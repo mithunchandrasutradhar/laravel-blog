@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Category;
+use App\Models\Post;
+use Illuminate\View\View;
+
+class CategoryController extends Controller
+{
+    /**
+     * Posts per page.
+     */
+    private const PER_PAGE = 12;
+
+    /**
+     * Display posts belonging to the given category.
+     *
+     * Resolves the Category by slug using implicit route model binding via a
+     * manual lookup (no binding key override needed since the route param is
+     * named "slug" and not "id").
+     */
+    public function show(string $slug): View
+    {
+        $category = Category::where('slug', $slug)
+            ->withCount(['posts' => fn ($q) => $q->where('status', 'published')->where('published_at', '<=', now())])
+            ->firstOrFail();
+
+        // Include posts in child categories as well
+        $categoryIds = $this->getCategoryTree($category);
+
+        $posts = Post::published()
+            ->whereIn('category_id', $categoryIds)
+            ->with(['category', 'author', 'tags'])
+            ->latestPublished()
+            ->paginate(self::PER_PAGE);
+
+        // Child categories for sub-navigation
+        $children = $category->children()->withCount(['posts' => fn ($q) => $q->where('status', 'published')])->get();
+
+        return view('blog.category', compact('category', 'posts', 'children'));
+    }
+
+    /**
+     * Collect the IDs of a category and all its descendants.
+     *
+     * @return array<int>
+     */
+    private function getCategoryTree(Category $category): array
+    {
+        $ids = [$category->id];
+
+        foreach ($category->allChildren as $child) {
+            $ids = array_merge($ids, $this->getCategoryTree($child));
+        }
+
+        return $ids;
+    }
+}
