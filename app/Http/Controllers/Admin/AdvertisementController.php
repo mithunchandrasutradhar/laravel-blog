@@ -87,9 +87,9 @@ class AdvertisementController extends Controller
     /**
      * Show an advertisement detail (admin view).
      */
-    public function show(Advertisement $advertisement): View
+    public function show(Advertisement $advertisement): RedirectResponse
     {
-        return view('admin.advertisements.show', compact('advertisement'));
+        return redirect()->route('admin.advertisements.edit', $advertisement);
     }
 
     /**
@@ -121,6 +121,16 @@ class AdvertisementController extends Controller
 
         return redirect()->route('admin.advertisements.index')
             ->with('success', 'Advertisement updated successfully.');
+    }
+
+    /**
+     * Toggle the active/inactive status of an advertisement.
+     */
+    public function toggle(Advertisement $advertisement): RedirectResponse
+    {
+        $advertisement->update(['is_active' => ! $advertisement->is_active]);
+
+        return back()->with('success', 'Advertisement status updated.');
     }
 
     /**

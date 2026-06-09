@@ -11,7 +11,7 @@
 @section('page-subtitle', 'Updating: ' . Str::limit($post->title ?? 'Post', 50))
 
 @section('page-actions')
-    <a href="{{ route('posts.show', $post->slug ?? '#') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ route('blog.show', $post->slug ?? '#') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
         <i class="fas fa-eye me-1"></i>View Post
     </a>
 @endsection

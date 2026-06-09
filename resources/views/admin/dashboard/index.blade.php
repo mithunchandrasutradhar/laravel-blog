@@ -284,8 +284,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Views Line Chart ──
     const viewsCtx = document.getElementById('viewsChart').getContext('2d');
-    const viewsData = @json($viewsChartData ?? array_fill(0, 30, 0));
-    const viewsLabels = @json($viewsChartLabels ?? array_map(fn($i) => date('M d', strtotime("-{$i} days")), range(29, 0)));
+    @php
+        $viewsDataArr = $viewsChartData ?? array_fill(0, 30, 0);
+        $viewsLabelsArr = $viewsChartLabels ?? array_map(function($i){ return date('M d', strtotime("-$i days")); }, range(29, 0));
+        $postsDataArr = $postsChartData ?? array_fill(0, 6, 0);
+        $postsLabelsArr = $postsChartLabels ?? ['Jan','Feb','Mar','Apr','May','Jun'];
+    @endphp
+    const viewsData = {!! json_encode($viewsDataArr) !!};
+    const viewsLabels = {!! json_encode($viewsLabelsArr) !!};
 
     new Chart(viewsCtx, {
         type: 'line',
@@ -318,8 +324,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Posts Bar Chart ──
     const postsCtx = document.getElementById('postsChart').getContext('2d');
-    const postsData = @json($postsChartData ?? array_fill(0, 6, 0));
-    const postsLabels = @json($postsChartLabels ?? ['Jan','Feb','Mar','Apr','May','Jun']);
+    const postsData = {!! json_encode($postsDataArr) !!};
+    const postsLabels = {!! json_encode($postsLabelsArr) !!};
 
     new Chart(postsCtx, {
         type: 'bar',

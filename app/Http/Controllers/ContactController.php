@@ -20,7 +20,7 @@ class ContactController extends Controller
         $contactPhone = Setting::get('contact_phone');
         $contactAddress = Setting::get('contact_address');
 
-        return view('contact', compact('contactEmail', 'contactPhone', 'contactAddress'));
+        return view('pages.contact', compact('contactEmail', 'contactPhone', 'contactAddress'));
     }
 
     /**

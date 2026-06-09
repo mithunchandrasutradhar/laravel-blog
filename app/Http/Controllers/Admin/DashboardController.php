@@ -78,7 +78,7 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->pluck('count', 'status');
 
-        return view('admin.dashboard', compact(
+        return view('admin.dashboard.index', compact(
             'metrics',
             'chartLabels',
             'chartData',

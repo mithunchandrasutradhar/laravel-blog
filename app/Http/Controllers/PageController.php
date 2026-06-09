@@ -19,7 +19,7 @@ class PageController extends Controller
         $teamData = Setting::get('team_data', '[]');
 
         // team_data is stored as JSON
-        $team = json_decode($teamData, true) ?? [];
+        $team = collect(json_decode($teamData, true) ?? []);
 
         return view('pages.about', compact('content', 'team'));
     }

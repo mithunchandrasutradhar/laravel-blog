@@ -36,6 +36,6 @@ class TagController extends Controller
 
         $relatedTags = Tag::whereIn('id', $relatedTagIds)->limit(10)->get();
 
-        return view('blog.tag', compact('tag', 'posts', 'relatedTags'));
+        return view('tags.show', compact('tag', 'posts', 'relatedTags'));
     }
 }

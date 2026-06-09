@@ -41,7 +41,7 @@ class SearchController extends Controller
             ->map(fn ($post) => [
                 'id'          => $post->id,
                 'title'       => $post->title,
-                'url'         => route('posts.show', $post->slug),
+                'url'         => route('blog.show', $post->slug),
                 'description' => $post->short_description
                     ? str($post->short_description)->limit(80)->toString()
                     : null,

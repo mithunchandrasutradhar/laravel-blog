@@ -50,6 +50,29 @@ class CommentController extends Controller
     }
 
     /**
+     * Bulk approve, reject, or delete comments.
+     */
+    public function bulkAction(Request $request): RedirectResponse
+    {
+        $ids    = array_filter((array) $request->input('ids', []), 'is_numeric');
+        $action = $request->input('action');
+
+        if (empty($ids)) {
+            return back()->withErrors(['error' => 'No comments selected.']);
+        }
+
+        if ($action === 'approve') {
+            Comment::whereIn('id', $ids)->update(['status' => 'approved']);
+        } elseif ($action === 'reject') {
+            Comment::whereIn('id', $ids)->update(['status' => 'rejected']);
+        } elseif ($action === 'delete') {
+            Comment::whereIn('id', $ids)->each(function (Comment $c) { $c->delete(); });
+        }
+
+        return back()->with('success', 'Bulk action applied.');
+    }
+
+    /**
      * Approve a comment.
      */
     public function approve(Comment $comment): RedirectResponse

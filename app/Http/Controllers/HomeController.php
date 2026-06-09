@@ -76,7 +76,11 @@ class HomeController extends Controller
             'site_description'  => Setting::get('site_description'),
         ];
 
-        return view('home', compact(
+        // Single hero post (first featured post)
+        $featuredPost = $featuredPosts->first();
+
+        return view('home.index', compact(
+            'featuredPost',
             'featuredPosts',
             'latestPosts',
             'trendingPosts',

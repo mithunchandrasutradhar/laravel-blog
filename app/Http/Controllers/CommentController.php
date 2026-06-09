@@ -44,7 +44,7 @@ class CommentController extends Controller
             ? 'Your comment has been posted.'
             : 'Your comment is awaiting moderation.';
 
-        return redirect()->route('posts.show', $post->slug)
+        return redirect()->route('blog.show', $post->slug)
             ->with('success', $message)
             ->withFragment('comments');
     }

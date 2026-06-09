@@ -164,7 +164,7 @@
                                        class="btn btn-sm btn-outline-primary" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="{{ route('posts.show', $post->slug) }}" target="_blank"
+                                    <a href="{{ route('blog.show', $post->slug) }}" target="_blank"
                                        class="btn btn-sm btn-outline-secondary" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>

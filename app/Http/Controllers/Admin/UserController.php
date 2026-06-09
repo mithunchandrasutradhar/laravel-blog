@@ -85,11 +85,9 @@ class UserController extends Controller
     /**
      * Show a user detail page.
      */
-    public function show(User $user): View
+    public function show(User $user): RedirectResponse
     {
-        $user->load('roles')->loadCount('posts', 'comments');
-
-        return view('admin.users.show', compact('user'));
+        return redirect()->route('admin.users.edit', $user);
     }
 
     /**

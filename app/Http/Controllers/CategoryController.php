@@ -14,6 +14,20 @@ class CategoryController extends Controller
     private const PER_PAGE = 12;
 
     /**
+     * Display a listing of all top-level categories.
+     */
+    public function index(): View
+    {
+        $categories = Category::topLevel()
+            ->withCount(['posts' => fn ($q) => $q->where('status', 'published')->where('published_at', '<=', now())])
+            ->with(['children' => fn ($q) => $q->withCount(['posts' => fn ($q2) => $q2->where('status', 'published')])])
+            ->orderBy('name')
+            ->get();
+
+        return view('categories.index', compact('categories'));
+    }
+
+    /**
      * Display posts belonging to the given category.
      *
      * Resolves the Category by slug using implicit route model binding via a
@@ -38,7 +52,7 @@ class CategoryController extends Controller
         // Child categories for sub-navigation
         $children = $category->children()->withCount(['posts' => fn ($q) => $q->where('status', 'published')])->get();
 
-        return view('blog.category', compact('category', 'posts', 'children'));
+        return view('categories.show', compact('category', 'posts', 'children'));
     }
 
     /**

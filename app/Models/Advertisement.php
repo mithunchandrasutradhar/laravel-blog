@@ -57,6 +57,11 @@ class Advertisement extends Model
         $query->where('position', $position);
     }
 
+    public function scopeByPosition(Builder $query, string $position): void
+    {
+        $query->where('position', $position);
+    }
+
     /**
      * Filter by type.
      */

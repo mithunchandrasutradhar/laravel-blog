@@ -36,10 +36,10 @@ class RssController extends Controller
         $xml .= '    <description>' . e($description) . '</description>' . PHP_EOL;
         $xml .= '    <language>en-us</language>' . PHP_EOL;
         $xml .= '    <lastBuildDate>' . now()->toRssString() . '</lastBuildDate>' . PHP_EOL;
-        $xml .= '    <atom:link href="' . route('rss') . '" rel="self" type="application/rss+xml" />' . PHP_EOL;
+        $xml .= '    <atom:link href="' . route('rss.feed') . '" rel="self" type="application/rss+xml" />' . PHP_EOL;
 
         foreach ($posts as $post) {
-            $postUrl = route('posts.show', $post->slug);
+            $postUrl = route('blog.show', $post->slug);
             $xml .= '    <item>' . PHP_EOL;
             $xml .= '      <title>' . e($post->title) . '</title>' . PHP_EOL;
             $xml .= '      <link>' . e($postUrl) . '</link>' . PHP_EOL;

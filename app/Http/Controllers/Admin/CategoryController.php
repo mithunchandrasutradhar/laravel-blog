@@ -23,7 +23,7 @@ class CategoryController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Category::withCount('posts');
+        $query = Category::with('parent')->withCount('posts');
 
         if ($request->filled('q')) {
             $query->where('name', 'LIKE', "%{$request->q}%");
@@ -98,11 +98,9 @@ class CategoryController extends Controller
     /**
      * Show a category detail (admin view).
      */
-    public function show(Category $category): View
+    public function show(Category $category): RedirectResponse
     {
-        $category->loadCount('posts');
-
-        return view('admin.categories.show', compact('category'));
+        return redirect()->route('admin.categories.edit', $category);
     }
 
     /**

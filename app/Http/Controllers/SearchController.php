@@ -50,6 +50,6 @@ class SearchController extends Controller
             $total = $posts->total();
         }
 
-        return view('blog.search', compact('posts', 'query', 'total'));
+        return view('search.index', compact('posts', 'query', 'total'));
     }
 }

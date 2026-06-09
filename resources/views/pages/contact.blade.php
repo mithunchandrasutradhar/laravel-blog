@@ -44,7 +44,7 @@
                     <h2 class="h5 fw-bold mb-1">Send us a message</h2>
                     <p class="text-muted mb-4">We typically respond within 1–2 business days.</p>
 
-                    <form action="{{ route('contact.send') }}" method="POST" id="contactForm" novalidate>
+                    <form action="{{ route('contact.store') }}" method="POST" id="contactForm" novalidate>
                         @csrf
 
                         <div class="row g-3">

@@ -11,6 +11,7 @@ use App\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PostController extends Controller
@@ -118,6 +119,11 @@ class PostController extends Controller
     {
         $data = $request->validated();
 
+        // Ensure slug is never null — fall back to generating one from the title
+        if (empty($data['slug'])) {
+            $data['slug'] = Str::slug($data['title']);
+        }
+
         // Handle featured image update
         if ($request->hasFile('featured_image')) {
             if ($post->featured_image) {
@@ -146,11 +152,31 @@ class PostController extends Controller
     /**
      * Display a single post (admin preview).
      */
-    public function show(Post $post): View
+    public function show(Post $post): RedirectResponse
     {
-        $post->load(['category', 'author', 'tags', 'comments.user']);
+        return redirect()->route('admin.posts.edit', $post);
+    }
 
-        return view('admin.posts.show', compact('post'));
+    /**
+     * Bulk-delete multiple posts by ID.
+     */
+    public function bulkDelete(Request $request): RedirectResponse
+    {
+        $ids = array_filter((array) $request->input('ids', []), 'is_numeric');
+
+        if (empty($ids)) {
+            return back()->withErrors(['error' => 'No posts selected.']);
+        }
+
+        Post::whereIn('id', $ids)->each(function (Post $post) {
+            if ($post->featured_image) {
+                Storage::disk('public')->delete($post->featured_image);
+            }
+            $post->delete();
+        });
+
+        return redirect()->route('admin.posts.index')
+            ->with('success', count($ids) . ' post(s) deleted.');
     }
 
     /**

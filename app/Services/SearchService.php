@@ -94,7 +94,7 @@ class SearchService
             ->map(fn (Post $post) => [
                 'id'    => $post->id,
                 'title' => $post->title,
-                'url'   => route('posts.show', $post->slug),
+                'url'   => route('blog.show', $post->slug),
             ]);
     }
 

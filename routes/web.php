@@ -35,12 +35,16 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])
     ->middleware('track.post.view')
-    ->name('posts.show');
+    ->name('blog.show'); // also aliased as posts.show for internal use
 
 // Category / tag / author archives
-Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('category.show');
-Route::get('/tag/{slug}', [TagController::class, 'show'])->name('tag.show');
-Route::get('/author/{username}', [AuthorController::class, 'show'])->name('author.show');
+Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('categories.show');
+Route::get('/tags', fn () => redirect()->route('blog.index'))->name('tags.index');
+Route::get('/tag/{slug}', [TagController::class, 'show'])->name('tags.show');
+Route::get('/author/{username}', [AuthorController::class, 'show'])
+    ->name('authors.show')
+    ->where('username', '(?!dashboard|posts|media|settings|profile)[\w\-]+');
 
 // Search
 Route::get('/search', [SearchController::class, 'index'])->name('search');
@@ -70,7 +74,7 @@ Route::get('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'uns
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
-Route::get('/rss.xml', [RssController::class, 'feed'])->name('rss');
+Route::get('/rss.xml', [RssController::class, 'feed'])->name('rss.feed');
 
 /*
 |--------------------------------------------------------------------------
@@ -162,6 +166,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     // Posts
     Route::resource('posts', Admin\PostController::class);
+    Route::post('/posts/bulk-delete', [Admin\PostController::class, 'bulkDelete'])->name('posts.bulk-delete');
 
     // Categories
     Route::resource('categories', Admin\CategoryController::class);
@@ -171,6 +176,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     // Comments
     Route::get('/comments', [Admin\CommentController::class, 'index'])->name('comments.index');
+    Route::post('/comments/bulk-action', [Admin\CommentController::class, 'bulkAction'])->name('comments.bulk-action');
     Route::patch('/comments/{comment}/approve', [Admin\CommentController::class, 'approve'])->name('comments.approve');
     Route::patch('/comments/{comment}/reject', [Admin\CommentController::class, 'reject'])->name('comments.reject');
     Route::delete('/comments/{comment}', [Admin\CommentController::class, 'destroy'])->name('comments.destroy');
@@ -190,10 +196,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     // Advertisements
     Route::resource('advertisements', Admin\AdvertisementController::class);
+    Route::post('/advertisements/{advertisement}/toggle', [Admin\AdvertisementController::class, 'toggle'])->name('advertisements.toggle');
 
     // Media library
     Route::get('/media', [Admin\MediaController::class, 'index'])->name('media.index');
     Route::post('/media', [Admin\MediaController::class, 'store'])->name('media.store');
+    Route::post('/media/upload', [Admin\MediaController::class, 'store'])->name('media.upload');
     Route::delete('/media/{media}', [Admin\MediaController::class, 'destroy'])->name('media.destroy');
     Route::get('/media/browse', [Admin\MediaController::class, 'browse'])->name('media.browse');
 

@@ -1,0 +1,14 @@
+node_modules
+vendor
+.git
+.gitignore
+*.md
+.env
+.env.*
+!.env.example
+tests
+storage/logs/*.log
+public/storage
+.idea
+.vscode
+docker-compose.override.yml

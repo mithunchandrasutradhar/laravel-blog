@@ -231,7 +231,7 @@ class Post extends Model
      */
     public function getUrlAttribute(): string
     {
-        return $this->canonical_url ?: route('posts.show', $this->slug);
+        return $this->canonical_url ?: route('blog.show', $this->slug);
     }
 
     /**

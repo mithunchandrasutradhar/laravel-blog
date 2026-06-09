@@ -78,7 +78,7 @@
                 @endif
 
                 @if(auth()->check() && (auth()->id() === $comment->user_id || auth()->user()->hasRole('admin')))
-                <form action="{{ route('comments.destroy', $comment->id) }}" method="POST" class="d-inline">
+                <form action="{{ route('admin.comments.destroy', $comment->id) }}" method="POST" class="d-inline">
                     @csrf @method('DELETE')
                     <button type="submit" class="btn btn-link text-danger p-0 btn-sm" onclick="return confirm('Delete this comment?')" aria-label="Delete comment">
                         <i class="fas fa-trash me-1"></i><span style="font-size:.8rem;">Delete</span>

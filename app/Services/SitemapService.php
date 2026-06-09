@@ -55,7 +55,7 @@ class SitemapService
             ->chunk(200, function ($posts) use ($xml) {
                 foreach ($posts as $post) {
                     $urlNode = $xml->addChild('url');
-                    $urlNode->addChild('loc', htmlspecialchars(route('posts.show', $post->slug), ENT_XML1));
+                    $urlNode->addChild('loc', htmlspecialchars(route('blog.show', $post->slug), ENT_XML1));
                     $urlNode->addChild('lastmod', $post->updated_at->toAtomString());
                     $urlNode->addChild('changefreq', 'weekly');
                     $urlNode->addChild('priority', '0.8');

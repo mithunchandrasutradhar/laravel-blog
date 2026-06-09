@@ -19,29 +19,29 @@
 @push('head')
 <script type="application/ld+json">
 {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
+    "@@context": "https://schema.org",
+    "@@type": "BlogPosting",
     "headline": "{{ addslashes($post->title) }}",
     "description": "{{ addslashes($post->excerpt ?? '') }}",
     "image": "{{ $post->thumbnail ? asset($post->thumbnail) : '' }}",
     "datePublished": "{{ $post->published_at?->toIso8601String() }}",
     "dateModified": "{{ $post->updated_at->toIso8601String() }}",
     "author": {
-        "@type": "Person",
+        "@@type": "Person",
         "name": "{{ addslashes($post->author?->name ?? '') }}",
         "url": "{{ $post->author ? route('authors.show', $post->author->username ?? $post->author->id) : '' }}"
     },
     "publisher": {
-        "@type": "Organization",
+        "@@type": "Organization",
         "name": "{{ settings('site_name', config('app.name')) }}",
         "logo": {
-            "@type": "ImageObject",
+            "@@type": "ImageObject",
             "url": "{{ settings('logo') ? asset(settings('logo')) : '' }}"
         }
     },
     "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": "{{ route('blog.show', $post->slug) }}"
+        "@@type": "WebPage",
+        "@@id": "{{ route('blog.show', $post->slug) }}"
     }
 }
 </script>

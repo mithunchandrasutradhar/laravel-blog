@@ -26,11 +26,8 @@ class AuthorController extends Controller
         // Assumes User::name is stored as the display name and a virtual
         // "username" slug matches str_slug(name). If a dedicated `username`
         // column exists this can be swapped to a direct where('username') call.
-        $author = User::where('name', function ($query) use ($username) {
-            // Match by URL-encoded name slug
-        })
-        ->orWhereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [strtolower($username)])
-        ->firstOrFail();
+        $author = User::whereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [strtolower($username)])
+            ->firstOrFail();
 
         // Ensure author is active and has the author/admin role
         abort_if(! $author->isActive(), 404);
@@ -50,6 +47,6 @@ class AuthorController extends Controller
                 ->count(),
         ];
 
-        return view('blog.author', compact('author', 'posts', 'stats'));
+        return view('authors.show', compact('author', 'posts', 'stats'));
     }
 }

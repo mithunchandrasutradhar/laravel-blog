@@ -77,8 +77,8 @@ class RssService
             $item = $channel->addChild('item');
 
             $item->addChild('title', htmlspecialchars($post->title, ENT_XML1));
-            $item->addChild('link', htmlspecialchars(route('posts.show', $post->slug), ENT_XML1));
-            $item->addChild('guid', htmlspecialchars(route('posts.show', $post->slug), ENT_XML1));
+            $item->addChild('link', htmlspecialchars(route('blog.show', $post->slug), ENT_XML1));
+            $item->addChild('guid', htmlspecialchars(route('blog.show', $post->slug), ENT_XML1));
             $item->addChild('pubDate', $post->published_at->toRfc822String());
 
             // dc:creator

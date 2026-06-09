@@ -7,7 +7,8 @@ if [ ! -f .env ]; then
 fi
 
 # Generate app key if not set
-if grep -q "APP_KEY=$" .env || grep -q "APP_KEY=base64:" .env; then
+APP_KEY_VALUE=$(grep '^APP_KEY=' .env | cut -d '=' -f2-)
+if [ -z "$APP_KEY_VALUE" ]; then
     php artisan key:generate --force
 fi
 
@@ -41,5 +42,5 @@ fi
 # Start cron for scheduled tasks
 service cron start 2>/dev/null || true
 
-# Start PHP-FPM
-exec php-fpm
+# Hand off to the CMD (php-fpm by default)
+exec "$@"

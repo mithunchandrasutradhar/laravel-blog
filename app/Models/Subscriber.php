@@ -62,6 +62,11 @@ class Subscriber extends Model
         $query->whereNotNull('verified_at');
     }
 
+    public function scopeActive(Builder $query): void
+    {
+        $query->whereNotNull('verified_at');
+    }
+
     /**
      * Only unverified (pending) subscribers.
      */

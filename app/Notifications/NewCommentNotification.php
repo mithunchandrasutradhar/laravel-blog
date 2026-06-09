@@ -37,7 +37,7 @@ class NewCommentNotification extends Notification implements ShouldQueue
         $post           = $this->comment->post;
         $commenterName  = $this->comment->commenter_name;
         $postTitle      = $post?->title ?? 'your post';
-        $postUrl        = $post ? route('posts.show', $post->slug) : url('/');
+        $postUrl        = $post ? route('blog.show', $post->slug) : url('/');
         $commentBody    = \Illuminate\Support\Str::limit(strip_tags($this->comment->body), 200);
 
         return (new MailMessage)

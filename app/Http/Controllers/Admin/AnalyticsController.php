@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Post;
 use App\Models\PostView;
 use Illuminate\Http\Request;
@@ -82,6 +83,11 @@ class AnalyticsController extends Controller
             ->limit(10)
             ->get();
 
+        // --- Category stats ---
+        $categoryStats = Category::withCount(['posts' => function ($q) use ($start) {
+            $q->published()->where('published_at', '>=', $start);
+        }])->orderByDesc('posts_count')->limit(10)->get();
+
         return view('admin.analytics.index', compact(
             'chartLabels',
             'chartData',
@@ -90,6 +96,7 @@ class AnalyticsController extends Controller
             'uniqueVisitors',
             'deviceTypes',
             'unreadPosts',
+            'categoryStats',
             'days'
         ));
     }

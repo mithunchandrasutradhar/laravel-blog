@@ -59,7 +59,7 @@ class SitemapController extends Controller
         // Posts
         foreach ($posts as $post) {
             $xml .= $this->urlEntry(
-                route('posts.show', $post->slug),
+                route('blog.show', $post->slug),
                 $post->updated_at->toAtomString(),
                 'weekly',
                 '0.8'
@@ -69,7 +69,7 @@ class SitemapController extends Controller
         // Categories
         foreach ($categories as $category) {
             $xml .= $this->urlEntry(
-                route('category.show', $category->slug),
+                route('categories.show', $category->slug),
                 $category->updated_at->toAtomString(),
                 'weekly',
                 '0.6'
@@ -79,7 +79,7 @@ class SitemapController extends Controller
         // Tags
         foreach ($tags as $tag) {
             $xml .= $this->urlEntry(
-                route('tag.show', $tag->slug),
+                route('tags.show', $tag->slug),
                 $tag->updated_at->toAtomString(),
                 'weekly',
                 '0.5'
@@ -90,7 +90,7 @@ class SitemapController extends Controller
         foreach ($authors as $author) {
             $username = strtolower(str_replace(' ', '-', $author->name));
             $xml .= $this->urlEntry(
-                route('author.show', $username),
+                route('authors.show', $username),
                 $author->updated_at->toAtomString(),
                 'weekly',
                 '0.6'

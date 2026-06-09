@@ -26,6 +26,13 @@ if (! function_exists('setting')) {
     }
 }
 
+if (! function_exists('settings')) {
+    function settings(string $key, mixed $default = null): mixed
+    {
+        return setting($key, $default);
+    }
+}
+
 if (! function_exists('active_ad')) {
     /**
      * Return the first active Advertisement model for the given position, or

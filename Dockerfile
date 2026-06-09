@@ -59,6 +59,15 @@ RUN chown -R www-data:www-data /var/www \
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
+# Entrypoint script
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Cron job for Laravel scheduler
+COPY docker/cron/blog-cron /etc/cron.d/blog-cron
+RUN chmod 0644 /etc/cron.d/blog-cron && crontab /etc/cron.d/blog-cron
+
 EXPOSE 9000
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]

@@ -36,9 +36,9 @@ class TagController extends Controller
     /**
      * Show the create tag form.
      */
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        return view('admin.tags.create');
+        return redirect()->route('admin.tags.index');
     }
 
     /**
@@ -55,9 +55,9 @@ class TagController extends Controller
     /**
      * Show the edit form for a tag.
      */
-    public function edit(Tag $tag): View
+    public function edit(Tag $tag): RedirectResponse
     {
-        return view('admin.tags.edit', compact('tag'));
+        return redirect()->route('admin.tags.index');
     }
 
     /**
@@ -74,11 +74,9 @@ class TagController extends Controller
     /**
      * Show a tag (admin view).
      */
-    public function show(Tag $tag): View
+    public function show(Tag $tag): RedirectResponse
     {
-        $tag->loadCount('posts');
-
-        return view('admin.tags.show', compact('tag'));
+        return redirect()->route('admin.tags.index');
     }
 
     /**
