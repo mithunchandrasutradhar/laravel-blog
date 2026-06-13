@@ -82,6 +82,14 @@ class Category extends Model
     }
 
     /**
+     * Videos belonging to this category.
+     */
+    public function videos(): HasMany
+    {
+        return $this->hasMany(\App\Models\Video::class);
+    }
+
+    /**
      * Published posts belonging to this category.
      */
     public function publishedPosts(): HasMany

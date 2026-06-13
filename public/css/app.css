@@ -104,66 +104,231 @@ img { max-width: 100%; height: auto; display: block; }
 /* ---------------------------------------------------
    Navbar — Frosted, Minimal
    --------------------------------------------------- */
-.site-header {
-    z-index: 1030;
-    border-bottom: 1px solid rgba(0,0,0,.06);
-    transition: box-shadow var(--transition), background var(--transition);
-    background: rgba(255,255,255,.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+/* ─────────────────────────────────────────
+   Premium Site Header
+   ───────────────────────────────────────── */
+.header-accent-bar {
+    height: 3px;
+    background: linear-gradient(90deg,#4f46e5 0%,#7c3aed 45%,#f59e0b 100%);
 }
 
+.site-header {
+    z-index: 1030;
+    background: rgba(255,255,255,.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(15,23,42,.07);
+    transition: box-shadow .3s var(--ease), background .3s var(--ease);
+}
 .site-header.scrolled {
-    box-shadow: 0 4px 24px rgba(0,0,0,.07);
+    box-shadow: 0 4px 30px rgba(0,0,0,.08);
     border-bottom-color: transparent;
 }
 
-.navbar-brand { font-weight: 800; font-size: 1.25rem; letter-spacing: -.03em; }
-.navbar-brand:hover { opacity: .85; }
-
-.nav-link {
-    font-weight: 500;
-    font-size: .9375rem;
-    padding: .45rem .7rem !important;
-    color: var(--brand-gray-700);
-    border-radius: var(--radius-sm);
-    transition: color var(--transition), background var(--transition);
+/* ── Logo ── */
+.navbar-brand { text-decoration: none !important; }
+.navbar-brand:hover .logo-icon-wrap { transform: scale(1.06) rotate(-3deg); }
+.logo-icon-wrap {
+    transition: transform .3s var(--ease);
+    flex-shrink: 0;
+}
+.logo-wordmark {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+    gap: 2px;
+}
+.logo-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -.03em;
+    line-height: 1;
+}
+.logo-sub {
+    font-size: .52rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--brand-primary);
+    line-height: 1;
 }
 
-.nav-link:hover { color: var(--brand-primary) !important; background: var(--brand-primary-light); }
-.nav-link.active { color: var(--brand-primary) !important; background: var(--brand-primary-light); }
+/* ── Nav links ── */
+#mainNavbar { padding: .75rem 0; }
 
+.site-header .nav-link {
+    font-size: .875rem;
+    font-weight: 600;
+    color: #374151;
+    padding: .45rem .8rem !important;
+    border-radius: 0;
+    position: relative;
+    transition: color .2s var(--ease);
+    background: transparent !important;
+}
+/* Underline uses ::before so it never conflicts with Bootstrap's ::after dropdown caret */
+.site-header .nav-link::before {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: .8rem;
+    right: .8rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--brand-primary);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform .22s var(--ease);
+    pointer-events: none;
+    z-index: 1;
+}
+.site-header .nav-link:hover              { color: var(--brand-primary) !important; }
+.site-header .nav-link.active             { color: var(--brand-primary) !important; }
+.site-header .nav-link:hover::before      { transform: scaleX(1); }
+.site-header .nav-link.active::before     { transform: scaleX(1); }
+
+/* Cleanly remove Bootstrap's built-in ::after triangle caret — ::before underline is untouched */
+.site-header .nav-link.dropdown-toggle::after { display: none !important; }
+
+/* Custom dropdown caret */
+.site-header .nav-link.dropdown-toggle .caret-icon {
+    font-size: .55rem;
+    margin-left: .3rem;
+    transition: transform .2s;
+    display: inline-block;
+}
+.site-header .nav-item.show .caret-icon { transform: rotate(180deg); }
+
+/* ── Dropdown ── */
 .navbar .dropdown-menu {
     border: 1px solid var(--brand-gray-200);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl);
+    box-shadow: 0 16px 40px rgba(0,0,0,.10), 0 4px 8px rgba(0,0,0,.06);
     padding: .5rem;
-    animation: dropdownIn .15s var(--ease);
-    min-width: 220px;
+    animation: dropdownIn .18s var(--ease);
+    min-width: 230px;
+    margin-top: 0 !important;
 }
 
+/* Invisible bridge above the dropdown so the hover zone is continuous —
+   prevents the mouse from "losing" the nav-item when crossing the visual gap */
+.navbar .dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 0;
+    right: 0;
+    height: 8px;
+}
 .navbar .dropdown-item {
     border-radius: var(--radius-sm);
     padding: .5rem .75rem;
-    font-size: .9rem;
+    font-size: .875rem;
     font-weight: 500;
     color: var(--brand-gray-700);
-    transition: background var(--transition), color var(--transition);
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    transition: background .15s, color .15s;
 }
-
+.navbar .dropdown-item .di-icon {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: var(--brand-primary-light);
+    color: var(--brand-primary);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: .7rem;
+    flex-shrink: 0;
+    transition: background .15s, color .15s;
+}
 .navbar .dropdown-item:hover { background: var(--brand-primary-light); color: var(--brand-primary); }
+.navbar .dropdown-item:hover .di-icon { background: var(--brand-primary); color: #fff; }
 
 @media (min-width: 992px) {
     .navbar .nav-item.dropdown:hover > .dropdown-menu {
         display: block;
         margin-top: 0;
+        top: calc(100% + 6px); /* 6px visual gap, covered by the 8px ::before bridge */
     }
 }
-
 @keyframes dropdownIn {
-    from { opacity: 0; transform: translateY(-8px) scale(.97); }
-    to   { opacity: 1; transform: translateY(0)   scale(1); }
+    from { opacity: 0; transform: translateY(-6px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
 }
+
+/* ── Header search ── */
+.header-search-wrap { position: relative; }
+.header-search-input {
+    background: #f1f5f9;
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-pill);
+    padding: .4rem 1rem .4rem 2.25rem;
+    font-size: .8125rem;
+    width: 190px;
+    color: #374151;
+    transition: width .3s var(--ease), border-color .2s, box-shadow .2s, background .2s;
+    outline: none;
+}
+.header-search-input::placeholder { color: #9ca3af; }
+.header-search-input:focus {
+    background: #fff;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(79,70,229,.12);
+    width: 240px;
+}
+.header-search-icon {
+    position: absolute;
+    left: .75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: .75rem;
+    pointer-events: none;
+    transition: color .2s;
+}
+.header-search-wrap:focus-within .header-search-icon { color: var(--brand-primary); }
+
+/* ── Auth buttons ── */
+.btn-nav-login {
+    font-size: .8125rem;
+    font-weight: 600;
+    padding: .4rem 1.1rem;
+    border-radius: var(--radius-pill);
+    border: 1.5px solid #d1d5db;
+    color: #374151;
+    background: transparent;
+    text-decoration: none;
+    transition: border-color .2s, color .2s;
+    white-space: nowrap;
+}
+.btn-nav-login:hover { border-color: var(--brand-primary); color: var(--brand-primary); }
+
+.btn-nav-register {
+    font-size: .8125rem;
+    font-weight: 600;
+    padding: .4rem 1.25rem;
+    border-radius: var(--radius-pill);
+    background: var(--brand-primary);
+    color: #fff !important;
+    text-decoration: none;
+    border: none;
+    white-space: nowrap;
+    transition: background .2s, transform .2s, box-shadow .2s;
+}
+.btn-nav-register:hover {
+    background: var(--brand-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-primary);
+}
+
+/* ── Mobile toggler ── */
+.navbar-toggler {
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: .35rem .5rem !important;
+}
+.navbar-toggler:focus { box-shadow: 0 0 0 3px rgba(79,70,229,.15) !important; }
 
 /* Search */
 .search-form { position: relative; }
@@ -1040,4 +1205,68 @@ mark {
     .col-lg-8 { width: 100% !important; }
     .post-content.prose { font-size: 11pt; }
     a[href]::after { content: ' (' attr(href) ')'; font-size: 9pt; color: #666; }
+}
+
+/* ---------------------------------------------------
+   Video Cards (home page + /videos page)
+   --------------------------------------------------- */
+.vid-card {
+    border-radius: 1rem; overflow: hidden;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.06);
+    transition: transform .22s ease, box-shadow .22s ease;
+    height: 100%; display: flex; flex-direction: column;
+}
+.vid-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.13);
+}
+.vid-thumb-wrap {
+    position: relative; aspect-ratio: 16/9;
+    overflow: hidden; cursor: pointer;
+    background: #0f0e1e; flex-shrink: 0;
+}
+.vid-thumb-wrap img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform .35s ease;
+}
+.vid-card:hover .vid-thumb-wrap img { transform: scale(1.04); }
+.vid-play-btn {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.28); transition: background .2s;
+}
+.vid-card:hover .vid-play-btn { background: rgba(0,0,0,.42); }
+.vid-play-circle {
+    width: 60px; height: 60px;
+    background: rgba(239,68,68,.9);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 24px rgba(239,68,68,.5);
+    transition: transform .2s ease, background .2s;
+}
+.vid-card:hover .vid-play-circle { transform: scale(1.1); background: #ef4444; }
+.vid-play-circle i { color: #fff; font-size: 1.25rem; margin-left: 3px; }
+.vid-cat-badge {
+    position: absolute; top: .75rem; left: .75rem;
+    display: inline-flex; align-items: center; gap: .3rem;
+    padding: .25rem .65rem; border-radius: 999px;
+    font-size: .7rem; font-weight: 700;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    color: #fff; text-decoration: none;
+}
+.vid-thumb-wrap iframe {
+    position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+}
+.vid-card-body {
+    padding: 1rem 1.125rem 1.25rem;
+    flex: 1; display: flex; flex-direction: column;
+}
+.vid-title {
+    font-size: .9375rem; font-weight: 700;
+    color: #111827; line-height: 1.45; margin-bottom: .4rem;
+}
+.vid-desc {
+    font-size: .8125rem; color: #6b7280;
+    line-height: 1.6; margin: 0; flex: 1;
 }

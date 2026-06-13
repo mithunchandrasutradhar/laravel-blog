@@ -315,6 +315,13 @@
             <span class="nav-label">Tags</span>
         </a>
 
+        {{-- Videos --}}
+        <a href="{{ route('admin.videos.index') }}"
+           class="nav-item-link {{ request()->routeIs('admin.videos.*') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fab fa-youtube"></i></span>
+            <span class="nav-label">Videos</span>
+        </a>
+
         {{-- Comments --}}
         <a href="{{ route('admin.comments.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.comments.*') ? 'active' : '' }}">

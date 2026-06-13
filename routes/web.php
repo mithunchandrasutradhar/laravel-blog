@@ -21,6 +21,7 @@ use App\Http\Controllers\RssController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TagController;
+use App\Http\Controllers\VideoController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,6 +49,9 @@ Route::get('/author/{username}', [AuthorController::class, 'show'])
 
 // Search
 Route::get('/search', [SearchController::class, 'index'])->name('search');
+
+// Videos
+Route::get('/videos', [VideoController::class, 'index'])->name('videos.index');
 
 // Static pages
 Route::get('/about', [PageController::class, 'about'])->name('about');
@@ -170,6 +174,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     // Categories
     Route::resource('categories', Admin\CategoryController::class);
+
+    // Videos
+    Route::resource('videos', Admin\VideoController::class);
 
     // Tags
     Route::resource('tags', Admin\TagController::class);

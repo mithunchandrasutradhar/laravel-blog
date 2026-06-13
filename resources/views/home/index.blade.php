@@ -332,6 +332,87 @@
 @endif
 
 {{-- ================================================================
+     VIDEOS SECTION
+     ================================================================ --}}
+@if(isset($homeVideos) && $homeVideos->isNotEmpty())
+<section class="py-5 py-lg-6" aria-labelledby="videosHeading" style="background:#f8f9fc;">
+    <div class="container">
+
+        {{-- Section header --}}
+        <div class="d-flex align-items-end justify-content-between mb-5 flex-wrap gap-3">
+            <div>
+                <div class="section-label">Watch &amp; Learn</div>
+                <h2 id="videosHeading" class="h2 fw-bold mb-1">Videos</h2>
+                <p class="text-muted mb-0">Curated videos to go deeper on topics you love</p>
+            </div>
+            <a href="{{ route('videos.index') }}" class="btn btn-outline-primary fw-semibold px-4">
+                <i class="fab fa-youtube me-2" style="color:#ef4444;"></i>View All Videos
+            </a>
+        </div>
+
+        <div class="row g-4">
+            @foreach($homeVideos as $video)
+            <div class="col-md-6 col-xl-4">
+                <div class="vid-card">
+
+                    {{-- Thumbnail + play button --}}
+                    <div class="vid-thumb-wrap" data-embed="{{ $video->embed_url }}&autoplay=1">
+                        <img src="{{ $video->thumbnail_url }}" alt="{{ e($video->title) }}" loading="lazy">
+
+                        @if($video->category)
+                        <a href="{{ route('videos.index', ['category' => $video->category->slug]) }}"
+                           class="vid-cat-badge"
+                           style="background:{{ $video->category->color ?? '#4f46e5' }}cc;"
+                           onclick="event.stopPropagation()">
+                            <i class="{{ $video->category->icon ?? 'fas fa-folder' }}"></i>
+                            {{ $video->category->name }}
+                        </a>
+                        @endif
+
+                        <div class="vid-play-btn" aria-label="Play video">
+                            <div class="vid-play-circle">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Info --}}
+                    <div class="vid-card-body">
+                        <h3 class="vid-title">{{ $video->title }}</h3>
+                        @if($video->description)
+                        <p class="vid-desc">{{ Str::limit($video->description, 100) }}</p>
+                        @endif
+                    </div>
+
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+    </div>
+</section>
+@once
+@push('scripts')
+<script>
+document.querySelectorAll('.vid-thumb-wrap').forEach(function (wrap) {
+    wrap.addEventListener('click', function () {
+        var embed = this.dataset.embed;
+        if (!embed) return;
+        var iframe = document.createElement('iframe');
+        iframe.src = embed;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        this.innerHTML = '';
+        this.appendChild(iframe);
+        this.style.cursor = 'default';
+    });
+});
+</script>
+@endpush
+@endonce
+@endif
+
+{{-- ================================================================
      NEWSLETTER
      ================================================================ --}}
 <section class="newsletter-section py-5 py-lg-6" aria-labelledby="newsletterHeading">

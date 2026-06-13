@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#4f46e5"/>
+      <stop offset="60%"  stop-color="#6d28d9"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Card background -->
+  <rect width="48" height="48" rx="12" fill="url(#bg)"/>
+  <!-- Subtle top shine -->
+  <rect width="48" height="24" rx="12" fill="url(#shine)"/>
+
+  <!-- Letter M — clean geometric paths -->
+  <path d="M9 34 L9 15 L24 27 L39 15 L39 34" fill="none" stroke="white"
+        stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Amber underline accent -->
+  <rect x="8" y="39" width="32" height="3" rx="1.5" fill="#f59e0b"/>
+</svg>

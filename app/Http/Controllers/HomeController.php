@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Setting;
+use App\Models\Video;
 use Illuminate\View\View;
 
 class HomeController extends Controller
@@ -82,13 +83,17 @@ class HomeController extends Controller
         // Single hero post (first featured post)
         $featuredPost = $featuredPosts->first();
 
+        // Active videos for home page preview (up to 6)
+        $homeVideos = Video::active()->with('category')->ordered()->limit(6)->get();
+
         return view('home.index', compact(
             'featuredPost',
             'featuredPosts',
             'latestPosts',
             'trendingPosts',
             'homeCategories',
-            'stats'
+            'stats',
+            'homeVideos'
         ));
     }
 }

@@ -39,7 +39,8 @@
     <link rel="icon" type="image/x-icon" href="{{ asset(settings('favicon')) }}">
     <link rel="apple-touch-icon" href="{{ asset(settings('favicon')) }}">
     @else
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
     @endif
 
     {{-- CSRF Token --}}
@@ -80,128 +81,205 @@
     {{-- Reading Progress Bar --}}
     <div id="reading-progress-bar" class="reading-progress-bar d-none"></div>
 
-    {{-- Header / Navbar --}}
-    <header class="site-header sticky-top bg-white shadow-sm">
-        <nav class="navbar navbar-expand-lg navbar-light" id="mainNavbar">
+    {{-- Header --}}
+    <header class="site-header sticky-top">
+
+        {{-- 3-px gradient accent bar --}}
+        <div class="header-accent-bar"></div>
+
+        <nav class="navbar navbar-expand-lg" id="mainNavbar">
             <div class="container">
-                {{-- Logo --}}
-                <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('home') }}">
+
+                {{-- ── Logo ── --}}
+                <a class="navbar-brand d-flex align-items-center gap-2 me-4" href="{{ route('home') }}">
                     @if(settings('logo'))
-                        <img src="{{ asset(settings('logo')) }}" alt="{{ settings('site_name', config('app.name')) }}" height="40" class="site-logo">
+                        <img src="{{ asset('storage/' . settings('logo')) }}"
+                             alt="{{ settings('site_name', 'Mithun Blog') }}"
+                             height="38" style="display:block;">
                     @else
-                        <span class="fw-bold fs-4 text-primary">{{ settings('site_name', config('app.name')) }}</span>
+                        {{-- Default logo: SVG icon + wordmark --}}
+                        <span class="logo-icon-wrap" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="38" height="38">
+                                <defs>
+                                    <linearGradient id="hdr-g" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                                        <stop offset="0%"   stop-color="#4f46e5"/>
+                                        <stop offset="60%"  stop-color="#6d28d9"/>
+                                        <stop offset="100%" stop-color="#7c3aed"/>
+                                    </linearGradient>
+                                    <linearGradient id="hdr-s" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="rgba(255,255,255,.2)"/>
+                                        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect width="48" height="48" rx="12" fill="url(#hdr-g)"/>
+                                <rect width="48" height="24" rx="12" fill="url(#hdr-s)"/>
+                                <path d="M9 34 L9 15 L24 27 L39 15 L39 34"
+                                      fill="none" stroke="white" stroke-width="3.8"
+                                      stroke-linecap="round" stroke-linejoin="round"/>
+                                <rect x="8" y="39" width="32" height="3" rx="1.5" fill="#f59e0b"/>
+                            </svg>
+                        </span>
+                        <span class="logo-wordmark d-none d-sm-flex">
+                            <span class="logo-name">{{ settings('site_name', 'Mithun') }}</span>
+                            <span class="logo-sub">Blog</span>
+                        </span>
                     @endif
                 </a>
 
-                {{-- Mobile: Search Icon + Hamburger --}}
-                <div class="d-flex align-items-center gap-2 d-lg-none">
-                    <button class="btn btn-link text-dark p-1" id="mobileSearchToggle" aria-label="Toggle search">
-                        <i class="fas fa-search"></i>
-                    </button>
-                    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                {{-- ── Mobile controls ── --}}
+                <div class="d-flex align-items-center gap-2 d-lg-none ms-auto me-2">
+                    <a href="{{ route('search') }}" class="btn p-1 border-0" style="color:#6b7280;" aria-label="Search">
+                        <i class="fas fa-search" style="font-size:.9rem;"></i>
+                    </a>
+                    <button class="navbar-toggler" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#navbarMain"
+                            aria-controls="navbarMain" aria-expanded="false"
+                            aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
                 </div>
 
-                {{-- Nav Links --}}
+                {{-- ── Collapsible nav ── --}}
                 <div class="collapse navbar-collapse" id="navbarMain">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                    {{-- Nav links --}}
+                    <ul class="navbar-nav mx-auto gap-1 mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
-                                Home
-                            </a>
+                            <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}"
+                               href="{{ route('home') }}">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}" href="{{ route('blog.index') }}">
-                                Blog
-                            </a>
+                            <a class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}"
+                               href="{{ route('blog.index') }}">Blog</a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->routeIs('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}"
+                               href="{{ route('categories.index') }}"
+                               id="navCategories" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
                                 Categories
+                                <i class="fas fa-chevron-down caret-icon"></i>
                             </a>
-                            <ul class="dropdown-menu shadow border-0" aria-labelledby="categoriesDropdown">
-                                @foreach(($globalCategories ?? collect())->take(12) as $category)
+                            <ul class="dropdown-menu" aria-labelledby="navCategories">
+                                @foreach(($globalCategories ?? collect())->take(12) as $cat)
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('categories.show', $category->slug) }}">
-                                        {{ $category->name }}
+                                    <a class="dropdown-item" href="{{ route('categories.show', $cat->slug) }}">
+                                        <span class="di-icon">
+                                            <i class="{{ $cat->icon ?? 'fas fa-folder' }}"></i>
+                                        </span>
+                                        {{ $cat->name }}
                                     </a>
                                 </li>
                                 @endforeach
-                                <li><hr class="dropdown-divider"></li>
+                                <li><hr class="dropdown-divider mx-2 my-1"></li>
                                 <li>
-                                    <a class="dropdown-item fw-semibold text-primary" href="{{ route('categories.index') }}">
-                                        <i class="fas fa-th-large me-1"></i> All Categories
+                                    <a class="dropdown-item fw-semibold" href="{{ route('categories.index') }}">
+                                        <span class="di-icon" style="background:var(--brand-accent-light);color:var(--brand-accent-dark);">
+                                            <i class="fas fa-th-large"></i>
+                                        </span>
+                                        All Categories
                                     </a>
                                 </li>
                             </ul>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">
-                                About
-                            </a>
+                            <a class="nav-link {{ request()->routeIs('videos.*') ? 'active' : '' }}"
+                               href="{{ route('videos.index') }}">Videos</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}" href="{{ route('contact') }}">
-                                Contact
-                            </a>
+                            <a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}"
+                               href="{{ route('about') }}">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('contact') ? 'active' : '' }}"
+                               href="{{ route('contact') }}">Contact</a>
                         </li>
                     </ul>
 
-                    {{-- Desktop Search Bar --}}
-                    <form class="d-none d-lg-flex search-form position-relative" action="{{ route('search') }}" method="GET" role="search">
-                        <div class="input-group">
-                            <input type="search" name="q" class="form-control form-control-sm rounded-start-pill border-end-0" placeholder="Search posts..." value="{{ request('q') }}" autocomplete="off" id="desktopSearch" aria-label="Search">
-                            <button class="btn btn-outline-secondary rounded-end-pill border-start-0" type="submit" aria-label="Submit search">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                        <div class="search-suggestions dropdown-menu w-100 shadow" id="searchSuggestions"></div>
-                    </form>
+                    {{-- Right side: Search + Auth --}}
+                    <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
 
-                    {{-- Auth Links --}}
-                    <div class="d-flex align-items-center ms-3 gap-2">
+                        {{-- Desktop search --}}
+                        <form class="d-none d-lg-block header-search-wrap"
+                              action="{{ route('search') }}" method="GET" role="search">
+                            <i class="fas fa-search header-search-icon" aria-hidden="true"></i>
+                            <input type="search" name="q"
+                                   class="header-search-input"
+                                   placeholder="Search articles…"
+                                   value="{{ request('q') }}"
+                                   autocomplete="off"
+                                   aria-label="Search articles">
+                            <div class="search-suggestions dropdown-menu w-100 shadow"
+                                 id="searchSuggestions"></div>
+                        </form>
+
+                        {{-- Auth --}}
                         @guest
-                            <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Login</a>
-                            <a href="{{ route('register') }}" class="btn btn-primary btn-sm">Register</a>
+                            <a href="{{ route('login') }}" class="btn-nav-login">Sign in</a>
+                            <a href="{{ route('register') }}" class="btn-nav-register">Get Started</a>
                         @else
                             <div class="dropdown">
-                                <button class="btn btn-link text-dark text-decoration-none dropdown-toggle d-flex align-items-center gap-2 p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <button class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
+                                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     @if(auth()->user()->avatar)
-                                        <img src="{{ asset(auth()->user()->avatar) }}" alt="{{ auth()->user()->name }}" class="rounded-circle" width="32" height="32" style="object-fit:cover;">
+                                        <img src="{{ asset(auth()->user()->avatar) }}"
+                                             alt="{{ auth()->user()->name }}"
+                                             class="rounded-circle"
+                                             width="34" height="34"
+                                             style="object-fit:cover;border:2px solid #e2e8f0;">
                                     @else
-                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:14px;">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0"
+                                             style="width:34px;height:34px;font-size:.8rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:2px solid #e2e8f0;">
                                             {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                                         </div>
                                     @endif
-                                    <span class="d-none d-xl-inline">{{ auth()->user()->name }}</span>
+                                    <span class="d-none d-xl-inline fw-semibold" style="font-size:.875rem;color:#374151;">
+                                        {{ auth()->user()->name }}
+                                    </span>
+                                    <i class="fas fa-chevron-down d-none d-xl-inline" style="font-size:.55rem;color:#9ca3af;"></i>
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                    <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="fas fa-user me-2 text-muted"></i>Profile</a></li>
-                                    @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('editor'))
-                                    <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="fas fa-tachometer-alt me-2 text-muted"></i>Dashboard</a></li>
-                                    @endif
-                                    <li><hr class="dropdown-divider"></li>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li class="px-3 py-2 border-bottom mb-1">
+                                        <div class="fw-semibold" style="font-size:.875rem;color:#111;">{{ auth()->user()->name }}</div>
+                                        <div style="font-size:.75rem;color:#6b7280;">{{ auth()->user()->email }}</div>
+                                    </li>
                                     <li>
-                                        <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                                        <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                            <span class="di-icon"><i class="fas fa-user"></i></span>Profile
+                                        </a>
+                                    </li>
+                                    @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('editor'))
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                            <span class="di-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-tachometer-alt"></i></span>Dashboard
+                                        </a>
+                                    </li>
+                                    @endif
+                                    <li><hr class="dropdown-divider mx-2 my-1"></li>
+                                    <li>
+                                        <form action="{{ route('logout') }}" method="POST">
                                             @csrf
                                             <button type="submit" class="dropdown-item text-danger">
-                                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                                <span class="di-icon" style="background:#fee2e2;color:#ef4444;"><i class="fas fa-sign-out-alt"></i></span>Sign out
                                             </button>
                                         </form>
                                     </li>
                                 </ul>
                             </div>
                         @endguest
-                    </div>
 
-                    {{-- Mobile Search (visible inside collapse) --}}
-                    <form class="d-lg-none mt-3 mb-1" action="{{ route('search') }}" method="GET" role="search">
-                        <div class="input-group">
-                            <input type="search" name="q" class="form-control" placeholder="Search posts..." value="{{ request('q') }}" aria-label="Search">
-                            <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
-                        </div>
-                    </form>
+                        {{-- Mobile search (inside collapse) --}}
+                        <form class="d-lg-none w-100 mt-2" action="{{ route('search') }}" method="GET">
+                            <div class="input-group input-group-sm">
+                                <input type="search" name="q" class="form-control rounded-start-pill"
+                                       placeholder="Search…" value="{{ request('q') }}">
+                                <button class="btn btn-primary rounded-end-pill" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
                 </div>
             </div>
         </nav>
@@ -231,18 +309,36 @@
 
                         {{-- Logo / Brand name --}}
                         @if(settings('logo_white') || settings('logo'))
-                            <img src="{{ asset(settings('logo_white') ?? settings('logo')) }}"
-                                 alt="{{ settings('site_name', config('app.name')) }}"
+                            <img src="{{ asset('storage/' . (settings('logo_white') ?? settings('logo'))) }}"
+                                 alt="{{ settings('site_name', 'Mithun Blog') }}"
                                  style="height:38px;margin-bottom:1.25rem;display:block;">
                         @else
-                            <div style="display:flex;align-items:center;gap:.625rem;margin-bottom:1.25rem;">
-                                <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#f59e0b);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                    <i class="fas fa-pen-nib" style="color:#fff;font-size:.85rem;"></i>
-                                </div>
-                                <span style="font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.02em;">
-                                    {{ settings('site_name', config('app.name')) }}
+                            <a href="{{ route('home') }}" style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;text-decoration:none;">
+                                {{-- Same SVG icon, works on dark background --}}
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="42" height="42" style="flex-shrink:0;">
+                                    <defs>
+                                        <linearGradient id="ft-g" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                                            <stop offset="0%"   stop-color="#4f46e5"/>
+                                            <stop offset="60%"  stop-color="#6d28d9"/>
+                                            <stop offset="100%" stop-color="#7c3aed"/>
+                                        </linearGradient>
+                                        <linearGradient id="ft-s" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="rgba(255,255,255,.2)"/>
+                                            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <rect width="48" height="48" rx="12" fill="url(#ft-g)"/>
+                                    <rect width="48" height="24" rx="12" fill="url(#ft-s)"/>
+                                    <path d="M9 34 L9 15 L24 27 L39 15 L39 34"
+                                          fill="none" stroke="white" stroke-width="3.8"
+                                          stroke-linecap="round" stroke-linejoin="round"/>
+                                    <rect x="8" y="39" width="32" height="3" rx="1.5" fill="#f59e0b"/>
+                                </svg>
+                                <span style="display:flex;flex-direction:column;line-height:1;gap:3px;">
+                                    <span style="font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:-.03em;">{{ settings('site_name', 'Mithun') }}</span>
+                                    <span style="font-size:.52rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#f59e0b;">Blog</span>
                                 </span>
-                            </div>
+                            </a>
                         @endif
 
                         <p style="color:#8b8ba8;font-size:.875rem;line-height:1.75;margin-bottom:1.75rem;">
@@ -288,6 +384,7 @@
                                 ['route' => 'home',             'label' => 'Home'],
                                 ['route' => 'blog.index',       'label' => 'Blog'],
                                 ['route' => 'categories.index', 'label' => 'Categories'],
+                                ['route' => 'videos.index',     'label' => 'Videos'],
                                 ['route' => 'about',            'label' => 'About'],
                                 ['route' => 'contact',          'label' => 'Contact'],
                             ] as $link)
