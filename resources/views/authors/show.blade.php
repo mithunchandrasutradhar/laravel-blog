@@ -5,7 +5,7 @@
         'title'       => $author->name . ' — Author at ' . settings('site_name', config('app.name')),
         'description' => $author->bio ?? 'Read articles by ' . $author->name . ' on ' . settings('site_name', config('app.name')),
         'og_image'    => $author->avatar ? asset($author->avatar) : null,
-        'canonical'   => route('authors.show', $author->username ?? $author->id),
+        'canonical'   => route('authors.show', $author->username),
     ];
 @endphp
 
@@ -17,8 +17,7 @@
             @include('partials.breadcrumb', [
                 'breadcrumbs' => [
                     ['label' => 'Blog',    'url' => route('blog.index')],
-                    ['label' => 'Authors', 'url' => route('authors.index')],
-                    ['label' => $author->name, 'url' => route('authors.show', $author->username ?? $author->id)],
+                    ['label' => $author->name, 'url' => route('authors.show', $author->username)],
                 ]
             ])
             <div class="row align-items-center mt-4 g-4">

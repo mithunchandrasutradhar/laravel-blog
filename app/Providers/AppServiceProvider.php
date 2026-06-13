@@ -49,10 +49,13 @@ class AppServiceProvider extends ServiceProvider
 
             if ($shared === null) {
                 $shared = Cache::remember('view.global_data', config('blog.cache_ttl', 3600), function () {
+                    $categories = $this->resolveCategories();
                     return [
-                        'globalSettings'    => $this->resolveSettings(),
-                        'globalCategories'  => $this->resolveCategories(),
-                        'globalRecentPosts' => $this->resolveRecentPosts(),
+                        'globalSettings'      => $this->resolveSettings(),
+                        'globalCategories'    => $categories,
+                        'navCategories'       => $categories->take(12),
+                        'sidebarCategories'   => $categories->sortByDesc('posts_count')->take(10)->values(),
+                        'globalRecentPosts'   => $this->resolveRecentPosts(),
                     ];
                 });
             }
@@ -92,7 +95,7 @@ class AppServiceProvider extends ServiceProvider
     private function resolveCategories(): \Illuminate\Database\Eloquent\Collection
     {
         try {
-            return \App\Models\Category::withCount(['posts' => fn ($q) => $q->published()])
+            return \App\Models\Category::withCount(['posts' => fn ($q) => $q->where('status', 'published')->where('published_at', '<=', now())])
                 ->orderBy('name')
                 ->get();
         } catch (\Throwable) {

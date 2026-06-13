@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f0e2a"/>
+      <stop offset="60%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#2d2a6e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <filter id="blur1">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+    <filter id="blur2">
+      <feGaussianBlur stdDeviation="80"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="900" fill="url(#bg)"/>
+
+  <!-- Ambient glow blobs -->
+  <circle cx="1350" cy="150" r="320" fill="#4f46e5" opacity="0.18" filter="url(#blur1)"/>
+  <circle cx="250"  cy="750" r="260" fill="#7c3aed" opacity="0.14" filter="url(#blur2)"/>
+  <circle cx="900"  cy="900" r="200" fill="#f59e0b" opacity="0.10" filter="url(#blur1)"/>
+
+  <!-- Subtle grid lines -->
+  <g stroke="rgba(255,255,255,0.03)" stroke-width="1">
+    <line x1="0"    y1="150" x2="1600" y2="150"/>
+    <line x1="0"    y1="300" x2="1600" y2="300"/>
+    <line x1="0"    y1="450" x2="1600" y2="450"/>
+    <line x1="0"    y1="600" x2="1600" y2="600"/>
+    <line x1="0"    y1="750" x2="1600" y2="750"/>
+    <line x1="200"  y1="0"   x2="200"  y2="900"/>
+    <line x1="400"  y1="0"   x2="400"  y2="900"/>
+    <line x1="600"  y1="0"   x2="600"  y2="900"/>
+    <line x1="800"  y1="0"   x2="800"  y2="900"/>
+    <line x1="1000" y1="0"   x2="1000" y2="900"/>
+    <line x1="1200" y1="0"   x2="1200" y2="900"/>
+    <line x1="1400" y1="0"   x2="1400" y2="900"/>
+  </g>
+
+  <!-- Icon background circle -->
+  <circle cx="800" cy="390" r="110" fill="url(#accent)" opacity="0.9"/>
+  <circle cx="800" cy="390" r="130" fill="none" stroke="#4f46e5" stroke-width="1.5" opacity="0.35"/>
+  <circle cx="800" cy="390" r="160" fill="none" stroke="#4f46e5" stroke-width="1"   opacity="0.18"/>
+
+  <!-- Pen-nib / article icon (centered at 800,390) -->
+  <g fill="#fff" opacity="0.95">
+    <!-- document lines -->
+    <rect x="762" y="352" width="76" height="9"  rx="4.5"/>
+    <rect x="762" y="372" width="56" height="9"  rx="4.5"/>
+    <rect x="762" y="392" width="66" height="9"  rx="4.5"/>
+    <rect x="762" y="412" width="46" height="9"  rx="4.5"/>
+  </g>
+
+  <!-- Amber accent dot (top-right of icon) -->
+  <circle cx="874" cy="316" r="14" fill="url(#amber)"/>
+
+  <!-- Label text -->
+  <text x="800" y="556"
+        font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="38" font-weight="700" fill="#fff" text-anchor="middle"
+        letter-spacing="-0.5" opacity="0.92">
+    No Image Available
+  </text>
+  <text x="800" y="604"
+        font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="22" font-weight="400" fill="#8b8ba8" text-anchor="middle"
+        letter-spacing="0.5" opacity="0.8">
+    Article thumbnail not set
+  </text>
+
+  <!-- Bottom accent bar -->
+  <rect x="0" y="880" width="1600" height="4" rx="0">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="0" y="880" width="1600" height="4" rx="0" fill="url(#accent)" opacity="0.7"/>
+  <rect x="580" y="880" width="440" height="4" rx="0" fill="url(#amber)" opacity="0.85"/>
+</svg>

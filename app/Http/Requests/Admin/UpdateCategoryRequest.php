@@ -24,6 +24,8 @@ class UpdateCategoryRequest extends FormRequest
             'slug'             => ['nullable', 'string', 'max:255', Rule::unique('categories', 'slug')->ignore($categoryId)],
             'description'      => ['nullable', 'string', 'max:1000'],
             'image'            => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'color'            => ['nullable', 'string', 'max:20'],
+            'icon'             => ['nullable', 'string', 'max:60'],
             'parent_id'        => ['nullable', 'integer', 'exists:categories,id', Rule::notIn([$categoryId])],
             'meta_title'       => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],

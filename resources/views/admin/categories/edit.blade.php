@@ -148,6 +148,17 @@
                 </div>
             </div>
 
+            {{-- Icon Picker --}}
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-transparent border-0 py-3">
+                    <h6 class="fw-bold mb-0"><i class="fas fa-icons text-warning me-2"></i>Category Icon</h6>
+                </div>
+                <div class="card-body">
+                    @include('admin.partials.icon-picker', ['currentIcon' => old('icon', $category->icon ?? 'fas fa-folder'), 'inputName' => 'icon'])
+                    @error('icon')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                </div>
+            </div>
+
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-body p-0">
                     <ul class="list-group list-group-flush">

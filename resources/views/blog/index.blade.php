@@ -120,7 +120,7 @@
                 @else
                 <div class="row g-4">
                     @foreach($posts as $post)
-                    <div class="col-sm-6 col-lg-4">
+                    <div class="col-sm-6">
                         @include('partials.post-card', ['post' => $post])
                     </div>
                     @endforeach

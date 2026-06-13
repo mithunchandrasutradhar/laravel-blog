@@ -106,22 +106,30 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Site Name <span class="text-danger">*</span></label>
                                 <input type="text" name="site_name" class="form-control"
-                                       value="{{ old('site_name', $settings['site_name'] ?? config('app.name')) }}" required>
+                                       value="{{ old('site_name', settings('site_name', config('app.name'))) }}" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Contact Email</label>
                                 <input type="email" name="contact_email" class="form-control"
-                                       value="{{ old('contact_email', $settings['contact_email'] ?? '') }}">
+                                       value="{{ old('contact_email', settings('contact_email', '')) }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Phone</label>
-                                <input type="tel" name="phone" class="form-control"
-                                       value="{{ old('phone', $settings['phone'] ?? '') }}">
+                                <input type="tel" name="contact_phone" class="form-control"
+                                       value="{{ old('contact_phone', settings('contact_phone', settings('phone', ''))) }}"
+                                       placeholder="+1 (555) 000-0000">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Address</label>
-                                <input type="text" name="address" class="form-control"
-                                       value="{{ old('address', $settings['address'] ?? '') }}">
+                                <input type="text" name="contact_address" class="form-control"
+                                       value="{{ old('contact_address', settings('contact_address', settings('address', ''))) }}"
+                                       placeholder="123 Main St, City, Country">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Site Description <span class="text-muted fw-normal">(shown in footer)</span></label>
+                                <input type="text" name="site_description" class="form-control"
+                                       value="{{ old('site_description', settings('site_description', '')) }}"
+                                       placeholder="A short tagline or description for your blog..." maxlength="200">
                             </div>
 
                             {{-- Logo --}}
@@ -168,7 +176,7 @@
                             <div class="col-12">
                                 <label class="form-label fw-semibold">About / Tagline</label>
                                 <textarea name="about" class="form-control" rows="3"
-                                          placeholder="Brief about your blog...">{{ old('about', $settings['about'] ?? '') }}</textarea>
+                                          placeholder="Brief about your blog...">{{ old('about', settings('about', '')) }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -257,37 +265,121 @@
                 @method('PUT')
                 <input type="hidden" name="section" value="social">
 
+                @php
+                    $socialPlatforms = [
+                        'facebook'  => [
+                            'icon'    => 'fab fa-facebook-f',
+                            'label'   => 'Facebook',
+                            'hint'    => 'https://facebook.com/yourpage',
+                            'bg'      => '#1877f2',
+                            'preview' => 'fab fa-facebook-f',
+                        ],
+                        'twitter'   => [
+                            'icon'    => 'fab fa-x-twitter',
+                            'label'   => 'Twitter / X',
+                            'hint'    => 'https://twitter.com/yourhandle',
+                            'bg'      => '#000000',
+                            'preview' => 'fab fa-x-twitter',
+                        ],
+                        'instagram' => [
+                            'icon'    => 'fab fa-instagram',
+                            'label'   => 'Instagram',
+                            'hint'    => 'https://instagram.com/yourprofile',
+                            'bg'      => 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',
+                            'preview' => 'fab fa-instagram',
+                        ],
+                        'linkedin'  => [
+                            'icon'    => 'fab fa-linkedin-in',
+                            'label'   => 'LinkedIn',
+                            'hint'    => 'https://linkedin.com/in/yourprofile',
+                            'bg'      => '#0077b5',
+                            'preview' => 'fab fa-linkedin-in',
+                        ],
+                        'youtube'   => [
+                            'icon'    => 'fab fa-youtube',
+                            'label'   => 'YouTube',
+                            'hint'    => 'https://youtube.com/yourchannel',
+                            'bg'      => '#ff0000',
+                            'preview' => 'fab fa-youtube',
+                        ],
+                        'tiktok'    => [
+                            'icon'    => 'fab fa-tiktok',
+                            'label'   => 'TikTok',
+                            'hint'    => 'https://tiktok.com/@yourhandle',
+                            'bg'      => '#010101',
+                            'preview' => 'fab fa-tiktok',
+                        ],
+                        'pinterest' => [
+                            'icon'    => 'fab fa-pinterest-p',
+                            'label'   => 'Pinterest',
+                            'hint'    => 'https://pinterest.com/yourprofile',
+                            'bg'      => '#e60023',
+                            'preview' => 'fab fa-pinterest-p',
+                        ],
+                        'github'    => [
+                            'icon'    => 'fab fa-github',
+                            'label'   => 'GitHub',
+                            'hint'    => 'https://github.com/yourusername',
+                            'bg'      => '#24292e',
+                            'preview' => 'fab fa-github',
+                        ],
+                    ];
+                @endphp
+
+                {{-- Live Preview Card --}}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent border-0 py-3 d-flex align-items-center justify-content-between">
+                        <h6 class="fw-bold mb-0"><i class="fas fa-eye text-primary me-2"></i>Footer Preview</h6>
+                        <span class="badge bg-success bg-opacity-10 text-success small">Live</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Icons appear in the footer and contact page only when a URL is saved.</p>
+                        <div class="d-flex flex-wrap gap-2" id="social-preview-row">
+                            @foreach($socialPlatforms as $key => $p)
+                            @php $existingUrl = settings('social_' . $key, ''); @endphp
+                            <div class="social-preview-icon"
+                                 id="preview-{{ $key }}"
+                                 style="width:38px;height:38px;border-radius:8px;display:{{ $existingUrl ? 'flex' : 'none' }};align-items:center;justify-content:center;background:{{ $p['bg'] }};"
+                                 title="{{ $p['label'] }}">
+                                <i class="{{ $p['preview'] }}" style="color:#fff;font-size:.9rem;"></i>
+                            </div>
+                            @endforeach
+                            <div id="preview-empty" style="display:{{ collect($socialPlatforms)->filter(fn($p,$k) => settings('social_'.$k))->isEmpty() ? 'block' : 'none' }};">
+                                <span class="text-muted small fst-italic">No social links configured yet.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Platform Inputs --}}
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-transparent border-0 py-3">
-                        <h6 class="fw-bold mb-0"><i class="fas fa-share-alt text-info me-2"></i>Social Media</h6>
+                        <h6 class="fw-bold mb-0"><i class="fas fa-share-alt text-info me-2"></i>Social Media Links</h6>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
-                            @php
-                                $socials = [
-                                    'facebook'  => ['icon'=>'fab fa-facebook','label'=>'Facebook URL','color'=>'text-primary'],
-                                    'twitter'   => ['icon'=>'fab fa-x-twitter','label'=>'Twitter / X URL','color'=>'text-dark'],
-                                    'instagram' => ['icon'=>'fab fa-instagram','label'=>'Instagram URL','color'=>'text-danger'],
-                                    'linkedin'  => ['icon'=>'fab fa-linkedin','label'=>'LinkedIn URL','color'=>'text-primary'],
-                                    'youtube'   => ['icon'=>'fab fa-youtube','label'=>'YouTube URL','color'=>'text-danger'],
-                                    'tiktok'    => ['icon'=>'fab fa-tiktok','label'=>'TikTok URL','color'=>'text-dark'],
-                                ];
-                            @endphp
-                            @foreach($socials as $key => $social)
+                            @foreach($socialPlatforms as $key => $p)
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">
-                                    <i class="{{ $social['icon'] }} {{ $social['color'] }} me-1"></i>{{ $social['label'] }}
+                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                    <span style="width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;background:{{ $p['bg'] }};flex-shrink:0;">
+                                        <i class="{{ $p['icon'] }}" style="color:#fff;font-size:.75rem;"></i>
+                                    </span>
+                                    {{ $p['label'] }}
                                 </label>
-                                <input type="url" name="social_{{ $key }}" class="form-control"
-                                       value="{{ old('social_' . $key, $settings['social_' . $key] ?? '') }}"
-                                       placeholder="https://...">
+                                <input type="url"
+                                       name="social_{{ $key }}"
+                                       id="input-{{ $key }}"
+                                       class="form-control"
+                                       value="{{ old('social_' . $key, settings('social_' . $key, '')) }}"
+                                       placeholder="{{ $p['hint'] }}"
+                                       @input="updatePreview('{{ $key }}', $event.target.value, '{{ $p['bg'] }}')">
                             </div>
                             @endforeach
                         </div>
                     </div>
                     <div class="card-footer bg-transparent border-0 text-end py-3">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i>Save Social Settings
+                        <button type="submit" class="btn btn-primary px-5">
+                            <i class="fas fa-save me-2"></i>Save Social Links
                         </button>
                     </div>
                 </div>
@@ -526,8 +618,8 @@
     function settingsPage() {
         return {
             tab: '{{ request("tab", "general") }}',
-            logoPreview: {{ isset($settings['logo']) && $settings['logo'] ? '"' . asset('storage/' . $settings['logo']) . '"' : 'null' }},
-            faviconPreview: {{ isset($settings['favicon']) && $settings['favicon'] ? '"' . asset('storage/' . $settings['favicon']) . '"' : 'null' }},
+            logoPreview: {{ settings('logo') ? '"' . asset('storage/' . settings('logo')) . '"' : 'null' }},
+            faviconPreview: {{ settings('favicon') ? '"' . asset('storage/' . settings('favicon')) . '"' : 'null' }},
 
             previewLogo(event) {
                 const file = event.target.files[0];
@@ -545,6 +637,23 @@
                 reader.readAsDataURL(file);
             }
         }
+    }
+
+    function updatePreview(platform, url, bg) {
+        const box   = document.getElementById('preview-' + platform);
+        const empty = document.getElementById('preview-empty');
+        if (!box) return;
+
+        if (url && url.trim()) {
+            box.style.display = 'flex';
+        } else {
+            box.style.display = 'none';
+        }
+
+        // Show/hide the "no links" message
+        const visible = document.querySelectorAll('[id^="preview-"]:not(#preview-empty)');
+        const anyVisible = Array.from(visible).some(el => el.style.display !== 'none');
+        if (empty) empty.style.display = anyVisible ? 'none' : 'block';
     }
 </script>
 @endpush

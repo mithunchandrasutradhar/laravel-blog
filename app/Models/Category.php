@@ -23,6 +23,8 @@ class Category extends Model
         'slug',
         'description',
         'image',
+        'color',
+        'icon',
         'meta_title',
         'meta_description',
         'parent_id',

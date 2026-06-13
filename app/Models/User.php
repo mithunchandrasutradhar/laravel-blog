@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -93,6 +94,14 @@ class User extends Authenticatable implements MustVerifyEmail
     // -------------------------------------------------------------------------
     // Accessors / Helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Virtual username derived from the user's display name.
+     */
+    public function getUsernameAttribute(): string
+    {
+        return Str::slug($this->name);
+    }
 
     /**
      * Return the full URL to the user's profile image, falling back to a

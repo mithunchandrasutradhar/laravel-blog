@@ -48,19 +48,22 @@ class HomeController extends Controller
             ->limit(self::LATEST_COUNT)
             ->get();
 
-        // Trending (popular) posts – exclude the featured ones to avoid repetition
+        // Trending posts ranked by views + (approved comments × 3)
         $featuredIds = $featuredPosts->pluck('id');
 
         $trendingPosts = Post::published()
             ->with(['category', 'author'])
+            ->withCount('approvedComments')
             ->whereNotIn('id', $featuredIds)
-            ->popular()
-            ->limit(self::TRENDING_COUNT)
-            ->get();
+            ->latestPublished()
+            ->limit(50)
+            ->get()
+            ->sortByDesc(fn ($p) => $p->views_count + ($p->approved_comments_count * 3))
+            ->take(self::TRENDING_COUNT)
+            ->values();
 
-        // Top-level categories with post counts
-        $categories = Category::topLevel()
-            ->withCount(['posts' => function ($q) {
+        // All categories that have at least one published post
+        $homeCategories = Category::withCount(['posts' => function ($q) {
                 $q->where('status', 'published')
                   ->where('published_at', '<=', now());
             }])
@@ -84,7 +87,7 @@ class HomeController extends Controller
             'featuredPosts',
             'latestPosts',
             'trendingPosts',
-            'categories',
+            'homeCategories',
             'stats'
         ));
     }

@@ -243,6 +243,30 @@ class Post extends Model
     }
 
     /**
+     * Thumbnail accessor — handles both storage paths and full external URLs.
+     * Views reference $post->thumbnail throughout the codebase.
+     */
+    public function getThumbnailAttribute(): string
+    {
+        if (! $this->featured_image) {
+            return asset('images/default-thumbnail.svg');
+        }
+        if (str_starts_with($this->featured_image, 'http')) {
+            return $this->featured_image;
+        }
+        return asset('storage/' . $this->featured_image);
+    }
+
+    /**
+     * Excerpt accessor — alias for short_description.
+     * Views reference $post->excerpt throughout the codebase.
+     */
+    public function getExcerptAttribute(): ?string
+    {
+        return $this->short_description;
+    }
+
+    /**
      * Determine whether the post is live and visible to the public.
      */
     public function isPublished(): bool

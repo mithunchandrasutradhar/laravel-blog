@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Tag;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,11 +53,12 @@ class BlogController extends Controller
             default   => $query->latestPublished(),
         };
 
-        $posts      = $query->paginate(self::PER_PAGE)->withQueryString();
-        $categories = Category::topLevel()->withPublishedPosts()->withCount('publishedPosts')->get();
-        $tags       = Tag::withPublishedPosts()->withCount('publishedPosts')->orderByDesc('published_posts_count')->limit(20)->get();
+        $posts             = $query->paginate(self::PER_PAGE)->withQueryString();
+        $filterCategories  = Category::withCount(['posts' => fn ($q) => $q->where('status', 'published')->where('published_at', '<=', now())])->orderBy('name')->get();
+        $filterAuthors     = User::has('posts')->orderBy('name')->get();
+        $allTags           = Tag::withCount('posts')->orderByDesc('posts_count')->limit(30)->get();
 
-        return view('blog.index', compact('posts', 'categories', 'tags'));
+        return view('blog.index', compact('posts', 'filterCategories', 'filterAuthors', 'allTags'));
     }
 
     /**

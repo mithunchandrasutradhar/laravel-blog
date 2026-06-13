@@ -134,59 +134,63 @@
                         </div>
                         @endif
 
-                        @if(settings('contact_phone'))
+                        @if(settings('contact_phone') || settings('phone'))
                         <div class="d-flex gap-3 align-items-start">
                             <div class="contact-icon rounded-3 bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px;">
                                 <i class="fas fa-phone-alt text-success"></i>
                             </div>
                             <div>
                                 <div class="fw-semibold mb-1">Phone</div>
-                                <a href="tel:{{ settings('contact_phone') }}" class="text-muted text-decoration-none">
-                                    {{ settings('contact_phone') }}
+                                <a href="tel:{{ settings('contact_phone', settings('phone')) }}" class="text-muted text-decoration-none">
+                                    {{ settings('contact_phone', settings('phone')) }}
                                 </a>
                             </div>
                         </div>
                         @endif
 
-                        @if(settings('contact_address'))
+                        @if(settings('contact_address') || settings('address'))
                         <div class="d-flex gap-3 align-items-start">
                             <div class="contact-icon rounded-3 bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style="width:44px;height:44px;">
                                 <i class="fas fa-map-marker-alt text-warning"></i>
                             </div>
                             <div>
                                 <div class="fw-semibold mb-1">Address</div>
-                                <address class="text-muted mb-0">{!! nl2br(e(settings('contact_address'))) !!}</address>
+                                <address class="text-muted mb-0">{!! nl2br(e(settings('contact_address', settings('address')))) !!}</address>
                             </div>
                         </div>
                         @endif
                     </div>
 
                     {{-- Social Links --}}
+                    @php
+                        $contactSocials = array_filter([
+                            ['url' => settings('social_facebook'),  'icon' => 'fab fa-facebook-f',  'label' => 'Facebook',  'bg' => '#1877f2'],
+                            ['url' => settings('social_twitter'),   'icon' => 'fab fa-x-twitter',   'label' => 'Twitter',   'bg' => '#000000'],
+                            ['url' => settings('social_instagram'), 'icon' => 'fab fa-instagram',   'label' => 'Instagram', 'bg' => '#e1306c'],
+                            ['url' => settings('social_linkedin'),  'icon' => 'fab fa-linkedin-in', 'label' => 'LinkedIn',  'bg' => '#0077b5'],
+                            ['url' => settings('social_youtube'),   'icon' => 'fab fa-youtube',     'label' => 'YouTube',   'bg' => '#ff0000'],
+                            ['url' => settings('social_tiktok'),    'icon' => 'fab fa-tiktok',      'label' => 'TikTok',    'bg' => '#010101'],
+                            ['url' => settings('social_pinterest'), 'icon' => 'fab fa-pinterest-p', 'label' => 'Pinterest', 'bg' => '#e60023'],
+                            ['url' => settings('social_github'),    'icon' => 'fab fa-github',      'label' => 'GitHub',    'bg' => '#24292e'],
+                        ], fn($s) => !empty($s['url']));
+                    @endphp
+                    @if(!empty($contactSocials))
                     <div class="mt-5">
                         <h4 class="h6 fw-bold mb-3">Follow Us</h4>
-                        <div class="d-flex gap-3 flex-wrap">
-                            @if(settings('social_facebook'))
-                            <a href="{{ settings('social_facebook') }}" class="btn btn-outline-secondary btn-sm rounded-circle" style="width:38px;height:38px;padding:0;line-height:36px;" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                                <i class="fab fa-facebook-f"></i>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach($contactSocials as $s)
+                            <a href="{{ $s['url'] }}"
+                               class="d-inline-flex align-items-center justify-content-center rounded-circle"
+                               style="width:40px;height:40px;background:{{ $s['bg'] }};color:#fff;text-decoration:none;font-size:.875rem;transition:opacity .2s,transform .2s;"
+                               target="_blank" rel="noopener noreferrer" aria-label="{{ $s['label'] }}"
+                               onmouseover="this.style.opacity='.8';this.style.transform='translateY(-2px)'"
+                               onmouseout="this.style.opacity='1';this.style.transform='translateY(0)'">
+                                <i class="{{ $s['icon'] }}"></i>
                             </a>
-                            @endif
-                            @if(settings('social_twitter'))
-                            <a href="{{ settings('social_twitter') }}" class="btn btn-outline-secondary btn-sm rounded-circle" style="width:38px;height:38px;padding:0;line-height:36px;" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
-                                <i class="fab fa-x-twitter"></i>
-                            </a>
-                            @endif
-                            @if(settings('social_instagram'))
-                            <a href="{{ settings('social_instagram') }}" class="btn btn-outline-secondary btn-sm rounded-circle" style="width:38px;height:38px;padding:0;line-height:36px;" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                                <i class="fab fa-instagram"></i>
-                            </a>
-                            @endif
-                            @if(settings('social_linkedin'))
-                            <a href="{{ settings('social_linkedin') }}" class="btn btn-outline-secondary btn-sm rounded-circle" style="width:38px;height:38px;padding:0;line-height:36px;" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                                <i class="fab fa-linkedin-in"></i>
-                            </a>
-                            @endif
+                            @endforeach
                         </div>
                     </div>
+                    @endif
                 </div>
             </div>
 

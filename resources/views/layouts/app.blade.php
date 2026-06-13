@@ -51,10 +51,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     {{-- Bootstrap 5.3 CSS --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
 
-    {{-- Font Awesome 6 --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6g==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    {{-- Font Awesome 6 (local) --}}
+    <link rel="stylesheet" href="{{ asset('css/fontawesome/all.min.css') }}">
 
     {{-- Custom CSS --}}
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
@@ -117,18 +117,14 @@
                             </a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->routeIs('categories.*') ? 'active' : '' }}" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle {{ request()->routeIs('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Categories
                             </a>
                             <ul class="dropdown-menu shadow border-0" aria-labelledby="categoriesDropdown">
-                                @php
-                                    $navCategories = $navCategories ?? \App\Models\Category::withCount('posts')->having('posts_count', '>', 0)->orderBy('name')->take(10)->get();
-                                @endphp
-                                @foreach($navCategories as $category)
+                                @foreach(($globalCategories ?? collect())->take(12) as $category)
                                 <li>
-                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ route('categories.show', $category->slug) }}">
+                                    <a class="dropdown-item" href="{{ route('categories.show', $category->slug) }}">
                                         {{ $category->name }}
-                                        <span class="badge bg-primary rounded-pill">{{ $category->posts_count }}</span>
                                     </a>
                                 </li>
                                 @endforeach
@@ -220,106 +216,205 @@
     </main>
 
     {{-- Footer --}}
-    <footer class="site-footer bg-dark text-light pt-5 mt-5">
-        <div class="container">
-            <div class="row g-4">
-                {{-- Brand Column --}}
-                <div class="col-lg-4 col-md-6">
-                    <div class="footer-brand mb-3">
+    <footer class="site-footer">
+
+        {{-- Gradient accent strip --}}
+        <div style="height:3px;background:linear-gradient(90deg,#4f46e5 0%,#f59e0b 50%,#4f46e5 100%);"></div>
+
+        {{-- Main content --}}
+        <div style="background:#0f0e1f;padding:4rem 0 2.5rem;">
+            <div class="container">
+                <div class="row g-5">
+
+                    {{-- Brand + Description + Social --}}
+                    <div class="col-lg-4 col-md-12">
+
+                        {{-- Logo / Brand name --}}
                         @if(settings('logo_white') || settings('logo'))
-                            <img src="{{ asset(settings('logo_white') ?? settings('logo')) }}" alt="{{ settings('site_name', config('app.name')) }}" height="40" class="mb-3">
+                            <img src="{{ asset(settings('logo_white') ?? settings('logo')) }}"
+                                 alt="{{ settings('site_name', config('app.name')) }}"
+                                 style="height:38px;margin-bottom:1.25rem;display:block;">
                         @else
-                            <h5 class="fw-bold text-white">{{ settings('site_name', config('app.name')) }}</h5>
-                        @endif
-                    </div>
-                    <p class="text-muted small">{{ settings('site_description', 'A place to read, write, and connect with stories that matter.') }}</p>
-                    {{-- Social Links --}}
-                    <div class="social-links d-flex gap-3 mt-3">
-                        @if(settings('social_facebook'))
-                        <a href="{{ settings('social_facebook') }}" class="text-muted fs-5 social-link" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        @endif
-                        @if(settings('social_twitter'))
-                        <a href="{{ settings('social_twitter') }}" class="text-muted fs-5 social-link" target="_blank" rel="noopener noreferrer" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
-                        @endif
-                        @if(settings('social_instagram'))
-                        <a href="{{ settings('social_instagram') }}" class="text-muted fs-5 social-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        @endif
-                        @if(settings('social_linkedin'))
-                        <a href="{{ settings('social_linkedin') }}" class="text-muted fs-5 social-link" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                        @endif
-                        @if(settings('social_youtube'))
-                        <a href="{{ settings('social_youtube') }}" class="text-muted fs-5 social-link" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
-                        @endif
-                        @if(settings('social_rss', true))
-                        <a href="{{ route('rss.feed') }}" class="text-muted fs-5 social-link" aria-label="RSS Feed"><i class="fas fa-rss"></i></a>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- Quick Links --}}
-                <div class="col-lg-2 col-md-6 col-6">
-                    <h6 class="text-white fw-semibold mb-3 footer-heading">Quick Links</h6>
-                    <ul class="list-unstyled footer-links">
-                        <li><a href="{{ route('home') }}" class="text-muted text-decoration-none">Home</a></li>
-                        <li><a href="{{ route('blog.index') }}" class="text-muted text-decoration-none">Blog</a></li>
-                        <li><a href="{{ route('categories.index') }}" class="text-muted text-decoration-none">Categories</a></li>
-                        <li><a href="{{ route('about') }}" class="text-muted text-decoration-none">About</a></li>
-                        <li><a href="{{ route('contact') }}" class="text-muted text-decoration-none">Contact</a></li>
-                        @if(settings('privacy_policy_page'))
-                        <li><a href="{{ route('page', settings('privacy_policy_page')) }}" class="text-muted text-decoration-none">Privacy Policy</a></li>
-                        @endif
-                        @if(settings('terms_page'))
-                        <li><a href="{{ route('page', settings('terms_page')) }}" class="text-muted text-decoration-none">Terms of Service</a></li>
-                        @endif
-                    </ul>
-                </div>
-
-                {{-- Recent Posts --}}
-                <div class="col-lg-3 col-md-6">
-                    <h6 class="text-white fw-semibold mb-3 footer-heading">Recent Posts</h6>
-                    @php
-                        $footerPosts = $footerPosts ?? \App\Models\Post::published()->latest('published_at')->take(4)->get();
-                    @endphp
-                    <ul class="list-unstyled footer-recent-posts">
-                        @foreach($footerPosts as $fp)
-                        <li class="d-flex gap-2 mb-3">
-                            @if($fp->thumbnail)
-                            <img src="{{ asset($fp->thumbnail) }}" alt="{{ $fp->title }}" class="rounded flex-shrink-0" width="56" height="56" style="object-fit:cover;" loading="lazy">
-                            @endif
-                            <div>
-                                <a href="{{ route('blog.show', $fp->slug) }}" class="text-muted text-decoration-none small fw-medium line-clamp-2">{{ $fp->title }}</a>
-                                <div class="text-muted" style="font-size:.75rem;">{{ $fp->published_at?->format('M d, Y') }}</div>
+                            <div style="display:flex;align-items:center;gap:.625rem;margin-bottom:1.25rem;">
+                                <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#f59e0b);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <i class="fas fa-pen-nib" style="color:#fff;font-size:.85rem;"></i>
+                                </div>
+                                <span style="font-size:1.2rem;font-weight:800;color:#fff;letter-spacing:-.02em;">
+                                    {{ settings('site_name', config('app.name')) }}
+                                </span>
                             </div>
-                        </li>
-                        @endforeach
-                    </ul>
-                </div>
+                        @endif
 
-                {{-- Newsletter --}}
-                <div class="col-lg-3 col-md-6">
-                    <h6 class="text-white fw-semibold mb-3 footer-heading">Newsletter</h6>
-                    <p class="text-muted small">Get the latest posts delivered to your inbox.</p>
-                    @include('partials.newsletter-form', ['variant' => 'footer'])
-                </div>
-            </div>
+                        <p style="color:#8b8ba8;font-size:.875rem;line-height:1.75;margin-bottom:1.75rem;">
+                            {{ settings('site_description', 'A modern space to read, write, and connect with ideas that inspire — quality content across technology, design, and life.') }}
+                        </p>
 
-            <hr class="border-secondary mt-4">
+                        {{-- Social icons — only render platforms that have a saved URL --}}
+                        @php
+                            $footerSocials = array_filter([
+                                ['url' => settings('social_facebook'),  'icon' => 'fab fa-facebook-f',  'label' => 'Facebook'],
+                                ['url' => settings('social_twitter'),   'icon' => 'fab fa-x-twitter',   'label' => 'Twitter'],
+                                ['url' => settings('social_instagram'), 'icon' => 'fab fa-instagram',   'label' => 'Instagram'],
+                                ['url' => settings('social_linkedin'),  'icon' => 'fab fa-linkedin-in', 'label' => 'LinkedIn'],
+                                ['url' => settings('social_youtube'),   'icon' => 'fab fa-youtube',     'label' => 'YouTube'],
+                                ['url' => settings('social_tiktok'),    'icon' => 'fab fa-tiktok',      'label' => 'TikTok'],
+                                ['url' => settings('social_pinterest'), 'icon' => 'fab fa-pinterest-p', 'label' => 'Pinterest'],
+                                ['url' => settings('social_github'),    'icon' => 'fab fa-github',      'label' => 'GitHub'],
+                            ], fn($s) => !empty($s['url']));
+                        @endphp
+                        @if(!empty($footerSocials))
+                        <div style="display:flex;flex-wrap:wrap;gap:.5rem;">
+                            @foreach($footerSocials as $s)
+                            <a href="{{ $s['url'] }}" aria-label="{{ $s['label'] }}"
+                               class="ft-social-icon"
+                               target="_blank" rel="noopener noreferrer">
+                                <i class="{{ $s['icon'] }}"></i>
+                            </a>
+                            @endforeach
+                        </div>
+                        @else
+                        <p style="color:#5c5c7a;font-size:.8rem;font-style:italic;">
+                            No social links configured.
+                            <a href="{{ route('admin.settings.index') }}?tab=social" style="color:#f59e0b;">Add them →</a>
+                        </p>
+                        @endif
+                    </div>
 
-            {{-- Copyright --}}
-            <div class="row align-items-center py-3">
-                <div class="col-md-6 text-center text-md-start">
-                    <small class="text-muted">
-                        &copy; {{ date('Y') }} {{ settings('site_name', config('app.name')) }}.
-                        {{ settings('copyright_text', 'All rights reserved.') }}
-                    </small>
-                </div>
-                <div class="col-md-6 text-center text-md-end mt-2 mt-md-0">
-                    <small class="text-muted">
-                        Built with <i class="fas fa-heart text-danger"></i> using <a href="https://laravel.com" class="text-muted" target="_blank" rel="noopener">Laravel</a>
-                    </small>
+                    {{-- Quick Links --}}
+                    <div class="col-lg-2 col-sm-6 col-6">
+                        <div class="ft-col-heading">Explore</div>
+                        <ul style="list-style:none;margin:0;padding:0;">
+                            @foreach([
+                                ['route' => 'home',             'label' => 'Home'],
+                                ['route' => 'blog.index',       'label' => 'Blog'],
+                                ['route' => 'categories.index', 'label' => 'Categories'],
+                                ['route' => 'about',            'label' => 'About'],
+                                ['route' => 'contact',          'label' => 'Contact'],
+                            ] as $link)
+                            <li style="margin-bottom:.5rem;">
+                                <a href="{{ route($link['route']) }}" class="ft-nav-link">
+                                    <i class="fas fa-angle-right" style="font-size:.6rem;color:#f59e0b;margin-right:.4rem;"></i>
+                                    {{ $link['label'] }}
+                                </a>
+                            </li>
+                            @endforeach
+                        </ul>
+                    </div>
+
+                    {{-- Recent Posts --}}
+                    <div class="col-lg-3 col-sm-6">
+                        <div class="ft-col-heading">Recent Posts</div>
+                        @php
+                            $footerPosts = $footerPosts ?? \App\Models\Post::published()
+                                ->with(['category'])
+                                ->latest('published_at')
+                                ->take(3)
+                                ->get();
+                        @endphp
+                        <div style="display:flex;flex-direction:column;gap:1rem;">
+                            @foreach($footerPosts as $fp)
+                            <div style="display:flex;gap:.875rem;align-items:flex-start;">
+                                {{-- Thumbnail --}}
+                                <a href="{{ route('blog.show', $fp->slug) }}"
+                                   style="display:block;width:60px;height:54px;min-width:60px;border-radius:8px;overflow:hidden;flex-shrink:0;">
+                                    @if($fp->thumbnail)
+                                    <img src="{{ $fp->thumbnail }}" alt="{{ $fp->title }}"
+                                         style="width:60px;height:54px;object-fit:cover;display:block;" loading="lazy">
+                                    @else
+                                    <div style="width:60px;height:54px;background:rgba(79,70,229,.3);display:flex;align-items:center;justify-content:center;">
+                                        <i class="fas fa-image" style="color:#4f46e5;opacity:.5;font-size:.75rem;"></i>
+                                    </div>
+                                    @endif
+                                </a>
+                                {{-- Info --}}
+                                <div style="flex:1;min-width:0;">
+                                    <a href="{{ route('blog.show', $fp->slug) }}"
+                                       style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.8125rem;font-weight:600;line-height:1.45;color:#cccce0;text-decoration:none;margin-bottom:.3rem;display:block;">
+                                        {{ $fp->title }}
+                                    </a>
+                                    <div style="font-size:.7rem;color:#5c5c7a;">
+                                        @if($fp->category)
+                                        <span style="color:#f59e0b;">{{ $fp->category->name }}</span>
+                                        <span style="margin:0 .25rem;">·</span>
+                                        @endif
+                                        {{ $fp->published_at?->format('M d, Y') }}
+                                    </div>
+                                </div>
+                            </div>
+                            @if(!$loop->last)
+                            <div style="border-top:1px solid rgba(255,255,255,.06);"></div>
+                            @endif
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Newsletter --}}
+                    <div class="col-lg-3 col-md-12">
+                        <div class="ft-col-heading">Stay Updated</div>
+                        <p style="color:#8b8ba8;font-size:.875rem;line-height:1.7;margin-bottom:1rem;">
+                            Get fresh articles delivered to your inbox every week.
+                        </p>
+
+                        {{-- Newsletter form --}}
+                        <div x-data="newsletterForm()" id="newsletter-footer-v2">
+                            <form @submit.prevent="submit" novalidate>
+                                @csrf
+                                {{-- Form — visible by default --}}
+                                <div x-show="!submitted">
+                                    <div style="margin-bottom:.5rem;">
+                                        <input type="email" x-model="email"
+                                               placeholder="Your email address"
+                                               required
+                                               style="width:100%;padding:.6rem .875rem;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#fff;font-size:.875rem;outline:none;box-sizing:border-box;"
+                                               onfocus="this.style.borderColor='#4f46e5';this.style.boxShadow='0 0 0 3px rgba(79,70,229,.2)'"
+                                               onblur="this.style.borderColor='rgba(255,255,255,.12)';this.style.boxShadow='none'">
+                                    </div>
+                                    <button type="submit" :disabled="loading"
+                                            style="width:100%;padding:.65rem 1rem;background:linear-gradient(135deg,#4f46e5,#6366f1);border:none;border-radius:8px;color:#fff;font-size:.875rem;font-weight:600;cursor:pointer;transition:opacity .2s;"
+                                            onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+                                        <span x-show="!loading"><i class="fas fa-paper-plane" style="margin-right:.4rem;"></i>Subscribe</span>
+                                        <span x-show="loading" style="display:none;"><i class="fas fa-spinner fa-spin" style="margin-right:.4rem;"></i>Subscribing…</span>
+                                    </button>
+                                    <div x-show="error" style="display:none;margin-top:.5rem;">
+                                        <small style="color:#ef4444;" x-text="error"></small>
+                                    </div>
+                                </div>
+                                {{-- Success — hidden by default --}}
+                                <div x-show="submitted" style="display:none;text-align:center;padding:1.25rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;">
+                                    <i class="fas fa-check-circle" style="color:#10b981;font-size:1.5rem;margin-bottom:.5rem;display:block;"></i>
+                                    <p style="color:#fff;font-weight:600;margin-bottom:.25rem;">You're in!</p>
+                                    <small style="color:#8b8ba8;">Thanks for subscribing.</small>
+                                </div>
+                            </form>
+                        </div>
+
+                        <p style="margin-top:.75rem;font-size:.72rem;color:#4a4a6a;">
+                            <i class="fas fa-lock" style="margin-right:.3rem;"></i>No spam. Unsubscribe anytime.
+                        </p>
+                    </div>
+
                 </div>
             </div>
         </div>
+
+        {{-- Divider --}}
+        <div style="background:#0d0c1c;border-top:1px solid rgba(255,255,255,.06);">
+            <div class="container">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:1.125rem 0;flex-wrap:wrap;gap:.5rem;">
+                    <span style="font-size:.78rem;color:#4a4a6a;">
+                        &copy; {{ date('Y') }}
+                        <strong style="color:#7b7b9a;">{{ settings('site_name', config('app.name')) }}</strong>.
+                        {{ settings('copyright_text', 'All rights reserved.') }}
+                    </span>
+                    <span style="font-size:.78rem;color:#4a4a6a;">
+                        Made with <i class="fas fa-heart" style="color:#f59e0b;font-size:.65rem;"></i> using
+                        <a href="https://laravel.com" target="_blank" rel="noopener"
+                           style="color:#f59e0b;text-decoration:none;font-weight:500;">Laravel</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+
     </footer>
 
     {{-- Back to Top Button --}}
@@ -327,8 +422,8 @@
         <i class="fas fa-chevron-up"></i>
     </button>
 
-    {{-- Bootstrap 5.3 JS Bundle --}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmErciUSRKxVKXFcO1HiN7HHLoX5" crossorigin="anonymous"></script>
+    {{-- Bootstrap 5.3 JS Bundle (local) --}}
+    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
 
     {{-- Alpine.js --}}
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
