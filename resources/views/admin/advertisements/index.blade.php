@@ -20,7 +20,7 @@
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between py-3">
         <h6 class="fw-bold mb-0">All Advertisements</h6>
-        <span class="text-muted small">{{ count($advertisements ?? []) }} total</span>
+        <span class="text-muted small">{{ $advertisements->total() ?? count($advertisements ?? []) }} total</span>
     </div>
 
     <div class="card-body p-0">
@@ -32,9 +32,7 @@
                         <th>Name</th>
                         <th>Type</th>
                         <th>Position</th>
-                        <th>Status</th>
-                        <th>Start</th>
-                        <th>End</th>
+                        <th width="90">Status</th>
                         <th width="110">Actions</th>
                     </tr>
                 </thead>
@@ -57,36 +55,28 @@
                         <td>
                             @php
                                 $positionLabels = [
-                                    'header'      => ['label'=>'Header',      'icon'=>'fa-arrow-up'],
-                                    'sidebar'     => ['label'=>'Sidebar',     'icon'=>'fa-columns'],
-                                    'in-article'  => ['label'=>'In-Article',  'icon'=>'fa-newspaper'],
-                                    'footer'      => ['label'=>'Footer',      'icon'=>'fa-arrow-down'],
+                                    'header'     => ['label' => 'Header',     'icon' => 'fa-arrow-up'],
+                                    'sidebar'    => ['label' => 'Sidebar',    'icon' => 'fa-columns'],
+                                    'in-article' => ['label' => 'In-Article', 'icon' => 'fa-newspaper'],
+                                    'footer'     => ['label' => 'Footer',     'icon' => 'fa-arrow-down'],
                                 ];
-                                $pos = $positionLabels[$ad->position] ?? ['label'=>$ad->position,'icon'=>'fa-ad'];
+                                $pos = $positionLabels[$ad->position] ?? ['label' => ucfirst($ad->position), 'icon' => 'fa-ad'];
                             @endphp
                             <span class="small text-muted">
                                 <i class="fas {{ $pos['icon'] }} me-1"></i>{{ $pos['label'] }}
                             </span>
                         </td>
                         <td>
-                            {{-- Toggle switch --}}
-                            <form method="POST" action="{{ route('admin.advertisements.toggle', $ad->id) }}"
-                                  class="d-inline">
+                            {{-- Toggle active status --}}
+                            <form method="POST" action="{{ route('admin.advertisements.toggle', $ad->id) }}" class="d-inline">
                                 @csrf
-                                @method('PATCH')
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input" type="checkbox"
                                            {{ $ad->is_active ? 'checked' : '' }}
                                            onchange="this.closest('form').submit()"
-                                           title="{{ $ad->is_active ? 'Active' : 'Inactive' }}">
+                                           title="{{ $ad->is_active ? 'Active — click to deactivate' : 'Inactive — click to activate' }}">
                                 </div>
                             </form>
-                        </td>
-                        <td class="small text-muted">
-                            {{ $ad->start_date ? \Carbon\Carbon::parse($ad->start_date)->format('M d, Y') : '—' }}
-                        </td>
-                        <td class="small text-muted">
-                            {{ $ad->end_date ? \Carbon\Carbon::parse($ad->end_date)->format('M d, Y') : '—' }}
                         </td>
                         <td>
                             <div class="d-flex gap-1">
@@ -110,7 +100,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="fas fa-ad fa-2x mb-2 d-block"></i>
                             No advertisements found.
                             <a href="{{ route('admin.advertisements.create') }}">Create one?</a>
@@ -121,6 +111,12 @@
             </table>
         </div>
     </div>
+
+    @if(isset($advertisements) && method_exists($advertisements, 'hasPages') && $advertisements->hasPages())
+    <div class="card-footer bg-transparent border-0 py-3">
+        {{ $advertisements->links('pagination::bootstrap-5') }}
+    </div>
+    @endif
 </div>
 
 @endsection

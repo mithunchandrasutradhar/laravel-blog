@@ -19,8 +19,8 @@
                 <label class="form-label small mb-1">Search</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" name="search" class="form-control" placeholder="Author name, email, or content..."
-                           value="{{ request('search') }}">
+                    <input type="text" name="q" class="form-control" placeholder="Author name, email, or content..."
+                           value="{{ request('q') }}">
                 </div>
             </div>
             <div class="col-md-2">
@@ -112,11 +112,11 @@
                                     {{ Str::limit($comment->post->title ?? 'N/A', 30) }}
                                 </a>
                             </td>
-                            <td class="small fw-semibold">{{ $comment->author_name }}</td>
-                            <td class="small text-muted">{{ $comment->author_email }}</td>
+                            <td class="small fw-semibold">{{ $comment->commenter_name }}</td>
+                            <td class="small text-muted">{{ $comment->commenter_email }}</td>
                             <td>
-                                <p class="mb-0 small text-muted" title="{{ $comment->content }}">
-                                    {{ Str::limit($comment->content, 60) }}
+                                <p class="mb-0 small text-muted" title="{{ $comment->body }}">
+                                    {{ Str::limit($comment->body, 60) }}
                                 </p>
                             </td>
                             <td>
@@ -132,33 +132,29 @@
                                 {{ $comment->created_at->format('M d, Y') }}
                             </td>
                             <td>
+                                {{-- Buttons reference forms defined OUTSIDE the bulk form via form= attribute --}}
                                 <div class="d-flex gap-1 flex-wrap">
                                     @if($comment->status !== 'approved')
-                                    <form method="POST" action="{{ route('admin.comments.approve', $comment->id) }}">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-success" title="Approve">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    </form>
+                                    <button type="submit" form="approve-{{ $comment->id }}"
+                                            class="btn btn-sm btn-success" title="Approve">
+                                        <i class="fas fa-check"></i>
+                                    </button>
                                     @endif
 
                                     @if($comment->status !== 'rejected')
-                                    <form method="POST" action="{{ route('admin.comments.reject', $comment->id) }}">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-warning" title="Reject">
-                                            <i class="fas fa-ban"></i>
-                                        </button>
-                                    </form>
+                                    <button type="submit" form="reject-{{ $comment->id }}"
+                                            class="btn btn-sm btn-warning" title="Reject">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
                                     @endif
 
-                                    <form method="POST" action="{{ route('admin.comments.destroy', $comment->id) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                data-confirm-delete title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-confirm-delete
+                                            data-form="delete-{{ $comment->id }}"
+                                            title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -185,6 +181,21 @@
         @endif
     </div>
 </form>
+
+{{-- Per-row action forms outside the bulk form to avoid nested-form conflicts --}}
+@if(isset($comments))
+@foreach($comments as $comment)
+<form id="approve-{{ $comment->id }}" method="POST" action="{{ route('admin.comments.approve', $comment) }}" style="display:none;">
+    @csrf @method('PATCH')
+</form>
+<form id="reject-{{ $comment->id }}" method="POST" action="{{ route('admin.comments.reject', $comment) }}" style="display:none;">
+    @csrf @method('PATCH')
+</form>
+<form id="delete-{{ $comment->id }}" method="POST" action="{{ route('admin.comments.destroy', $comment) }}" style="display:none;">
+    @csrf @method('DELETE')
+</form>
+@endforeach
+@endif
 
 @endsection
 

@@ -26,8 +26,8 @@
                 <label class="form-label small mb-1">Search</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" name="search" class="form-control" placeholder="Search posts..."
-                           value="{{ request('search') }}">
+                    <input type="text" name="q" class="form-control" placeholder="Search posts..."
+                           value="{{ request('q') }}">
                 </div>
             </div>
 
@@ -45,10 +45,10 @@
             {{-- Category --}}
             <div class="col-md-3">
                 <label class="form-label small mb-1">Category</label>
-                <select name="category_id" class="form-select form-select-sm">
+                <select name="category" class="form-select form-select-sm">
                     <option value="">All Categories</option>
                     @foreach($categories ?? [] as $cat)
-                        <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                        <option value="{{ $cat->id }}" {{ request('category') == $cat->id ? 'selected' : '' }}>
                             {{ $cat->name }}
                         </option>
                     @endforeach
@@ -71,7 +71,6 @@
 {{-- ── Bulk Actions Form ── --}}
 <form id="bulkForm" method="POST" action="{{ route('admin.posts.bulk-delete') }}">
     @csrf
-    @method('DELETE')
 
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between py-3">
@@ -121,7 +120,7 @@
                             <td class="text-muted small">{{ $post->id }}</td>
                             <td>
                                 @if($post->featured_image)
-                                    <img src="{{ asset('storage/' . $post->featured_image) }}"
+                                    <img src="{{ $post->thumbnail }}"
                                          alt="" class="rounded" style="width:50px;height:35px;object-fit:cover;">
                                 @else
                                     <div class="rounded bg-light d-flex align-items-center justify-content-center"
@@ -168,14 +167,13 @@
                                        class="btn btn-sm btn-outline-secondary" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <form method="POST" action="{{ route('admin.posts.destroy', $post->id) }}" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                data-confirm-delete title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" form="delete-post-{{ $post->id }}"
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-confirm-delete
+                                            data-form="delete-post-{{ $post->id }}"
+                                            title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -202,6 +200,16 @@
         @endif
     </div>
 </form>
+
+{{-- Per-row delete forms outside the bulk form to avoid nested-form conflicts --}}
+@if(isset($posts))
+@foreach($posts as $post)
+<form id="delete-post-{{ $post->id }}" method="POST"
+      action="{{ route('admin.posts.destroy', $post->id) }}" style="display:none;">
+    @csrf @method('DELETE')
+</form>
+@endforeach
+@endif
 
 @endsection
 

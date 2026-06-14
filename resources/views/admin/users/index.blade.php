@@ -1,4 +1,4 @@
-@extends('admin.layouts.admin')
+﻿@extends('admin.layouts.admin')
 
 @section('title', 'Users')
 
@@ -87,8 +87,8 @@
                     <tr>
                         <td class="ps-3 text-muted small">{{ $user->id }}</td>
                         <td>
-                            @if($user->avatar)
-                                <img src="{{ asset('storage/' . $user->avatar) }}"
+                            @if($user->profile_image)
+                                <img src="{{ asset('storage/' . $user->profile_image) }}"
                                      alt="{{ $user->name }}" class="rounded-circle"
                                      style="width:36px;height:36px;object-fit:cover;">
                             @else
@@ -106,10 +106,10 @@
                         </td>
                         <td class="small text-muted">{{ $user->email }}</td>
                         <td>
-                            @php $roleColors = ['admin'=>'danger','editor'=>'primary','author'=>'info','user'=>'secondary']; @endphp
-                            <span class="badge bg-{{ $roleColors[$user->role ?? 'user'] ?? 'secondary' }} bg-opacity-10
-                                         text-{{ $roleColors[$user->role ?? 'user'] ?? 'secondary' }}">
-                                {{ ucfirst($user->role ?? 'user') }}
+                            @php $userRole = $user->roles->first()?->name ?? 'user'; $roleColors = ['admin'=>'danger','editor'=>'primary','author'=>'info','user'=>'secondary']; @endphp
+                            <span class="badge bg-{{ $roleColors[$userRole] ?? 'secondary' }} bg-opacity-10
+                                         text-{{ $roleColors[$userRole] ?? 'secondary' }}">
+                                {{ ucfirst($userRole) }}
                             </span>
                         </td>
                         <td>
@@ -174,3 +174,4 @@
 </div>
 
 @endsection
+

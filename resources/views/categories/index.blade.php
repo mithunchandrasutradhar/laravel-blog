@@ -44,7 +44,7 @@
                         @else
                             <div class="rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center"
                                  style="width:64px;height:64px;background:{{ $category->color ?? '#0d6efd' }}22;">
-                                <i class="fas fa-folder fa-lg" style="color:{{ $category->color ?? '#0d6efd' }};"></i>
+                                <i class="{{ $category->icon ?? 'fas fa-folder' }} fa-lg" style="color:{{ $category->color ?? '#0d6efd' }};"></i>
                             </div>
                         @endif
 
@@ -71,16 +71,16 @@
                 </div>
             </div>
 
-            {{-- Sub-categories --}}
-            @if($category->children->isNotEmpty())
+            {{-- Sub-categories (all depths) --}}
+            @if($category->descendants->isNotEmpty())
             <div class="row g-2 ps-3">
-                @foreach($category->children as $child)
+                @foreach($category->descendants as $child)
                 <div class="col-12 col-sm-6 col-lg-4">
                     <a href="{{ route('categories.show', $child->slug) }}"
                        class="d-flex align-items-center gap-2 p-2 rounded-2 text-decoration-none text-dark border bg-white hover-shadow">
-                        <i class="fas fa-folder-open fa-sm" style="color:{{ $category->color ?? '#0d6efd' }};"></i>
+                        <i class="{{ $child->icon ?? 'fas fa-folder-open' }} fa-sm" style="color:{{ $child->color ?? $category->color ?? '#0d6efd' }};"></i>
                         <span class="small fw-medium">{{ $child->name }}</span>
-                        <span class="ms-auto badge bg-secondary bg-opacity-10 text-secondary small">{{ $child->posts_count }}</span>
+                        <span class="ms-auto badge bg-secondary bg-opacity-10 text-secondary small">{{ $child->posts_count ?? 0 }}</span>
                     </a>
                 </div>
                 @endforeach

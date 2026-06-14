@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin Panel') — {{ config('app.name', 'Blog') }}</title>
+    <title>@yield('title', 'Admin Panel') — {{ settings('site_name', config('app.name', 'Blog')) }}</title>
+
+    {{-- Favicon --}}
+    @if(settings('favicon'))
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . settings('favicon')) }}">
+    @endif
 
     {{-- Bootstrap 5.3 --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -14,6 +19,28 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     @stack('styles')
+
+    {{-- Dynamic primary color from Appearance settings --}}
+    @php $adminPrimaryColor = settings('primary_color', '#0d6efd'); @endphp
+    @if($adminPrimaryColor !== '#0d6efd')
+    <style>
+        :root {
+            --bs-primary: {{ $adminPrimaryColor }};
+            --bs-primary-rgb: {{ implode(',', sscanf($adminPrimaryColor, '#%02x%02x%02x') ?? [13,110,253]) }};
+            --bs-link-color: {{ $adminPrimaryColor }};
+            --bs-link-hover-color: {{ $adminPrimaryColor }};
+        }
+        .btn-primary { background-color: {{ $adminPrimaryColor }} !important; border-color: {{ $adminPrimaryColor }} !important; }
+        .text-primary { color: {{ $adminPrimaryColor }} !important; }
+        .border-primary { border-color: {{ $adminPrimaryColor }} !important; }
+        a:not(.nav-link):not(.btn):not(.dropdown-item) { color: {{ $adminPrimaryColor }}; }
+    </style>
+    @endif
+
+    {{-- Custom CSS from Appearance settings --}}
+    @if(settings('custom_css'))
+    <style>{!! settings('custom_css') !!}</style>
+    @endif
 
     <style>
         :root {
@@ -258,12 +285,20 @@
 <nav id="sidebar">
     {{-- Brand --}}
     <div class="sidebar-brand">
-        <img src="{{ asset('images/admin-logo.png') }}" alt="Logo" class="brand-logo"
+        @if(settings('logo'))
+        @php $adminLogoH = (int) settings('logo_height', 32); $adminLogoW = settings('logo_width') ? 'max-width:'.(int)settings('logo_width').'px;' : ''; @endphp
+        <img src="{{ asset('storage/' . settings('logo')) }}" alt="{{ settings('site_name', config('app.name')) }}" class="brand-logo"
+             style="height:{{ $adminLogoH }}px;{{ $adminLogoW }}width:auto;object-fit:contain;"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div style="display:none;width:32px;height:32px;background:#0d6efd;border-radius:8px;align-items:center;justify-content:center;">
             <i class="fas fa-pencil-alt text-white" style="font-size:.8rem;"></i>
         </div>
-        <span class="brand-name">{{ config('app.name', 'BlogAdmin') }}</span>
+        @else
+        <div style="width:32px;height:32px;background:#0d6efd;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fas fa-pencil-alt text-white" style="font-size:.8rem;"></i>
+        </div>
+        @endif
+        <span class="brand-name">{{ settings('site_name', config('app.name', 'Blog')) }}</span>
     </div>
 
     {{-- Navigation --}}
@@ -331,6 +366,13 @@
             @if($pendingComments > 0)
                 <span class="badge bg-danger badge-sidebar">{{ $pendingComments }}</span>
             @endif
+        </a>
+
+        {{-- Pages --}}
+        <a href="{{ route('admin.pages.index') }}"
+           class="nav-item-link {{ request()->routeIs('admin.pages.*') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+            <span class="nav-label">Pages</span>
         </a>
 
         {{-- Media Library --}}
@@ -586,7 +628,7 @@
 {{-- Bootstrap 5.3 --}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {{-- Alpine.js --}}
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script defer src="{{ asset('js/alpine.min.js') }}"></script>
 {{-- Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 {{-- SweetAlert2 --}}
@@ -631,7 +673,7 @@
         const btn = e.target.closest('[data-confirm-delete]');
         if (!btn) return;
         e.preventDefault();
-        const form   = btn.closest('form') || document.getElementById(btn.dataset.form);
+        const form   = (btn.dataset.form ? document.getElementById(btn.dataset.form) : null) || btn.closest('form');
         const title  = btn.dataset.confirmTitle  || 'Are you sure?';
         const text   = btn.dataset.confirmText   || 'This action cannot be undone.';
         Swal.fire({

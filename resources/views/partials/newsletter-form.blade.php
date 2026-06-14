@@ -62,46 +62,4 @@
     </form>
 </div>
 
-@once
-@push('scripts')
-<script>
-function newsletterForm() {
-    return {
-        email: '',
-        loading: false,
-        submitted: false,
-        error: '',
-        async submit() {
-            this.error = '';
-            if (!this.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email)) {
-                this.error = 'Please enter a valid email address.';
-                return;
-            }
-            this.loading = true;
-            try {
-                const res = await fetch('/newsletter/subscribe', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({ email: this.email })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    this.submitted = true;
-                } else {
-                    this.error = data.message || 'Subscription failed. Please try again.';
-                }
-            } catch {
-                this.error = 'Network error. Please try again.';
-            } finally {
-                this.loading = false;
-            }
-        }
-    };
-}
-</script>
-@endpush
-@endonce
+{{-- newsletterForm() is defined globally in app.js --}}

@@ -46,7 +46,7 @@
             <div class="input-group input-group-sm">
                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                 <input type="text" name="search" class="form-control" style="width:200px;"
-                       placeholder="Search by name or email..." value="{{ request('search') }}">
+                       placeholder="Search by email..." value="{{ request('search') }}">
             </div>
             <select name="verified" class="form-select form-select-sm" style="width:130px;">
                 <option value="">All</option>
@@ -66,7 +66,6 @@
                 <thead class="table-light">
                     <tr>
                         <th width="60" class="ps-3">ID</th>
-                        <th>Name</th>
                         <th>Email</th>
                         <th>Verified</th>
                         <th>Subscribed</th>
@@ -77,10 +76,9 @@
                     @forelse($subscribers ?? [] as $subscriber)
                     <tr>
                         <td class="ps-3 text-muted small">{{ $subscriber->id }}</td>
-                        <td class="fw-semibold small">{{ $subscriber->name ?: '—' }}</td>
                         <td class="small">{{ $subscriber->email }}</td>
                         <td>
-                            @if($subscriber->email_verified_at)
+                            @if($subscriber->verified_at)
                                 <span class="badge bg-success bg-opacity-10 text-success">
                                     <i class="fas fa-check me-1"></i>Verified
                                 </span>
@@ -92,22 +90,33 @@
                             {{ $subscriber->created_at->format('M d, Y') }}
                         </td>
                         <td>
-                            <form method="POST" action="{{ route('admin.subscribers.destroy', $subscriber->id) }}">
-                                @csrf
-                                @method('DELETE')
-                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                        data-confirm-delete
-                                        data-confirm-title="Remove subscriber?"
-                                        data-confirm-text="They will no longer receive newsletters."
-                                        title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            <div class="d-flex gap-1">
+                                @if(!$subscriber->verified_at)
+                                <form method="POST" action="{{ route('admin.subscribers.verify', $subscriber->id) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as verified">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                                @endif
+                                <form method="POST" action="{{ route('admin.subscribers.destroy', $subscriber->id) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            data-confirm-delete
+                                            data-confirm-title="Remove subscriber?"
+                                            data-confirm-text="They will no longer receive newsletters."
+                                            title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center py-5 text-muted">
+                        <td colspan="5" class="text-center py-5 text-muted">
                             <i class="fas fa-envelope fa-2x mb-2 d-block"></i>
                             No subscribers found.
                         </td>

@@ -31,7 +31,7 @@
 @section('content')
 
 <form method="POST" action="{{ route('admin.categories.update', $category->id) }}" enctype="multipart/form-data"
-      x-data="categoryEditForm()">
+      x-data="categoryEditForm()" @media-picked.window="onMediaPicked($event.detail)">
     @csrf
     @method('PUT')
 
@@ -62,7 +62,8 @@
                         <input type="text" name="slug" id="slug"
                                class="form-control @error('slug') is-invalid @enderror"
                                x-model="slug" :readonly="!slugEditing"
-                               :class="slugEditing ? '' : 'bg-light'">
+                               :class="slugEditing ? '' : 'bg-light'"
+                               value="{{ old('slug', $category->slug) }}">
                         @error('slug')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
@@ -78,7 +79,7 @@
                         <label for="parent_id" class="form-label fw-semibold">Parent Category</label>
                         <select name="parent_id" id="parent_id" class="form-select @error('parent_id') is-invalid @enderror">
                             <option value="">None (Top-level)</option>
-                            @foreach($categories ?? [] as $cat)
+                            @foreach($parents ?? [] as $cat)
                                 @if($cat->id !== $category->id)
                                 <option value="{{ $cat->id }}"
                                     {{ old('parent_id', $category->parent_id) == $cat->id ? 'selected' : '' }}>
@@ -121,27 +122,32 @@
                     <h6 class="fw-bold mb-0"><i class="fas fa-image text-info me-2"></i>Category Image</h6>
                 </div>
                 <div class="card-body">
-                    <div class="image-preview-box mb-2" @click="$refs.imageInput.click()">
+                    <div class="image-preview-box mb-2" @click="openMediaPicker()" style="cursor:pointer;">
                         <template x-if="imagePreview">
                             <img :src="imagePreview" alt="Preview">
                         </template>
                         <template x-if="!imagePreview">
                             <div class="text-center text-muted p-3">
-                                <i class="fas fa-cloud-upload-alt fa-2x mb-2 d-block"></i>
-                                <span class="small">Click to change image</span>
+                                <i class="fas fa-images fa-2x mb-2 d-block"></i>
+                                <span class="small">Click to choose from media library</span>
                             </div>
                         </template>
                     </div>
-                    <input type="file" name="image" class="d-none" accept="image/*"
-                           x-ref="imageInput" @change="previewImage($event)">
+                    <input type="hidden" name="image_path" x-bind:value="selectedMediaPath">
                     <input type="hidden" name="remove_image" x-bind:value="removeImage ? '1' : ''">
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1"
-                                @click="$refs.imageInput.click()">
-                            <i class="fas fa-upload me-1"></i>Change
+                                @click="openMediaPicker()">
+                            <i class="fas fa-images me-1"></i>Choose Image
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm"
+                                x-show="imagePreview !== originalImage && originalImage"
+                                @click="imagePreview = originalImage; selectedMediaPath = ''; removeImage = false;"
+                                title="Revert to original">
+                            <i class="fas fa-undo"></i>
                         </button>
                         <button type="button" class="btn btn-outline-danger btn-sm" x-show="imagePreview"
-                                @click="imagePreview=null; removeImage=true; $refs.imageInput.value=''">
+                                @click="imagePreview = null; selectedMediaPath = ''; removeImage = true;">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -189,27 +195,41 @@
     </div>
 </form>
 
+@include('admin.partials.media-picker-modal')
+
 @endsection
 
 @push('scripts')
 <script>
     function categoryEditForm() {
-        return {
-            slug: '{{ old("slug", $category->slug ?? "") }}',
-            slugEditing: false,
-            imagePreview: {{ $category->image ? '"' . asset('storage/' . $category->image) . '"' : 'null' }},
-            removeImage: false,
-
-            previewImage(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = e => {
-                    this.imagePreview = e.target.result;
-                    this.removeImage = false;
-                };
-                reader.readAsDataURL(file);
+        @php
+            $initCatImage = null;
+            if (old('image_path')) {
+                $initCatImage = asset('storage/' . old('image_path'));
+            } else {
+                $initCatImage = $category->image ? asset('storage/' . $category->image) : null;
             }
+            $initCatPath = old('image_path', '');
+        @endphp
+
+        return {
+            slug:              {!! json_encode(old('slug', $category->slug ?? '')) !!},
+            slugEditing:       false,
+            imagePreview:      {!! json_encode($initCatImage) !!},
+            originalImage:     {!! json_encode($category->image ? asset('storage/' . $category->image) : null) !!},
+            selectedMediaPath: {!! json_encode($initCatPath) !!},
+            removeImage:       false,
+
+            openMediaPicker() {
+                window.dispatchEvent(new CustomEvent('open-media-picker', { detail: { context: 'featured' } }));
+            },
+
+            onMediaPicked(detail) {
+                if (detail.context !== 'featured') return;
+                this.imagePreview      = detail.url;
+                this.selectedMediaPath = detail.file_name;
+                this.removeImage       = false;
+            },
         }
     }
 </script>

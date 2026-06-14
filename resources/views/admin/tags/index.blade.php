@@ -73,8 +73,9 @@
                     <form method="GET" class="d-flex">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" name="search" class="form-control" style="width:160px;"
-                                   placeholder="Search..." value="{{ request('search') }}">
+                            <input type="text" name="q" class="form-control" style="width:160px;"
+                                   placeholder="Search..." value="{{ request('q') }}">
+                            <button class="btn btn-outline-secondary" type="submit">Go</button>
                         </div>
                     </form>
                 </div>
@@ -111,29 +112,30 @@
                                     <span class="badge bg-info bg-opacity-10 text-info">{{ $tag->posts_count ?? 0 }}</span>
                                 </td>
                                 <td>
-                                    {{-- Quick inline save --}}
-                                    <form method="POST" action="{{ route('admin.tags.update', $tag->id) }}"
-                                          x-show="editing" class="d-inline">
-                                        @csrf
-                                        @method('PUT')
-                                        <input type="hidden" name="name" :value="name">
-                                        <input type="hidden" name="slug" :value="slug">
-                                        <button type="submit" class="btn btn-sm btn-success me-1" title="Save">
-                                            <i class="fas fa-check"></i>
-                                        </button>
+                                    {{-- Edit mode --}}
+                                    <div x-show="editing" class="d-flex gap-1 align-items-center">
+                                        <form method="POST" action="{{ route('admin.tags.update', $tag->id) }}">
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="name" :value="name">
+                                            <input type="hidden" name="slug" :value="slug">
+                                            <button type="submit" class="btn btn-sm btn-success" title="Save">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
                                         <button type="button" class="btn btn-sm btn-secondary"
-                                                @click="editing=false" title="Cancel">
+                                                @click="editing = false" title="Cancel">
                                             <i class="fas fa-times"></i>
                                         </button>
-                                    </form>
+                                    </div>
 
+                                    {{-- View mode --}}
                                     <div class="d-flex gap-1" x-show="!editing">
                                         <button type="button" class="btn btn-sm btn-outline-primary"
-                                                @click="editing=true" title="Edit">
+                                                @click="editing = true" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <form method="POST" action="{{ route('admin.tags.destroy', $tag->id) }}"
-                                              class="d-inline">
+                                        <form method="POST" action="{{ route('admin.tags.destroy', $tag->id) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button type="button" class="btn btn-sm btn-outline-danger"

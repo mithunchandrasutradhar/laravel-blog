@@ -20,7 +20,7 @@
     </div>
 
     {{-- Advertisement - Sidebar Top --}}
-    @include('partials.advertisement', ['position' => 'sidebar_top'])
+    @include('partials.advertisement', ['position' => 'sidebar'])
 
     {{-- Popular Posts Widget --}}
     @php
@@ -71,9 +71,8 @@
                 <li class="{{ !$loop->last ? 'mb-2' : '' }}">
                     <a href="{{ route('categories.show', $sidebarCat->slug) }}" class="d-flex justify-content-between align-items-center text-decoration-none text-dark py-1">
                         <span class="d-flex align-items-center gap-2">
-                            @if($sidebarCat->color)
-                            <span class="rounded-circle flex-shrink-0" style="width:8px;height:8px;background:{{ $sidebarCat->color }};display:inline-block;"></span>
-                            @endif
+                            <i class="{{ $sidebarCat->icon ?? 'fas fa-folder' }} fa-fw"
+                               style="color:{{ $sidebarCat->color ?? '#6c757d' }};font-size:.85rem;"></i>
                             {{ $sidebarCat->name }}
                         </span>
                         <span class="badge bg-light text-secondary rounded-pill">{{ $sidebarCat->posts_count }}</span>
@@ -119,6 +118,6 @@
     </div>
 
     {{-- Advertisement - Sidebar Bottom --}}
-    @include('partials.advertisement', ['position' => 'sidebar_bottom'])
+    @include('partials.advertisement', ['position' => 'sidebar'])
 
 </aside>

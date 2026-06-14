@@ -20,7 +20,7 @@
 
     {{-- Favicon --}}
     @if(settings('favicon'))
-    <link rel="icon" type="image/x-icon" href="{{ asset(settings('favicon')) }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . settings('favicon')) }}">
     @else
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     @endif
@@ -38,7 +38,7 @@
         {{-- Sidebar Brand --}}
         <div class="sidebar-brand d-flex align-items-center px-3 py-3 border-bottom border-secondary">
             @if(settings('logo_white') || settings('logo'))
-                <img src="{{ asset(settings('logo_white') ?? settings('logo')) }}" alt="{{ settings('site_name', config('app.name')) }}" height="32" class="me-2">
+                <img src="{{ asset('storage/' . (settings('logo_white') ?? settings('logo'))) }}" alt="{{ settings('site_name', config('app.name')) }}" height="32" class="me-2">
             @else
                 <span class="fw-bold text-white fs-6">{{ settings('site_name', config('app.name')) }}</span>
             @endif

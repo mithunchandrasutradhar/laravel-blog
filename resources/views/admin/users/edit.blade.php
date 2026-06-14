@@ -1,4 +1,4 @@
-@extends('admin.layouts.admin')
+﻿@extends('admin.layouts.admin')
 
 @section('title', 'Edit User')
 
@@ -101,10 +101,10 @@
                             <label for="role" class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
                             <select name="role" id="role"
                                     class="form-select @error('role') is-invalid @enderror" required>
-                                <option value="user"   {{ old('role', $user->role) === 'user'   ? 'selected' : '' }}>User</option>
-                                <option value="author" {{ old('role', $user->role) === 'author' ? 'selected' : '' }}>Author</option>
-                                <option value="editor" {{ old('role', $user->role) === 'editor' ? 'selected' : '' }}>Editor</option>
-                                <option value="admin"  {{ old('role', $user->role) === 'admin'  ? 'selected' : '' }}>Admin</option>
+                                <option value="user"   {{ old('role', $currentRole) === 'user'   ? 'selected' : '' }}>User</option>
+                                <option value="author" {{ old('role', $currentRole) === 'author' ? 'selected' : '' }}>Author</option>
+                                <option value="editor" {{ old('role', $currentRole) === 'editor' ? 'selected' : '' }}>Editor</option>
+                                <option value="admin"  {{ old('role', $currentRole) === 'admin'  ? 'selected' : '' }}>Admin</option>
                             </select>
                             @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
@@ -113,7 +113,7 @@
                             <select name="status" id="status" class="form-select @error('status') is-invalid @enderror">
                                 <option value="active"   {{ old('status', $user->status) === 'active'   ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ old('status', $user->status) === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                <option value="banned"   {{ old('status', $user->status) === 'banned'   ? 'selected' : '' }}>Banned</option>
+                                <option value="suspended"   {{ old('status', $user->status) === 'banned'   ? 'selected' : '' }}>Suspended</option>
                             </select>
                             @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
@@ -162,17 +162,14 @@
                 </div>
                 <div class="card-body text-center">
                     <div class="avatar-upload-box mb-3" @click="$refs.avatarInput.click()">
-                        <template x-if="avatarPreview">
-                            <img :src="avatarPreview" alt="Avatar">
-                        </template>
-                        <template x-if="!avatarPreview">
-                            <div class="text-muted">
-                                <i class="fas fa-user fa-2x d-block mb-1"></i>
-                                <span style="font-size:.7rem;">Upload</span>
-                            </div>
-                        </template>
+                        <img x-show="avatarPreview" :src="avatarPreview || ''"
+                             alt="Avatar" style="width:100%;height:100%;object-fit:cover;display:block;">
+                        <div x-show="!avatarPreview" class="text-muted text-center">
+                            <i class="fas fa-user fa-2x d-block mb-1"></i>
+                            <span style="font-size:.7rem;">Upload</span>
+                        </div>
                     </div>
-                    <input type="file" name="avatar" class="d-none" accept="image/*"
+                    <input type="file" name="profile_image" class="d-none" accept="image/*"
                            x-ref="avatarInput" @change="previewAvatar($event)">
                     <input type="hidden" name="remove_avatar" x-bind:value="removeAvatar ? '1' : ''">
                     <div class="d-flex justify-content-center gap-2">
@@ -212,7 +209,7 @@
         return {
             showPassword: false,
             changePassword: false,
-            avatarPreview: {{ $user->avatar ? '"' . asset('storage/' . $user->avatar) . '"' : 'null' }},
+            avatarPreview: {{ $user->profile_image ? json_encode(asset('storage/' . $user->profile_image)) : 'null' }},
             removeAvatar: false,
             previewAvatar(event) {
                 const file = event.target.files[0];
@@ -228,3 +225,7 @@
     }
 </script>
 @endpush
+
+
+
+

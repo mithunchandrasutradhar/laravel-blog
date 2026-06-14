@@ -225,8 +225,8 @@
                         <tbody>
                             @forelse($recentComments ?? [] as $comment)
                             <tr>
-                                <td class="ps-3 small fw-semibold">{{ Str::limit($comment->author_name, 12) }}</td>
-                                <td class="small text-muted">{{ Str::limit($comment->content, 25) }}</td>
+                                <td class="ps-3 small fw-semibold">{{ Str::limit($comment->commenter_name, 12) }}</td>
+                                <td class="small text-muted">{{ Str::limit($comment->body, 25) }}</td>
                                 <td>
                                     @if($comment->status === 'approved')
                                         <span class="badge bg-success bg-opacity-10 text-success">OK</span>

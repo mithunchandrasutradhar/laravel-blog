@@ -23,10 +23,10 @@
             ])
             <div class="d-flex align-items-center gap-4 mt-3">
                 @if($category->image)
-                <img src="{{ asset($category->image) }}" alt="{{ $category->name }}" class="rounded-3 flex-shrink-0 d-none d-sm-block" width="80" height="80" style="object-fit:cover;">
+                <img src="{{ $category->image_url }}" alt="{{ $category->name }}" class="rounded-3 flex-shrink-0 d-none d-sm-block" width="80" height="80" style="object-fit:cover;">
                 @else
                 <div class="rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center d-none d-sm-flex" style="width:80px;height:80px;background:{{ $category->color ?? '#0d6efd' }}22;">
-                    <i class="fas fa-folder fa-2x" style="color:{{ $category->color ?? '#0d6efd' }};"></i>
+                    <i class="{{ $category->icon ?? 'fas fa-folder' }} fa-2x" style="color:{{ $category->color ?? '#0d6efd' }};"></i>
                 </div>
                 @endif
                 <div>

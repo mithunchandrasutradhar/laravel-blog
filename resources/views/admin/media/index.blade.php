@@ -95,7 +95,6 @@
         margin-top: 1rem;
     }
 
-    #uploadInput { display: none; }
 </style>
 @endpush
 
@@ -105,11 +104,10 @@
 <div class="card border-0 shadow-sm mb-4" x-data="mediaUploader()">
     <div class="card-body">
         <div class="upload-zone"
-             id="dropZone"
              @click="$refs.fileInput.click()"
              @dragover.prevent="isDragging=true"
              @dragleave.prevent="isDragging=false"
-             @drop.prevent="handleDrop($event)"
+             @drop.prevent="isDragging=false; handleDrop($event)"
              :class="{ 'drag-over': isDragging }">
             <div class="upload-icon mb-3">
                 <i class="fas fa-cloud-upload-alt fa-3x text-primary"></i>
@@ -118,8 +116,10 @@
             <p class="text-muted mb-3">or click to browse</p>
             <span class="badge bg-light text-secondary">JPG, PNG, GIF, WebP, PDF, MP4 — Max 10MB each</span>
         </div>
-        <input type="file" id="fileInput" x-ref="fileInput" multiple accept="image/*,application/pdf,video/mp4"
-               @change="handleFiles($event.target.files)">
+        <div style="display:none;position:absolute;">
+            <input type="file" x-ref="fileInput" multiple accept="image/*,application/pdf,video/mp4"
+                   @change="handleFiles($event.target.files)">
+        </div>
 
         {{-- Upload Queue --}}
         <div x-show="uploads.length" x-transition class="mt-3">
@@ -157,8 +157,8 @@
                 </select>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" name="search" class="form-control" style="width:160px;"
-                           placeholder="Search..." value="{{ request('search') }}">
+                    <input type="text" name="q" class="form-control" style="width:160px;"
+                           placeholder="Search..." value="{{ request('q') }}">
                     <button type="submit" class="btn btn-primary btn-sm">Go</button>
                 </div>
             </form>
@@ -172,8 +172,8 @@
             <div class="media-item" id="media-{{ $file->id }}">
                 {{-- Thumbnail --}}
                 @if(Str::startsWith($file->mime_type ?? '', 'image/'))
-                    <img src="{{ asset('storage/' . $file->path) }}"
-                         alt="{{ $file->original_name }}" class="media-thumb">
+                    <img src="{{ $file->url }}"
+                         alt="{{ $file->name }}" class="media-thumb">
                 @elseif(Str::startsWith($file->mime_type ?? '', 'video/'))
                     <div class="media-thumb-icon text-secondary">
                         <i class="fas fa-film"></i>
@@ -191,7 +191,7 @@
                 {{-- Hover overlay --}}
                 <div class="media-overlay">
                     <button type="button" class="btn btn-sm btn-light" title="Copy URL"
-                            onclick="copyUrl('{{ asset('storage/' . $file->path) }}')">
+                            onclick="copyUrl('{{ $file->url }}')">
                         <i class="fas fa-link"></i> Copy URL
                     </button>
                     <button type="button" class="btn btn-sm btn-danger" title="Delete"
@@ -202,8 +202,8 @@
 
                 {{-- Info --}}
                 <div class="media-info">
-                    <div class="media-name" title="{{ $file->original_name }}">
-                        {{ $file->original_name }}
+                    <div class="media-name" title="{{ $file->name }}">
+                        {{ $file->name }}
                     </div>
                     <div class="media-meta d-flex justify-content-between">
                         <span>{{ $file->human_size ?? number_format(($file->size ?? 0)/1024, 1) . ' KB' }}</span>
@@ -261,7 +261,7 @@
             uploadFile(file, entry) {
                 return new Promise(resolve => {
                     const formData = new FormData();
-                    formData.append('file', file);
+                    formData.append('files[]', file);
                     formData.append('_token', '{{ csrf_token() }}');
 
                     const xhr = new XMLHttpRequest();

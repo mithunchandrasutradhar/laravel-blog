@@ -30,6 +30,21 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 
     @stack('styles')
+
+    {{-- Dynamic primary color from Appearance settings --}}
+    @php $authPrimaryColor = settings('primary_color', '#0d6efd'); @endphp
+    @if($authPrimaryColor !== '#0d6efd')
+    <style>
+        :root {
+            --bs-primary: {{ $authPrimaryColor }};
+            --bs-primary-rgb: {{ implode(',', sscanf($authPrimaryColor, '#%02x%02x%02x') ?? [13,110,253]) }};
+            --bs-link-color: {{ $authPrimaryColor }};
+        }
+        .btn-primary { background-color: {{ $authPrimaryColor }} !important; border-color: {{ $authPrimaryColor }} !important; }
+        .text-primary { color: {{ $authPrimaryColor }} !important; }
+        a { color: {{ $authPrimaryColor }}; }
+    </style>
+    @endif
 </head>
 <body class="auth-body bg-light min-vh-100 d-flex flex-column">
 
@@ -38,7 +53,9 @@
         <div class="container text-center">
             <a href="{{ route('home') }}" class="text-decoration-none">
                 @if(settings('logo'))
-                    <img src="{{ asset(settings('logo')) }}" alt="{{ settings('site_name', config('app.name')) }}" height="36">
+                    @php $authLogoH = (int) settings('logo_height', 36); $authLogoW = settings('logo_width') ? 'max-width:'.(int)settings('logo_width').'px;' : ''; @endphp
+                    <img src="{{ asset('storage/' . settings('logo')) }}" alt="{{ settings('site_name', config('app.name')) }}"
+                         style="height:{{ $authLogoH }}px;{{ $authLogoW }}width:auto;object-fit:contain;">
                 @else
                     <span class="fw-bold fs-5 text-primary">{{ settings('site_name', config('app.name')) }}</span>
                 @endif

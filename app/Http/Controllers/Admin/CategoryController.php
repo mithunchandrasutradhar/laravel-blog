@@ -39,7 +39,7 @@ class CategoryController extends Controller
      */
     public function create(): View
     {
-        $parents = Category::topLevel()->orderBy('name')->get();
+        $parents = Category::orderBy('name')->get();
 
         return view('admin.categories.create', compact('parents'));
     }
@@ -51,7 +51,9 @@ class CategoryController extends Controller
     {
         $data = $request->validated();
 
-        if ($request->hasFile('image')) {
+        if ($request->filled('image_path')) {
+            $data['image'] = $request->image_path;
+        } elseif ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('categories', 'public');
         }
 
@@ -66,8 +68,7 @@ class CategoryController extends Controller
      */
     public function edit(Category $category): View
     {
-        $parents = Category::topLevel()
-            ->where('id', '!=', $category->id)
+        $parents = Category::where('id', '!=', $category->id)
             ->orderBy('name')
             ->get();
 
@@ -81,12 +82,21 @@ class CategoryController extends Controller
     {
         $data = $request->validated();
 
-        if ($request->hasFile('image')) {
+        if ($request->filled('image_path')) {
             if ($category->image) {
                 Storage::disk('public')->delete($category->image);
             }
-
+            $data['image'] = $request->image_path;
+        } elseif ($request->hasFile('image')) {
+            if ($category->image) {
+                Storage::disk('public')->delete($category->image);
+            }
             $data['image'] = $request->file('image')->store('categories', 'public');
+        } elseif ($request->input('remove_image') === '1') {
+            if ($category->image) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $data['image'] = null;
         }
 
         $category->update($data);

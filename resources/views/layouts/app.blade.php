@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     {{-- SEO Meta Tags --}}
-    <title>{{ $seo['title'] ?? config('app.name', 'Blog') }}</title>
+    <title>{{ $seo['title'] ?? settings('site_name', config('app.name', 'Blog')) }}</title>
     <meta name="description" content="{{ $seo['description'] ?? settings('seo_description', 'A modern blog platform') }}">
     <meta name="keywords" content="{{ $seo['keywords'] ?? settings('seo_keywords', '') }}">
     @if(isset($seo['robots']))
@@ -36,8 +36,8 @@
 
     {{-- Favicon --}}
     @if(settings('favicon'))
-    <link rel="icon" type="image/x-icon" href="{{ asset(settings('favicon')) }}">
-    <link rel="apple-touch-icon" href="{{ asset(settings('favicon')) }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . settings('favicon')) }}">
+    <link rel="apple-touch-icon" href="{{ asset('storage/' . settings('favicon')) }}">
     @else
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
     <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
@@ -61,6 +61,29 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 
     @stack('styles')
+
+    {{-- Dynamic primary color from Appearance settings --}}
+    @php $primaryColor = settings('primary_color', '#0d6efd'); @endphp
+    @if($primaryColor !== '#0d6efd')
+    <style>
+        :root {
+            --bs-primary: {{ $primaryColor }};
+            --bs-primary-rgb: {{ implode(',', sscanf($primaryColor, '#%02x%02x%02x') ?? [13,110,253]) }};
+            --bs-link-color: {{ $primaryColor }};
+            --bs-link-hover-color: {{ $primaryColor }};
+        }
+        .btn-primary { background-color: {{ $primaryColor }} !important; border-color: {{ $primaryColor }} !important; }
+        .text-primary { color: {{ $primaryColor }} !important; }
+        .border-primary { border-color: {{ $primaryColor }} !important; }
+        a { color: {{ $primaryColor }}; }
+        a:hover { color: {{ $primaryColor }}; }
+    </style>
+    @endif
+
+    {{-- Custom CSS from Appearance settings --}}
+    @if(settings('custom_css'))
+    <style>{!! settings('custom_css') !!}</style>
+    @endif
 
     {{-- Google Analytics 4 --}}
     @if(settings('ga4_measurement_id'))
@@ -93,9 +116,13 @@
                 {{-- ── Logo ── --}}
                 <a class="navbar-brand d-flex align-items-center gap-2 me-4" href="{{ route('home') }}">
                     @if(settings('logo'))
+                        @php
+                            $lh = (int) settings('logo_height', 38);
+                            $lw = settings('logo_width') ? 'max-width:' . (int)settings('logo_width') . 'px;' : '';
+                        @endphp
                         <img src="{{ asset('storage/' . settings('logo')) }}"
                              alt="{{ settings('site_name', 'Mithun Blog') }}"
-                             height="38" style="display:block;">
+                             style="height:{{ $lh }}px;{{ $lw }}width:auto;object-fit:contain;display:block;">
                     @else
                         {{-- Default logo: SVG icon + wordmark --}}
                         <span class="logo-icon-wrap" aria-hidden="true">
@@ -309,9 +336,10 @@
 
                         {{-- Logo / Brand name --}}
                         @if(settings('logo_white') || settings('logo'))
+                            @php $lhF = (int) settings('logo_height', 38); $lwF = settings('logo_width') ? 'max-width:'.(int)settings('logo_width').'px;' : ''; @endphp
                             <img src="{{ asset('storage/' . (settings('logo_white') ?? settings('logo'))) }}"
                                  alt="{{ settings('site_name', 'Mithun Blog') }}"
-                                 style="height:38px;margin-bottom:1.25rem;display:block;">
+                                 style="height:{{ $lhF }}px;{{ $lwF }}width:auto;object-fit:contain;margin-bottom:1.25rem;display:block;">
                         @else
                             <a href="{{ route('home') }}" style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;text-decoration:none;">
                                 {{-- Same SVG icon, works on dark background --}}
@@ -503,11 +531,15 @@
                         <strong style="color:#7b7b9a;">{{ settings('site_name', config('app.name')) }}</strong>.
                         {{ settings('copyright_text', 'All rights reserved.') }}
                     </span>
-                    <span style="font-size:.78rem;color:#4a4a6a;">
-                        Made with <i class="fas fa-heart" style="color:#f59e0b;font-size:.65rem;"></i> using
-                        <a href="https://laravel.com" target="_blank" rel="noopener"
-                           style="color:#f59e0b;text-decoration:none;font-weight:500;">Laravel</a>
+                    @php $footerPages = \App\Models\Page::footer()->orderBy('title')->get(); @endphp
+                    @if($footerPages->isNotEmpty())
+                    <span style="font-size:.78rem;color:#4a4a6a;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+                        @foreach($footerPages as $fp)
+                        <a href="{{ route('pages.show', $fp->slug) }}" style="color:#6b6b8a;text-decoration:none;"
+                           onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='#6b6b8a'">{{ $fp->title }}</a>
+                        @endforeach
                     </span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -523,11 +555,16 @@
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
 
     {{-- Alpine.js --}}
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+    <script defer src="{{ asset('js/alpine.min.js') }}"></script>
 
     {{-- Custom JS --}}
     <script src="{{ asset('js/app.js') }}"></script>
 
     @stack('scripts')
+
+    {{-- Custom JS from Appearance settings --}}
+    @if(settings('custom_js'))
+    <script>{!! settings('custom_js') !!}</script>
+    @endif
 </body>
 </html>

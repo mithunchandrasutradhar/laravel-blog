@@ -55,8 +55,6 @@ Route::get('/videos', [VideoController::class, 'index'])->name('videos.index');
 
 // Static pages
 Route::get('/about', [PageController::class, 'about'])->name('about');
-Route::get('/terms', [PageController::class, 'terms'])->name('terms');
-Route::get('/privacy', [PageController::class, 'privacy'])->name('privacy');
 
 // Contact
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
@@ -193,8 +191,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     // Subscribers
     Route::get('/subscribers', [Admin\SubscriberController::class, 'index'])->name('subscribers.index');
-    Route::delete('/subscribers/{subscriber}', [Admin\SubscriberController::class, 'destroy'])->name('subscribers.destroy');
     Route::get('/subscribers/export', [Admin\SubscriberController::class, 'export'])->name('subscribers.export');
+    Route::patch('/subscribers/{subscriber}/verify', [Admin\SubscriberController::class, 'verify'])->name('subscribers.verify');
+    Route::delete('/subscribers/{subscriber}', [Admin\SubscriberController::class, 'destroy'])->name('subscribers.destroy');
 
     // Settings
     Route::get('/settings', [Admin\SettingsController::class, 'index'])->name('settings.index');
@@ -209,9 +208,18 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/media', [Admin\MediaController::class, 'index'])->name('media.index');
     Route::post('/media', [Admin\MediaController::class, 'store'])->name('media.store');
     Route::post('/media/upload', [Admin\MediaController::class, 'store'])->name('media.upload');
-    Route::delete('/media/{media}', [Admin\MediaController::class, 'destroy'])->name('media.destroy');
+    Route::get('/media/list', [Admin\MediaController::class, 'list'])->name('media.list');
     Route::get('/media/browse', [Admin\MediaController::class, 'browse'])->name('media.browse');
+    Route::delete('/media/{media}', [Admin\MediaController::class, 'destroy'])->name('media.destroy');
 
     // Analytics
     Route::get('/analytics', [Admin\AnalyticsController::class, 'index'])->name('analytics.index');
+
+    // Pages
+    Route::resource('pages', Admin\PagesController::class);
 });
+
+// Dynamic pages — must be LAST so it doesn't shadow any named routes above
+Route::get('/{slug}', [PageController::class, 'show'])
+    ->name('pages.show')
+    ->where('slug', '[a-z0-9][a-z0-9\-]*');

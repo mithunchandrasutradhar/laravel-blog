@@ -34,13 +34,21 @@ class HomeController extends Controller
      */
     public function index(): View
     {
-        // Featured posts: most-viewed published posts (editors may later add
-        // a dedicated "featured" boolean column; for now we use views_count).
+        // Featured posts: admin-flagged via is_featured; fall back to most-viewed
         $featuredPosts = Post::published()
             ->with(['category', 'author'])
-            ->popular()
+            ->featured()
+            ->latestPublished()
             ->limit(self::FEATURED_COUNT)
             ->get();
+
+        if ($featuredPosts->isEmpty()) {
+            $featuredPosts = Post::published()
+                ->with(['category', 'author'])
+                ->popular()
+                ->limit(self::FEATURED_COUNT)
+                ->get();
+        }
 
         // Latest posts
         $latestPosts = Post::published()
@@ -63,13 +71,13 @@ class HomeController extends Controller
             ->take(self::TRENDING_COUNT)
             ->values();
 
-        // All categories that have at least one published post
+        // All categories, ordered so populated ones appear first
         $homeCategories = Category::withCount(['posts' => function ($q) {
-                $q->where('status', 'published')
+                $q->whereIn('status', ['published', 'scheduled'])
                   ->where('published_at', '<=', now());
             }])
-            ->withPublishedPosts()
             ->orderByDesc('posts_count')
+            ->orderBy('name')
             ->get();
 
         // Simple site stats (used in sidebar / footer widgets)
@@ -83,8 +91,8 @@ class HomeController extends Controller
         // Single hero post (first featured post)
         $featuredPost = $featuredPosts->first();
 
-        // Active videos for home page preview (up to 6)
-        $homeVideos = Video::active()->with('category')->ordered()->limit(6)->get();
+        // Active videos for home page preview (max 3)
+        $homeVideos = Video::active()->with('category')->ordered()->limit(3)->get();
 
         return view('home.index', compact(
             'featuredPost',

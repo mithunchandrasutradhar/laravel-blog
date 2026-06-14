@@ -51,7 +51,7 @@ class PostController extends Controller
         }
 
         $posts      = $query->latest()->paginate(self::PER_PAGE)->withQueryString();
-        $categories = Category::topLevel()->get();
+        $categories = Category::orderBy('name')->get();
 
         return view('admin.posts.index', compact('posts', 'categories'));
     }
@@ -74,8 +74,10 @@ class PostController extends Controller
     {
         $data = $request->validated();
 
-        // Handle featured image upload
-        if ($request->hasFile('featured_image')) {
+        // Handle featured image: media library selection or direct file upload
+        if ($request->filled('featured_image_path')) {
+            $data['featured_image'] = $request->featured_image_path;
+        } elseif ($request->hasFile('featured_image')) {
             $data['featured_image'] = $request->file('featured_image')
                 ->store('posts/images', 'public');
         }
@@ -124,14 +126,23 @@ class PostController extends Controller
             $data['slug'] = Str::slug($data['title']);
         }
 
-        // Handle featured image update
-        if ($request->hasFile('featured_image')) {
-            if ($post->featured_image) {
+        // Handle featured image update: media library, direct upload, or removal
+        if ($request->filled('featured_image_path')) {
+            if ($post->featured_image && !str_starts_with($post->featured_image, 'http')) {
                 Storage::disk('public')->delete($post->featured_image);
             }
-
+            $data['featured_image'] = $request->featured_image_path;
+        } elseif ($request->hasFile('featured_image')) {
+            if ($post->featured_image && !str_starts_with($post->featured_image, 'http')) {
+                Storage::disk('public')->delete($post->featured_image);
+            }
             $data['featured_image'] = $request->file('featured_image')
                 ->store('posts/images', 'public');
+        } elseif ($request->input('remove_featured_image') === '1') {
+            if ($post->featured_image && !str_starts_with($post->featured_image, 'http')) {
+                Storage::disk('public')->delete($post->featured_image);
+            }
+            $data['featured_image'] = null;
         }
 
         // If status changed to published and no published_at set, stamp it now

@@ -70,7 +70,7 @@
                     $totalPosts  = \App\Models\Post::published()->count();
                     $totalViews  = \App\Models\Post::published()->sum('views_count');
                     $totalAuthors = \App\Models\User::whereHas('posts')->count();
-                    $totalSubs   = \App\Models\Subscriber::active()->count();
+                    $totalSubs   = \App\Models\Subscriber::count();
                 @endphp
                 <div class="col-6 col-md-3">
                     <div class="h2 fw-black mb-1">{{ number_format($totalPosts) }}+</div>

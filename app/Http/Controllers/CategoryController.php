@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Post;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class CategoryController extends Controller
@@ -20,11 +21,28 @@ class CategoryController extends Controller
     {
         $categories = Category::topLevel()
             ->withCount(['posts' => fn ($q) => $q->where('status', 'published')->where('published_at', '<=', now())])
-            ->with(['children' => fn ($q) => $q->withCount(['posts' => fn ($q2) => $q2->where('status', 'published')])])
+            ->with('allChildren')
             ->orderBy('name')
             ->get();
 
+        // Flatten the full descendant tree so any depth of sub-category appears
+        foreach ($categories as $cat) {
+            $cat->setRelation('descendants', $this->flatDescendants($cat->allChildren));
+        }
+
         return view('categories.index', compact('categories'));
+    }
+
+    private function flatDescendants(Collection $children): Collection
+    {
+        $flat = collect();
+        foreach ($children as $child) {
+            $flat->push($child);
+            if ($child->relationLoaded('allChildren') && $child->allChildren->isNotEmpty()) {
+                $flat = $flat->merge($this->flatDescendants($child->allChildren));
+            }
+        }
+        return $flat;
     }
 
     /**

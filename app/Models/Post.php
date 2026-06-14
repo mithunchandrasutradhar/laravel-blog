@@ -26,6 +26,8 @@ class Post extends Model
         'category_id',
         'user_id',
         'featured_image',
+        'is_featured',
+        'allow_comments',
         'short_description',
         'content',
         'meta_title',
@@ -45,9 +47,11 @@ class Post extends Model
     protected function casts(): array
     {
         return [
-            'published_at' => 'datetime',
-            'views_count'  => 'integer',
-            'reading_time' => 'integer',
+            'published_at'   => 'datetime',
+            'views_count'    => 'integer',
+            'reading_time'   => 'integer',
+            'is_featured'    => 'boolean',
+            'allow_comments' => 'boolean',
         ];
     }
 
@@ -148,7 +152,7 @@ class Post extends Model
      */
     public function scopePublished(Builder $query): void
     {
-        $query->where('status', 'published')
+        $query->whereIn('status', ['published', 'scheduled'])
               ->where('published_at', '<=', now());
     }
 
@@ -204,6 +208,14 @@ class Post extends Model
             'MATCH(title, short_description, content) AGAINST(? IN BOOLEAN MODE)',
             [$term . '*']
         );
+    }
+
+    /**
+     * Only admin-flagged featured posts.
+     */
+    public function scopeFeatured(Builder $query): void
+    {
+        $query->where('is_featured', true);
     }
 
     /**

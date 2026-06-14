@@ -27,8 +27,6 @@ class CommentController extends Controller
             $this->verifyRecaptcha($request->input('g-recaptcha-response'), $recaptchaSecret);
         }
 
-        $status = auth()->check() ? 'approved' : 'pending';
-
         Comment::create([
             'post_id'    => $post->id,
             'user_id'    => auth()->id(),
@@ -36,13 +34,11 @@ class CommentController extends Controller
             'name'       => auth()->check() ? auth()->user()->name : $request->name,
             'email'      => auth()->check() ? auth()->user()->email : $request->email,
             'body'       => $request->body,
-            'status'     => $status,
+            'status'     => 'pending',
             'ip_address' => $request->ip(),
         ]);
 
-        $message = $status === 'approved'
-            ? 'Your comment has been posted.'
-            : 'Your comment is awaiting moderation.';
+        $message = 'Your comment is awaiting moderation.';
 
         return redirect()->route('blog.show', $post->slug)
             ->with('success', $message)

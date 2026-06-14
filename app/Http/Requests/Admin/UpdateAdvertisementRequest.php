@@ -18,8 +18,8 @@ class UpdateAdvertisementRequest extends FormRequest
     {
         return [
             'name'      => ['required', 'string', 'max:255'],
-            'type'      => ['required', 'in:adsense,banner,custom'],
-            'position'  => ['required', 'in:header,sidebar-top,sidebar-bottom,in-content,footer,popup'],
+            'type'      => ['required', 'in:adsense,banner'],
+            'position'  => ['required', 'in:header,sidebar,in-article,footer'],
             'code'      => ['nullable', 'string'],
             'image'     => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:2048'],
             'url'       => ['nullable', 'url', 'max:2048'],

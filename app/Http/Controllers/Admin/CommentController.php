@@ -44,9 +44,10 @@ class CommentController extends Controller
 
         $comments = $query->paginate(self::PER_PAGE)->withQueryString();
 
-        $pendingCount = Comment::pending()->count();
+        $pendingCount  = Comment::pending()->count();
+        $approvedCount = Comment::approved()->count();
 
-        return view('admin.comments.index', compact('comments', 'pendingCount'));
+        return view('admin.comments.index', compact('comments', 'pendingCount', 'approvedCount'));
     }
 
     /**

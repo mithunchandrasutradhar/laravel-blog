@@ -29,6 +29,8 @@ class UpdatePostRequest extends FormRequest
             'slug'              => ['nullable', 'string', 'max:255', Rule::unique('posts', 'slug')->ignore($postId)],
             'category_id'       => ['required', 'integer', 'exists:categories,id'],
             'user_id'           => ['nullable', 'integer', 'exists:users,id'],
+            'is_featured'       => ['nullable', 'boolean'],
+            'allow_comments'    => ['nullable', 'boolean'],
             'short_description' => ['nullable', 'string', 'max:500'],
             'content'           => ['required', 'string'],
             'featured_image'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
@@ -40,5 +42,14 @@ class UpdatePostRequest extends FormRequest
             'tags'              => ['nullable', 'array'],
             'tags.*'            => ['required'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'is_featured'       => $this->boolean('is_featured'),
+            'allow_comments'    => $this->boolean('allow_comments', true),
+            'short_description' => $this->input('short_description') ?? $this->input('excerpt'),
+        ]);
     }
 }

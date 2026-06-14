@@ -436,7 +436,7 @@
 {{-- Bootstrap 5.3 --}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {{-- Alpine.js --}}
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script defer src="{{ asset('js/alpine.min.js') }}"></script>
 {{-- Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 {{-- SweetAlert2 --}}

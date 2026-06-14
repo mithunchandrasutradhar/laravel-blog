@@ -100,6 +100,7 @@ class MediaController extends Controller
             $uploaded[] = [
                 'id'        => $media->id,
                 'name'      => $media->name,
+                'file_name' => $media->file_name,
                 'url'       => $media->url,
                 'mime_type' => $media->mime_type,
                 'size'      => $media->human_size,
@@ -109,6 +110,33 @@ class MediaController extends Controller
         return response()->json([
             'success' => true,
             'files'   => $uploaded,
+        ]);
+    }
+
+    /**
+     * List images for the media picker modal (paginated JSON).
+     */
+    public function list(Request $request): JsonResponse
+    {
+        $query = Media::where('mime_type', 'LIKE', 'image/%')->latest();
+
+        if ($request->filled('q')) {
+            $query->where('name', 'LIKE', "%{$request->q}%");
+        }
+
+        $paginator = $query->paginate(self::PER_PAGE);
+
+        return response()->json([
+            'data'      => $paginator->getCollection()->map(fn ($m) => [
+                'id'        => $m->id,
+                'name'      => $m->name,
+                'url'       => $m->url,
+                'file_name' => $m->file_name,
+                'size'      => $m->human_size,
+            ]),
+            'has_more'  => $paginator->hasMorePages(),
+            'next_page' => $paginator->currentPage() + 1,
+            'total'     => $paginator->total(),
         ]);
     }
 

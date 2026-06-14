@@ -25,11 +25,9 @@ class AdvertisementController extends Controller
      */
     private const POSITIONS = [
         'header',
-        'sidebar-top',
-        'sidebar-bottom',
-        'in-content',
+        'sidebar',
+        'in-article',
         'footer',
-        'popup',
     ];
 
     /**
@@ -73,9 +71,12 @@ class AdvertisementController extends Controller
     public function store(StoreAdvertisementRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        unset($data['image']); // handle image separately below
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('advertisements', 'public');
+        } elseif ($request->filled('media_path')) {
+            $data['image'] = $request->input('media_path');
         }
 
         Advertisement::create($data);
@@ -113,8 +114,12 @@ class AdvertisementController extends Controller
             if ($advertisement->image) {
                 Storage::disk('public')->delete($advertisement->image);
             }
-
             $data['image'] = $request->file('image')->store('advertisements', 'public');
+        } elseif ($request->boolean('remove_image')) {
+            if ($advertisement->image) {
+                Storage::disk('public')->delete($advertisement->image);
+            }
+            $data['image'] = null;
         }
 
         $advertisement->update($data);

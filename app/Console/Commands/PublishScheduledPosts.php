@@ -35,7 +35,7 @@ class PublishScheduledPosts extends Command
     {
         $isDryRun = $this->option('dry-run');
 
-        $posts = Post::scheduled()
+        $posts = Post::where('status', 'scheduled')
             ->where('published_at', '<=', now())
             ->get();
 

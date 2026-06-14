@@ -69,6 +69,16 @@ services:
       - blog_network
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: blog_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - blog_network
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     container_name: blog_phpmyadmin

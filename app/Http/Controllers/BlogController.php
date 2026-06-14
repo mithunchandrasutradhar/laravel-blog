@@ -75,6 +75,11 @@ class BlogController extends Controller
             'tags',
             'approvedComments.user',
             'approvedComments.replies.user',
+            'approvedComments.replies.parent',
+            'approvedComments.replies.replies.user',
+            'approvedComments.replies.replies.parent',
+            'approvedComments.replies.replies.replies.user',
+            'approvedComments.replies.replies.replies.parent',
         ])->where('slug', $slug)->firstOrFail();
 
         // Allow authors / admins to preview unpublished posts

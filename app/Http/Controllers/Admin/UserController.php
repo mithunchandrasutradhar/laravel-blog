@@ -95,6 +95,7 @@ class UserController extends Controller
      */
     public function edit(User $user): View
     {
+        $user->loadCount(['posts', 'comments']);
         $roles       = Role::orderBy('name')->get();
         $currentRole = $user->roles->first()?->name;
 
@@ -118,9 +119,13 @@ class UserController extends Controller
             if ($user->profile_image) {
                 Storage::disk('public')->delete($user->profile_image);
             }
-
             $data['profile_image'] = $request->file('profile_image')
                 ->store('profile-images', 'public');
+        } elseif ($request->boolean('remove_avatar')) {
+            if ($user->profile_image) {
+                Storage::disk('public')->delete($user->profile_image);
+            }
+            $data['profile_image'] = null;
         }
 
         $user->update($data);
@@ -130,7 +135,7 @@ class UserController extends Controller
             $user->syncRoles([$request->role]);
         }
 
-        return redirect()->route('admin.users.index')
+        return redirect()->route('admin.users.edit', $user)
             ->with('success', 'User updated successfully.');
     }
 

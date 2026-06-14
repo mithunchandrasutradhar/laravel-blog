@@ -492,3 +492,48 @@ function escapeHtml(str) {
         });
     }, 6000);
 })();
+
+
+/* =====================================================
+   Newsletter Form — Alpine.js component
+   Defined globally so it works on every page
+   (footer form, home section, sidebar, etc.)
+   ===================================================== */
+function newsletterForm() {
+    return {
+        email: '',
+        loading: false,
+        submitted: false,
+        error: '',
+        async submit() {
+            this.error = '';
+            if (!this.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email)) {
+                this.error = 'Please enter a valid email address.';
+                return;
+            }
+            this.loading = true;
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                const res = await fetch('/newsletter/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken ? csrfToken.content : '',
+                    },
+                    body: JSON.stringify({ email: this.email }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    this.submitted = true;
+                } else {
+                    this.error = data.message || data.errors?.email?.[0] || 'Subscription failed. Please try again.';
+                }
+            } catch {
+                this.error = 'Network error. Please try again.';
+            } finally {
+                this.loading = false;
+            }
+        }
+    };
+}

@@ -19,8 +19,8 @@
                      style="object-fit:cover;"
                      loading="lazy">
             @else
-                <img src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim($comment->email ?? 'unknown@example.com'))) }}?s={{ $depth === 0 ? 88 : 72 }}&d=mp"
-                     alt="{{ $comment->author_name }}"
+                <img src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim($comment->commenter_email ?? 'unknown@example.com'))) }}?s={{ $depth === 0 ? 88 : 72 }}&d=mp"
+                     alt="{{ $comment->commenter_name }}"
                      class="rounded-circle"
                      width="{{ $depth === 0 ? 44 : 36 }}"
                      height="{{ $depth === 0 ? 44 : 36 }}"
@@ -34,7 +34,7 @@
                 {{-- Header --}}
                 <div class="d-flex align-items-start justify-content-between gap-2 mb-1 flex-wrap">
                     <div>
-                        <span class="fw-semibold text-dark">{{ $comment->user?->name ?? $comment->author_name }}</span>
+                        <span class="fw-semibold text-dark">{{ $comment->commenter_name }}</span>
                         @if($comment->user?->hasRole('admin'))
                             <span class="badge bg-danger ms-1" style="font-size:.65rem;">Admin</span>
                         @elseif($comment->user?->hasRole('editor'))
@@ -53,11 +53,13 @@
 
                 {{-- Content --}}
                 <div class="comment-content">
-                    @if($comment->parent)
+                    @if($comment->parent_id)
                     <p class="mb-1">
                         <a href="#comment-{{ $comment->parent_id }}" class="text-muted text-decoration-none" style="font-size:.8rem;">
                             <i class="fas fa-reply me-1"></i>
-                            <em>@{{ $comment->parent->user?->name ?? $comment->parent->author_name }}</em>
+                            @if($comment->relationLoaded('parent') && $comment->parent)
+                                <em>{{ $comment->parent->commenter_name }}</em>
+                            @endif
                         </a>
                     </p>
                     @endif
@@ -71,8 +73,8 @@
                 <button type="button"
                         class="btn btn-link text-muted p-0 btn-sm comment-reply-toggle"
                         data-comment-id="{{ $comment->id }}"
-                        data-author="{{ $comment->user?->name ?? $comment->author_name }}"
-                        aria-label="Reply to {{ $comment->user?->name ?? $comment->author_name }}">
+                        data-author="{{ $comment->commenter_name }}"
+                        aria-label="Reply to {{ $comment->commenter_name }}">
                     <i class="fas fa-reply me-1"></i><span style="font-size:.8rem;">Reply</span>
                 </button>
                 @endif
@@ -97,7 +99,7 @@
                     @guest
                     <div class="row g-2 mb-2">
                         <div class="col-sm-4">
-                            <input type="text" name="author_name" class="form-control form-control-sm" placeholder="Your name *" required>
+                            <input type="text" name="name" class="form-control form-control-sm" placeholder="Your name *" required>
                         </div>
                         <div class="col-sm-4">
                             <input type="email" name="email" class="form-control form-control-sm" placeholder="Email *" required>

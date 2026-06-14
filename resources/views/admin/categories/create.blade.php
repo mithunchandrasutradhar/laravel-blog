@@ -30,7 +30,7 @@
 @section('content')
 
 <form method="POST" action="{{ route('admin.categories.store') }}" enctype="multipart/form-data"
-      x-data="categoryForm()">
+      x-data="categoryForm()" @media-picked.window="onMediaPicked($event.detail)">
     @csrf
 
     <div class="row g-4">
@@ -84,7 +84,7 @@
                         <select name="parent_id" id="parent_id"
                                 class="form-select @error('parent_id') is-invalid @enderror">
                             <option value="">None (Top-level)</option>
-                            @foreach($categories ?? [] as $cat)
+                            @foreach($parents ?? [] as $cat)
                                 <option value="{{ $cat->id }}" {{ old('parent_id') == $cat->id ? 'selected' : '' }}>
                                     {{ $cat->name }}
                                 </option>
@@ -126,26 +126,25 @@
                     <h6 class="fw-bold mb-0"><i class="fas fa-image text-info me-2"></i>Category Image</h6>
                 </div>
                 <div class="card-body">
-                    <div class="image-preview-box mb-2" @click="$refs.imageInput.click()">
+                    <div class="image-preview-box mb-2" @click="openMediaPicker()" style="cursor:pointer;">
                         <template x-if="imagePreview">
                             <img :src="imagePreview" alt="Preview">
                         </template>
                         <template x-if="!imagePreview">
                             <div class="text-center text-muted p-3">
-                                <i class="fas fa-cloud-upload-alt fa-2x mb-2 d-block"></i>
-                                <span class="small">Click to upload image</span>
+                                <i class="fas fa-images fa-2x mb-2 d-block"></i>
+                                <span class="small">Click to choose from media library</span>
                             </div>
                         </template>
                     </div>
-                    <input type="file" name="image" class="d-none" accept="image/*"
-                           x-ref="imageInput" @change="previewImage($event)">
+                    <input type="hidden" name="image_path" x-bind:value="selectedMediaPath">
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1"
-                                @click="$refs.imageInput.click()">
-                            <i class="fas fa-upload me-1"></i>Upload
+                                @click="openMediaPicker()">
+                            <i class="fas fa-images me-1"></i>Choose Image
                         </button>
                         <button type="button" class="btn btn-outline-danger btn-sm" x-show="imagePreview"
-                                @click="imagePreview=null; $refs.imageInput.value=''">
+                                @click="imagePreview = null; selectedMediaPath = ''">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -179,15 +178,18 @@
     </div>
 </form>
 
+@include('admin.partials.media-picker-modal')
+
 @endsection
 
 @push('scripts')
 <script>
     function categoryForm() {
         return {
-            slug: '',
-            slugEditing: false,
-            imagePreview: null,
+            slug:              '',
+            slugEditing:       false,
+            imagePreview:      {!! json_encode(old('image_path') ? asset('storage/' . old('image_path')) : null) !!},
+            selectedMediaPath: {!! json_encode(old('image_path', '')) !!},
 
             generateSlug(name) {
                 if (this.slugEditing) return;
@@ -198,13 +200,15 @@
                     .replace(/-+/g, '-');
             },
 
-            previewImage(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = e => this.imagePreview = e.target.result;
-                reader.readAsDataURL(file);
-            }
+            openMediaPicker() {
+                window.dispatchEvent(new CustomEvent('open-media-picker', { detail: { context: 'featured' } }));
+            },
+
+            onMediaPicked(detail) {
+                if (detail.context !== 'featured') return;
+                this.imagePreview      = detail.url;
+                this.selectedMediaPath = detail.file_name;
+            },
         }
     }
 </script>

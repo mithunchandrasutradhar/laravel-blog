@@ -1,4 +1,4 @@
-@extends('admin.layouts.admin')
+﻿@extends('admin.layouts.admin')
 
 @section('title', 'Settings')
 
@@ -57,7 +57,13 @@
 
 @section('content')
 
-<div class="row g-4" x-data="settingsPage()">
+<div class="row g-4" x-data="{
+    tab: '{{ request('tab', 'general') }}',
+    logoPreview: {{ settings('logo') ? json_encode(asset('storage/'.settings('logo'))) : 'null' }},
+    faviconPreview: {{ settings('favicon') ? json_encode(asset('storage/'.settings('favicon'))) : 'null' }},
+    previewLogo(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>this.logoPreview=ev.target.result; r.readAsDataURL(f); },
+    previewFavicon(e) { const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=ev=>this.faviconPreview=ev.target.result; r.readAsDataURL(f); }
+}">
 
     {{-- ── Sidebar tabs ── --}}
     <div class="col-xl-3 col-lg-4">
@@ -91,7 +97,7 @@
     <div class="col-xl-9 col-lg-8">
 
         {{-- ══ General ══ --}}
-        <div x-show="tab === 'general'" x-transition>
+        <div x-show="tab === 'general'">
             <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
@@ -126,27 +132,38 @@
                                        placeholder="123 Main St, City, Country">
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-semibold">Site Description <span class="text-muted fw-normal">(shown in footer)</span></label>
-                                <input type="text" name="site_description" class="form-control"
-                                       value="{{ old('site_description', settings('site_description', '')) }}"
-                                       placeholder="A short tagline or description for your blog..." maxlength="200">
+                                <label class="form-label fw-semibold">Site Description <span class="text-muted fw-normal">(shown in footer &amp; meta description)</span></label>
+                                <textarea name="site_description" class="form-control" rows="2"
+                                          placeholder="A short tagline or description for your blog..." maxlength="300">{{ old('site_description', settings('site_description', '')) }}</textarea>
                             </div>
 
                             {{-- Logo --}}
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Site Logo</label>
                                 <div class="logo-preview-box mb-2" @click="$refs.logoInput.click()">
-                                    <template x-if="logoPreview">
-                                        <img :src="logoPreview" alt="Logo">
-                                    </template>
-                                    <template x-if="!logoPreview">
-                                        <div class="text-muted small text-center">
-                                            <i class="fas fa-image d-block mb-1"></i>Click to upload
-                                        </div>
-                                    </template>
+                                    <img x-show="logoPreview" :src="logoPreview || ''" alt="Logo"
+                                         style="height:60px;object-fit:contain;">
+                                    <div x-show="!logoPreview" class="text-muted small text-center">
+                                        <i class="fas fa-image d-block mb-1"></i>Click to upload
+                                    </div>
                                 </div>
                                 <input type="file" name="logo" class="d-none" accept="image/*"
                                        x-ref="logoInput" @change="previewLogo($event)">
+                                <div class="row g-2 mt-1">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-semibold mb-1">Display Height (px)</label>
+                                        <input type="number" name="logo_height" class="form-control form-control-sm"
+                                               value="{{ old('logo_height', settings('logo_height', 38)) }}"
+                                               min="16" max="200" placeholder="38">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-semibold mb-1">Max Width (px)</label>
+                                        <input type="number" name="logo_width" class="form-control form-control-sm"
+                                               value="{{ old('logo_width', settings('logo_width', '')) }}"
+                                               min="0" max="600" placeholder="auto">
+                                    </div>
+                                </div>
+                                <div class="form-text">Controls logo size across the site. Leave Max Width blank for auto.</div>
                             </div>
 
                             {{-- Favicon --}}
@@ -154,12 +171,9 @@
                                 <label class="form-label fw-semibold">Favicon</label>
                                 <div class="d-flex align-items-center gap-3">
                                     <div class="favicon-preview-box" @click="$refs.faviconInput.click()">
-                                        <template x-if="faviconPreview">
-                                            <img :src="faviconPreview" alt="Favicon">
-                                        </template>
-                                        <template x-if="!faviconPreview">
-                                            <i class="fas fa-globe text-muted"></i>
-                                        </template>
+                                        <img x-show="faviconPreview" :src="faviconPreview || ''" alt="Favicon"
+                                             style="width:48px;height:48px;object-fit:cover;">
+                                        <i x-show="!faviconPreview" class="fas fa-globe text-muted"></i>
                                     </div>
                                     <div>
                                         <button type="button" class="btn btn-sm btn-outline-primary d-block mb-1"
@@ -173,11 +187,6 @@
                                        x-ref="faviconInput" @change="previewFavicon($event)">
                             </div>
 
-                            <div class="col-12">
-                                <label class="form-label fw-semibold">About / Tagline</label>
-                                <textarea name="about" class="form-control" rows="3"
-                                          placeholder="Brief about your blog...">{{ old('about', settings('about', '')) }}</textarea>
-                            </div>
                         </div>
                     </div>
                     <div class="card-footer bg-transparent border-0 text-end py-3">
@@ -190,7 +199,7 @@
         </div>
 
         {{-- ══ SEO ══ --}}
-        <div x-show="tab === 'seo'" x-transition>
+        <div x-show="tab === 'seo'">
             <form method="POST" action="{{ route('admin.settings.update') }}">
                 @csrf
                 @method('PUT')
@@ -259,7 +268,7 @@
         </div>
 
         {{-- ══ Social ══ --}}
-        <div x-show="tab === 'social'" x-transition>
+        <div x-show="tab === 'social'">
             <form method="POST" action="{{ route('admin.settings.update') }}">
                 @csrf
                 @method('PUT')
@@ -387,7 +396,7 @@
         </div>
 
         {{-- ══ Mail ══ --}}
-        <div x-show="tab === 'mail'" x-transition>
+        <div x-show="tab === 'mail'">
             <form method="POST" action="{{ route('admin.settings.update') }}">
                 @csrf
                 @method('PUT')
@@ -463,7 +472,7 @@
         </div>
 
         {{-- ══ Appearance ══ --}}
-        <div x-show="tab === 'appearance'" x-transition>
+        <div x-show="tab === 'appearance'">
             <form method="POST" action="{{ route('admin.settings.update') }}">
                 @csrf
                 @method('PUT')
@@ -525,7 +534,7 @@
         </div>
 
         {{-- ══ Comments ══ --}}
-        <div x-show="tab === 'comments'" x-transition>
+        <div x-show="tab === 'comments'">
             <form method="POST" action="{{ route('admin.settings.update') }}">
                 @csrf
                 @method('PUT')
@@ -608,6 +617,7 @@
             </form>
         </div>
 
+
     </div>
 </div>
 
@@ -615,30 +625,6 @@
 
 @push('scripts')
 <script>
-    function settingsPage() {
-        return {
-            tab: '{{ request("tab", "general") }}',
-            logoPreview: {{ settings('logo') ? '"' . asset('storage/' . settings('logo')) . '"' : 'null' }},
-            faviconPreview: {{ settings('favicon') ? '"' . asset('storage/' . settings('favicon')) . '"' : 'null' }},
-
-            previewLogo(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = e => this.logoPreview = e.target.result;
-                reader.readAsDataURL(file);
-            },
-
-            previewFavicon(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = e => this.faviconPreview = e.target.result;
-                reader.readAsDataURL(file);
-            }
-        }
-    }
-
     function updatePreview(platform, url, bg) {
         const box   = document.getElementById('preview-' + platform);
         const empty = document.getElementById('preview-empty');
@@ -657,3 +643,4 @@
     }
 </script>
 @endpush
+

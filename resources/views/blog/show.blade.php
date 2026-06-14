@@ -159,7 +159,7 @@
 
                         {{-- In-Article Advertisement --}}
                         <div class="my-4">
-                            @include('partials.advertisement', ['position' => 'in_article'])
+                            @include('partials.advertisement', ['position' => 'in-article'])
                         </div>
 
                         {!! implode('', array_slice($contentParts, 4)) !!}
@@ -266,7 +266,7 @@
                 <section class="comments-section mt-5" id="comments" aria-labelledby="commentsHeading">
                     <h3 id="commentsHeading" class="h5 fw-bold mb-4">
                         <i class="fas fa-comments me-2 text-primary"></i>
-                        {{ $post->approved_comments_count ?? $post->comments->count() }} {{ Str::plural('Comment', $post->approved_comments_count ?? $post->comments->count()) }}
+                        {{ $post->approvedComments->count() }} {{ Str::plural('Comment', $post->approvedComments->count()) }}
                     </h3>
 
                     {{-- Comment Form --}}
@@ -275,10 +275,9 @@
                             <i class="fas fa-pen me-2 text-primary"></i>Leave a Comment
                         </h4>
 
-                        @if(session('comment_success'))
+                        @if(session('success'))
                         <div class="alert alert-success">
-                            <i class="fas fa-check-circle me-2"></i>
-                            {{ session('comment_pending') ? 'Your comment has been submitted and is awaiting moderation.' : 'Your comment has been posted!' }}
+                            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
                         </div>
                         @else
                         <form action="{{ route('comments.store') }}" method="POST" id="commentForm" novalidate>
@@ -290,9 +289,9 @@
                             {{-- Guest fields --}}
                             <div class="row g-3 mb-3">
                                 <div class="col-sm-4">
-                                    <label for="author_name" class="form-label small fw-medium">Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="author_name" id="author_name" class="form-control @error('author_name') is-invalid @enderror" value="{{ old('author_name') }}" required autocomplete="name">
-                                    @error('author_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    <label for="comment_name" class="form-label small fw-medium">Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" id="comment_name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required autocomplete="name">
+                                    @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                 </div>
                                 <div class="col-sm-4">
                                     <label for="comment_email" class="form-label small fw-medium">Email <span class="text-danger">*</span></label>
@@ -353,10 +352,10 @@
                         @endif
                     </div>
 
-                    {{-- Comments List --}}
-                    @if($post->comments->isNotEmpty())
+                    {{-- Comments List — only approved, top-level; replies are nested inside comment-item --}}
+                    @if($post->approvedComments->isNotEmpty())
                     <div class="comments-list" id="commentsList">
-                        @foreach($post->comments->whereNull('parent_id') as $comment)
+                        @foreach($post->approvedComments as $comment)
                             @include('partials.comment-item', ['comment' => $comment, 'depth' => 0])
                             @if(!$loop->last)<hr class="my-4">@endif
                         @endforeach

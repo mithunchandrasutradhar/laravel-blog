@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Subscriber;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\View\View;
 
 class SubscriberController extends Controller
@@ -23,29 +23,38 @@ class SubscriberController extends Controller
     {
         $query = Subscriber::query();
 
-        // Filter by verified status
-        if ($request->filled('status')) {
-            if ($request->status === 'verified') {
+        // Filter by verified status (view sends verified=1 or verified=0)
+        if ($request->filled('verified')) {
+            if ($request->verified === '1') {
                 $query->verified();
-            } else {
+            } elseif ($request->verified === '0') {
                 $query->unverified();
             }
         }
 
-        // Search by name or email
-        if ($request->filled('q')) {
-            $q = $request->q;
-            $query->where(function ($sub) use ($q) {
-                $sub->where('email', 'LIKE', "%{$q}%")
-                    ->orWhere('name', 'LIKE', "%{$q}%");
-            });
+        // Search by email
+        if ($request->filled('search')) {
+            $query->where('email', 'LIKE', "%{$request->search}%");
         }
 
-        $subscribers   = $query->latest()->paginate(self::PER_PAGE)->withQueryString();
-        $totalVerified = Subscriber::verified()->count();
-        $totalAll      = Subscriber::count();
+        $subscribers     = $query->latest()->paginate(self::PER_PAGE)->withQueryString();
+        $totalCount      = Subscriber::count();
+        $verifiedCount   = Subscriber::verified()->count();
+        $unverifiedCount = $totalCount - $verifiedCount;
 
-        return view('admin.subscribers.index', compact('subscribers', 'totalVerified', 'totalAll'));
+        return view('admin.subscribers.index', compact(
+            'subscribers', 'totalCount', 'verifiedCount', 'unverifiedCount'
+        ));
+    }
+
+    /**
+     * Manually verify a subscriber.
+     */
+    public function verify(Subscriber $subscriber): RedirectResponse
+    {
+        $subscriber->verify();
+
+        return back()->with('success', 'Subscriber marked as verified.');
     }
 
     /**
@@ -59,11 +68,11 @@ class SubscriberController extends Controller
     }
 
     /**
-     * Export all verified subscribers as a CSV file.
+     * Export all subscribers as a CSV file.
      */
-    public function export(): Response
+    public function export(): StreamedResponse
     {
-        $subscribers = Subscriber::verified()->orderBy('email')->get(['name', 'email', 'verified_at', 'created_at']);
+        $subscribers = Subscriber::orderBy('email')->get(['email', 'verified_at', 'created_at']);
 
         $filename = 'subscribers-' . now()->format('Y-m-d') . '.csv';
 
@@ -82,12 +91,12 @@ class SubscriberController extends Controller
             fwrite($handle, "\xEF\xBB\xBF");
 
             // Header row
-            fputcsv($handle, ['Name', 'Email', 'Verified At', 'Subscribed At']);
+            fputcsv($handle, ['Email', 'Status', 'Verified At', 'Subscribed At']);
 
             foreach ($subscribers as $subscriber) {
                 fputcsv($handle, [
-                    $subscriber->name ?? '',
                     $subscriber->email,
+                    $subscriber->verified_at ? 'Verified' : 'Unverified',
                     $subscriber->verified_at?->toDateTimeString() ?? '',
                     $subscriber->created_at->toDateTimeString(),
                 ]);
