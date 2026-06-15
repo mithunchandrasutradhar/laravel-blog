@@ -479,36 +479,73 @@
     <div class="d-flex align-items-center gap-2 ms-auto">
 
         {{-- Notifications --}}
+        @php
+            $bellNotifications = auth()->user()->notifications()->latest()->take(8)->get();
+            $bellUnread        = auth()->user()->unreadNotifications()->count();
+        @endphp
         <div class="dropdown">
             <button class="btn btn-link text-secondary p-1 position-relative" data-bs-toggle="dropdown" title="Notifications">
                 <i class="fas fa-bell fa-lg"></i>
-                <span class="notification-dot"></span>
+                @if($bellUnread)
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.6rem;min-width:16px;">
+                    {{ $bellUnread > 9 ? '9+' : $bellUnread }}
+                </span>
+                @endif
             </button>
-            <div class="dropdown-menu dropdown-menu-end shadow" style="width:320px;max-height:400px;overflow-y:auto;">
+            <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width:340px;">
                 <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
                     <strong class="small">Notifications</strong>
-                    <a href="#" class="small text-decoration-none">Mark all read</a>
+                    @if($bellUnread)
+                    <form method="POST" action="{{ route('admin.notifications.mark-all-read') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-link btn-sm p-0 small text-primary text-decoration-none">Mark all read</button>
+                    </form>
+                    @endif
                 </div>
-                <a class="dropdown-item py-2 border-bottom" href="#">
-                    <div class="d-flex gap-2">
-                        <div class="text-primary mt-1"><i class="fas fa-comment-dots"></i></div>
-                        <div>
-                            <div class="small fw-semibold">New comment awaiting approval</div>
-                            <div class="text-muted" style="font-size:.75rem;">2 minutes ago</div>
+                <div style="max-height:360px;overflow-y:auto;">
+                    @forelse($bellNotifications as $notif)
+                    @php
+                        $d    = $notif->data;
+                        $type = $d['type'] ?? '';
+                        $icon = match($type) {
+                            'new_comment'            => ['icon' => 'fa-comment-dots', 'color' => 'text-primary'],
+                            'contact_form_submission' => ['icon' => 'fa-envelope',    'color' => 'text-info'],
+                            default                   => ['icon' => 'fa-bell',         'color' => 'text-secondary'],
+                        };
+                        $text = match($type) {
+                            'new_comment'            => ($d['commenter_name'] ?? 'Someone') . ' commented on "' . ($d['post_title'] ?? 'a post') . '"',
+                            'contact_form_submission' => 'New message from ' . ($d['from_name'] ?? 'someone') . ': ' . ($d['subject'] ?? ''),
+                            default                   => $d['message'] ?? 'New notification',
+                        };
+                        $url = match($type) {
+                            'new_comment'            => route('admin.comments.index'),
+                            'contact_form_submission' => isset($d['message_id']) ? route('admin.contact-messages.show', $d['message_id']) : '#',
+                            default                   => '#',
+                        };
+                    @endphp
+                    <a class="dropdown-item py-2 border-bottom {{ $notif->read_at ? '' : 'bg-light' }}"
+                       href="{{ $url }}"
+                       onclick="markRead('{{ $notif->id }}')">
+                        <div class="d-flex gap-2 align-items-start">
+                            <div class="{{ $icon['color'] }} mt-1 flex-shrink-0"><i class="fas {{ $icon['icon'] }}"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="small fw-{{ $notif->read_at ? 'normal' : 'semibold' }} text-truncate" style="max-width:260px;">{{ $text }}</div>
+                                <div class="text-muted" style="font-size:.72rem;">{{ $notif->created_at->diffForHumans() }}</div>
+                            </div>
+                            @if(!$notif->read_at)
+                            <div class="flex-shrink-0 ms-auto"><span class="bg-primary rounded-circle d-inline-block" style="width:7px;height:7px;"></span></div>
+                            @endif
                         </div>
+                    </a>
+                    @empty
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-bell-slash d-block mb-2 fs-4 opacity-50"></i>
+                        <div class="small">No notifications</div>
                     </div>
-                </a>
-                <a class="dropdown-item py-2" href="#">
-                    <div class="d-flex gap-2">
-                        <div class="text-success mt-1"><i class="fas fa-user-plus"></i></div>
-                        <div>
-                            <div class="small fw-semibold">New user registered</div>
-                            <div class="text-muted" style="font-size:.75rem;">1 hour ago</div>
-                        </div>
-                    </div>
-                </a>
-                <div class="text-center py-2 border-top">
-                    <a href="#" class="small text-decoration-none">View all notifications</a>
+                    @endforelse
+                </div>
+                <div class="text-center border-top py-2">
+                    <a href="{{ route('admin.notifications.index') }}" class="small text-decoration-none">View all notifications</a>
                 </div>
             </div>
         </div>
@@ -517,16 +554,16 @@
         <div class="dropdown">
             <button class="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-1"
                     data-bs-toggle="dropdown">
-                @if(auth()->user()->avatar ?? false)
-                    <img src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="avatar" class="avatar-sm">
+                @if(auth()->user()->avatar)
+                    <img src="{{ asset(auth()->user()->avatar) }}" alt="avatar" class="avatar-sm rounded-circle" style="object-fit:cover;">
                 @else
-                    <div class="avatar-sm bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
+                    <div class="avatar-sm bg-primary d-flex align-items-center justify-content-center text-white fw-bold rounded-circle"
                          style="font-size:.8rem;">
-                        {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}
+                        {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
                     </div>
                 @endif
                 <span class="d-none d-md-inline small fw-semibold text-dark">
-                    {{ auth()->user()->name ?? 'Admin' }}
+                    {{ explode(' ', auth()->user()->name ?? 'Admin')[0] }}
                 </span>
                 <i class="fas fa-chevron-down text-muted" style="font-size:.65rem;"></i>
             </button>
@@ -706,5 +743,13 @@
 </script>
 
 @stack('scripts')
+<script>
+function markRead(id) {
+    fetch(`/admin/notifications/${id}/mark-read`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+    });
+}
+</script>
 </body>
 </html>

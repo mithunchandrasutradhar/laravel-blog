@@ -36,7 +36,7 @@
                     <tr>
                         <td class="ps-4 fw-semibold">{{ $page->title }}</td>
                         <td>
-                            <a href="{{ route('pages.show', $page->slug) }}" target="_blank"
+                            <a href="{{ route('blog.show', $page->slug) }}" target="_blank"
                                class="text-muted text-decoration-none small">
                                 /{{ $page->slug }} <i class="fas fa-external-link-alt ms-1" style="font-size:.65rem;"></i>
                             </a>

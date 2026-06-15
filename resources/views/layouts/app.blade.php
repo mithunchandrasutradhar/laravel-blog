@@ -248,12 +248,11 @@
                             <div class="dropdown">
                                 <button class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
                                         type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    @if(auth()->user()->avatar)
-                                        <img src="{{ asset(auth()->user()->avatar) }}"
+                                    @if(auth()->user()->profile_image)
+                                        <img src="{{ asset('storage/' . auth()->user()->profile_image) }}"
                                              alt="{{ auth()->user()->name }}"
-                                             class="rounded-circle"
-                                             width="34" height="34"
-                                             style="object-fit:cover;border:2px solid #e2e8f0;">
+                                             class="rounded-circle flex-shrink-0"
+                                             style="width:34px;height:34px;min-width:34px;min-height:34px;object-fit:cover;border:2px solid #e2e8f0;">
                                     @else
                                         <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0"
                                              style="width:34px;height:34px;font-size:.8rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:2px solid #e2e8f0;">
@@ -261,7 +260,7 @@
                                         </div>
                                     @endif
                                     <span class="d-none d-xl-inline fw-semibold" style="font-size:.875rem;color:#374151;">
-                                        {{ auth()->user()->name }}
+                                        {{ explode(' ', auth()->user()->name)[0] }}
                                     </span>
                                     <i class="fas fa-chevron-down d-none d-xl-inline" style="font-size:.55rem;color:#9ca3af;"></i>
                                 </button>
@@ -278,7 +277,13 @@
                                     @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('editor'))
                                     <li>
                                         <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
-                                            <span class="di-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-tachometer-alt"></i></span>Dashboard
+                                            <span class="di-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-tachometer-alt"></i></span>Admin Dashboard
+                                        </a>
+                                    </li>
+                                    @elseif(auth()->user()->hasRole('author'))
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('author.dashboard') }}">
+                                            <span class="di-icon" style="background:#e0f2fe;color:#0284c7;"><i class="fas fa-pen-nib"></i></span>Author Dashboard
                                         </a>
                                     </li>
                                     @endif
@@ -541,7 +546,7 @@
                     @if($footerPages->isNotEmpty())
                     <span style="font-size:.78rem;color:#4a4a6a;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
                         @foreach($footerPages as $fp)
-                        <a href="{{ route('pages.show', $fp->slug) }}" style="color:#6b6b8a;text-decoration:none;"
+                        <a href="{{ route('blog.show', $fp->slug) }}" style="color:#6b6b8a;text-decoration:none;"
                            onmouseover="this.style.color='#f59e0b'" onmouseout="this.style.color='#6b6b8a'">{{ $fp->title }}</a>
                         @endforeach
                     </span>

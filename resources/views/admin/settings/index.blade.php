@@ -460,9 +460,13 @@
                         </div>
                     </div>
                     <div class="card-footer bg-transparent border-0 d-flex align-items-center justify-content-between py-3">
-                        <button type="button" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-paper-plane me-1"></i>Send Test Email
-                        </button>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="testEmailBtn"
+                                    onclick="sendTestEmail()">
+                                <i class="fas fa-paper-plane me-1"></i>Send Test Email
+                            </button>
+                            <span id="testEmailResult" class="small" style="display:none;"></span>
+                        </div>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>Save Mail Settings
                         </button>
@@ -625,6 +629,45 @@
 
 @push('scripts')
 <script>
+    async function sendTestEmail() {
+        const btn    = document.getElementById('testEmailBtn');
+        const result = document.getElementById('testEmailResult');
+        const email  = prompt('Send test email to:', '{{ auth()->user()->email }}');
+        if (!email) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending…';
+        result.style.display = 'none';
+
+        try {
+            const res  = await fetch('{{ route('admin.settings.test-email') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            result.style.display = 'inline';
+            if (data.success) {
+                result.className = 'small text-success';
+                result.innerHTML = '<i class="fas fa-check-circle me-1"></i>' + data.message;
+            } else {
+                result.className = 'small text-danger';
+                result.innerHTML = '<i class="fas fa-times-circle me-1"></i>' + data.message;
+            }
+        } catch (e) {
+            result.style.display = 'inline';
+            result.className = 'small text-danger';
+            result.innerHTML = '<i class="fas fa-times-circle me-1"></i>Network error.';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Send Test Email';
+        }
+    }
+
     function updatePreview(platform, url, bg) {
         const box   = document.getElementById('preview-' + platform);
         const empty = document.getElementById('preview-empty');

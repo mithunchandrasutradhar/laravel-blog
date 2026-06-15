@@ -9,21 +9,19 @@
 <div class="comment-item {{ $depth > 0 ? 'comment-nested' : '' }}" id="comment-{{ $comment->id }}" data-depth="{{ $depth }}">
     <div class="d-flex gap-3">
         {{-- Avatar --}}
+        @php $avatarSize = $depth === 0 ? '44px' : '36px'; @endphp
         <div class="comment-avatar flex-shrink-0">
             @if($comment->user?->avatar)
                 <img src="{{ asset($comment->user->avatar) }}"
                      alt="{{ $comment->user->name }}"
-                     class="rounded-circle"
-                     width="{{ $depth === 0 ? 44 : 36 }}"
-                     height="{{ $depth === 0 ? 44 : 36 }}"
-                     style="object-fit:cover;"
+                     class="rounded-circle flex-shrink-0"
+                     style="width:{{ $avatarSize }};height:{{ $avatarSize }};min-width:{{ $avatarSize }};min-height:{{ $avatarSize }};object-fit:cover;"
                      loading="lazy">
             @else
                 <img src="https://www.gravatar.com/avatar/{{ md5(strtolower(trim($comment->commenter_email ?? 'unknown@example.com'))) }}?s={{ $depth === 0 ? 88 : 72 }}&d=mp"
                      alt="{{ $comment->commenter_name }}"
-                     class="rounded-circle"
-                     width="{{ $depth === 0 ? 44 : 36 }}"
-                     height="{{ $depth === 0 ? 44 : 36 }}"
+                     class="rounded-circle flex-shrink-0"
+                     style="width:{{ $avatarSize }};height:{{ $avatarSize }};min-width:{{ $avatarSize }};min-height:{{ $avatarSize }};object-fit:cover;"
                      loading="lazy">
             @endif
         </div>

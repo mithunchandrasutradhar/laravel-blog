@@ -49,6 +49,19 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Block inactive or suspended accounts immediately after credential check
+        $user = Auth::user();
+        if (! $user->isActive()) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+
+            $message = $user->status === 'suspended'
+                ? 'Your account has been suspended. Please contact support.'
+                : 'Your account is currently inactive. Please contact support.';
+
+            throw ValidationException::withMessages(['email' => $message]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

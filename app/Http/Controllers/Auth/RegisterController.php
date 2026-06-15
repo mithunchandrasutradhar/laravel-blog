@@ -38,7 +38,7 @@ class RegisterController extends Controller
         ]);
 
         // Assign default role via spatie/laravel-permission
-        $user->assignRole('reader');
+        $user->assignRole('user');
 
         event(new Registered($user));
 

@@ -36,9 +36,16 @@ class MediaController extends Controller
         $query = Media::latest();
 
         if ($request->filled('folder')) {
-            $currentFolder = MediaFolder::where('slug', $request->folder)->firstOrFail();
-            $query->where('folder_id', $currentFolder->id);
+            if ($request->folder === 'uncategorized') {
+                $currentFolder = (object)['id' => null, 'name' => 'Uncategorized', 'slug' => 'uncategorized'];
+                $query->whereNull('folder_id');
+            } else {
+                $currentFolder = MediaFolder::where('slug', $request->folder)->firstOrFail();
+                $query->where('folder_id', $currentFolder->id);
+            }
         }
+
+        $uncategorizedCount = Media::whereNull('folder_id')->count();
 
         if ($request->filled('type')) {
             if ($request->type === 'image') {
@@ -54,7 +61,7 @@ class MediaController extends Controller
 
         $media = $query->paginate(self::PER_PAGE)->withQueryString();
 
-        return view('admin.media.index', compact('media', 'folders', 'currentFolder'));
+        return view('admin.media.index', compact('media', 'folders', 'currentFolder', 'uncategorizedCount'));
     }
 
     public function store(Request $request): JsonResponse
@@ -78,6 +85,8 @@ class MediaController extends Controller
 
         foreach ($request->file('files') as $file) {
             $originalName = $file->getClientOriginalName();
+            $mimeType     = $file->getMimeType() ?? $file->getClientMimeType();
+            $fileSize     = $file->getSize();
             $safeName     = Str::slug(pathinfo($originalName, PATHINFO_FILENAME))
                 . '-' . uniqid()
                 . '.' . $file->getClientOriginalExtension();
@@ -91,9 +100,9 @@ class MediaController extends Controller
             $media = Media::create([
                 'name'            => pathinfo($originalName, PATHINFO_FILENAME),
                 'file_name'       => $path,
-                'mime_type'       => $file->getMimeType(),
+                'mime_type'       => $mimeType,
                 'disk'            => 'public',
-                'size'            => $file->getSize(),
+                'size'            => $fileSize,
                 'collection_name' => $folder ? $folder->slug : 'default',
                 'folder_id'       => $folder?->id,
             ]);
@@ -202,6 +211,77 @@ class MediaController extends Controller
             'url'        => $copy->url,
             'human_size' => $copy->human_size,
         ]);
+    }
+
+    public function bulkMove(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids'       => ['required', 'array', 'min:1'],
+            'ids.*'     => ['integer', 'exists:media,id'],
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+        ]);
+
+        $folder = $request->folder_id ? MediaFolder::find($request->folder_id) : null;
+
+        Media::whereIn('id', $request->ids)->update([
+            'folder_id'       => $folder?->id,
+            'collection_name' => $folder ? $folder->slug : 'default',
+        ]);
+
+        return response()->json(['success' => true, 'count' => count($request->ids)]);
+    }
+
+    public function bulkCopy(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids'       => ['required', 'array', 'min:1'],
+            'ids.*'     => ['integer', 'exists:media,id'],
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+        ]);
+
+        $folder  = $request->folder_id ? MediaFolder::find($request->folder_id) : null;
+        $subDir  = $folder ? 'media/' . $folder->slug : 'media/' . now()->format('Y/m');
+        $copied  = 0;
+
+        foreach (Media::whereIn('id', $request->ids)->get() as $media) {
+            $ext      = pathinfo($media->file_name, PATHINFO_EXTENSION);
+            $safeName = Str::slug($media->name) . '-copy-' . uniqid() . '.' . $ext;
+            $newPath  = $subDir . '/' . $safeName;
+
+            if (Storage::disk($media->disk)->exists($media->file_name)) {
+                Storage::disk($media->disk)->copy($media->file_name, $newPath);
+            }
+
+            Media::create([
+                'name'            => $media->name . ' (copy)',
+                'file_name'       => $newPath,
+                'mime_type'       => $media->mime_type,
+                'disk'            => $media->disk,
+                'size'            => $media->size,
+                'collection_name' => $folder ? $folder->slug : $media->collection_name,
+                'folder_id'       => $folder?->id,
+            ]);
+            $copied++;
+        }
+
+        return response()->json(['success' => true, 'count' => $copied]);
+    }
+
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids'   => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:media,id'],
+        ]);
+
+        $count = 0;
+        foreach (Media::whereIn('id', $request->ids)->get() as $media) {
+            Storage::disk($media->disk)->delete($media->file_name);
+            $media->delete();
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 
     public function destroy(Media $media): JsonResponse|RedirectResponse

@@ -117,6 +117,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Provide an "avatar" attribute used by templates throughout the app.
+     * Returns the storage-relative path so callers can wrap it with asset().
+     * Returns null when no profile image is set (so @if checks work correctly).
+     */
+    public function getAvatarAttribute(): ?string
+    {
+        return $this->profile_image ? 'storage/' . $this->profile_image : null;
+    }
+
+    /**
      * Determine whether the user's account is active.
      */
     public function isActive(): bool

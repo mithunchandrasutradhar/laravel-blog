@@ -31,7 +31,7 @@ class PageController extends Controller
         $seo = [
             'title'       => ($page->meta_title ?: $page->title) . ' — ' . $siteName,
             'description' => $page->meta_description ?: '',
-            'canonical'   => $page->canonical_url ?: route('pages.show', $slug),
+            'canonical'   => $page->canonical_url ?: route('blog.show', $slug),
             'og_title'    => $page->meta_title ?: $page->title,
             'og_type'     => 'website',
         ];

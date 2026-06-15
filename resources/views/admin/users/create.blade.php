@@ -137,7 +137,7 @@
                             </div>
                         </template>
                     </div>
-                    <input type="file" name="avatar" class="d-none" accept="image/*"
+                    <input type="file" name="profile_image" class="d-none" accept="image/*"
                            x-ref="avatarInput" @change="previewAvatar($event)">
                     <div class="d-flex justify-content-center gap-2">
                         <button type="button" class="btn btn-outline-primary btn-sm"

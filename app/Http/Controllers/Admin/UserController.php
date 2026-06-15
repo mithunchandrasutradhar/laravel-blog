@@ -67,18 +67,44 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): RedirectResponse
     {
-        $user = User::create([
+        $data = [
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
             'bio'      => $request->bio,
             'status'   => $request->status ?? 'active',
-        ]);
+        ];
+
+        if ($request->hasFile('profile_image')) {
+            $file     = $request->file('profile_image');
+            $mimeType = $file->getMimeType() ?? $file->getClientMimeType();
+            $fileSize = $file->getSize();
+            $origName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeName = Str::slug($origName) . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path     = $file->storeAs('media/users', $safeName, 'public');
+
+            if ($path !== false) {
+                $data['profile_image'] = $path;
+
+                $usersFolder = MediaFolder::where('slug', 'users')->first();
+                Media::create([
+                    'name'            => $origName,
+                    'file_name'       => $path,
+                    'mime_type'       => $mimeType,
+                    'disk'            => 'public',
+                    'size'            => $fileSize,
+                    'collection_name' => 'users',
+                    'folder_id'       => $usersFolder?->id,
+                ]);
+            }
+        }
+
+        $user = User::create($data);
 
         if ($request->filled('role')) {
             $user->syncRoles([$request->role]);
         } else {
-            $user->assignRole('reader');
+            $user->assignRole('user');
         }
 
         return redirect()->route('admin.users.index')
@@ -123,19 +149,25 @@ class UserController extends Controller
                 Storage::disk('public')->delete($user->profile_image);
             }
             $file       = $request->file('profile_image');
-            $safeName   = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
-                . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $path       = $file->storeAs('media/users', $safeName, 'public');
+            $mimeType   = $file->getMimeType() ?? $file->getClientMimeType();
+            $fileSize   = $file->getSize();
+            $origName   = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeName   = Str::slug($origName) . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('media/users', $safeName, 'public');
+
+            if ($path === false) {
+                return back()->withErrors(['profile_image' => 'Failed to save image. Check storage permissions.'])->withInput();
+            }
 
             $data['profile_image'] = $path;
 
             $usersFolder = MediaFolder::where('slug', 'users')->first();
             Media::create([
-                'name'            => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                'name'            => $origName,
                 'file_name'       => $path,
-                'mime_type'       => $file->getMimeType(),
+                'mime_type'       => $mimeType,
                 'disk'            => 'public',
-                'size'            => $file->getSize(),
+                'size'            => $fileSize,
                 'collection_name' => 'users',
                 'folder_id'       => $usersFolder?->id,
             ]);

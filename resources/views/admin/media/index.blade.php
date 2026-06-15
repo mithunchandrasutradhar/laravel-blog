@@ -94,6 +94,24 @@
     .media-action-btn { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: .75rem; }
     .cursor-pointer { cursor: pointer; }
 
+    /* ── Bulk selection ─────────────────────────────── */
+    .media-checkbox-wrap {
+        position: absolute; top: 6px; left: 6px; z-index: 10;
+        opacity: 0; transition: opacity .15s;
+    }
+    .media-item:hover .media-checkbox-wrap,
+    .media-item.selected .media-checkbox-wrap { opacity: 1; }
+    .media-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #0d6efd; }
+    .media-item.selected { border-color: #0d6efd !important; box-shadow: 0 0 0 2px rgba(13,110,253,.3) !important; }
+
+    /* ── Bulk action bar ────────────────────────────── */
+    .bulk-bar {
+        display: none; align-items: center; gap: .5rem; flex-wrap: wrap;
+        background: #e7f1ff; border: 1px solid #b8d4f9;
+        border-radius: .5rem; padding: .5rem .75rem; margin-bottom: .75rem;
+    }
+    .bulk-bar.active { display: flex; }
+
     /* ── Rename input ───────────────────────────────── */
     .folder-rename-input {
         font-size: .875rem;
@@ -171,6 +189,15 @@
                         <i class="fas fa-plus fa-sm"></i>
                     </button>
                 </div>
+
+                {{-- Uncategorized (virtual folder: files with no folder_id) --}}
+                @php $isUncategorized = ($currentFolder?->slug ?? '') === 'uncategorized'; @endphp
+                <a href="{{ route('admin.media.index', ['folder' => 'uncategorized']) }}"
+                   class="folder-item {{ $isUncategorized ? 'active' : '' }}">
+                    <i class="fas fa-inbox" style="width:16px;text-align:center;"></i>
+                    <span>Uncategorized</span>
+                    <span class="folder-count">{{ $uncategorizedCount }}</span>
+                </a>
 
                 {{-- Folder list --}}
                 @forelse($folders as $folder)
@@ -311,11 +338,34 @@
         {{-- Media grid --}}
         <div class="card border-0 shadow-sm">
             <div class="card-body">
+
+                {{-- Bulk action bar --}}
+                <div class="bulk-bar" id="bulkBar">
+                    <span class="small fw-semibold text-primary" id="bulkCount">0 selected</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllVisible()">Select All</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">Deselect</button>
+                    <div class="vr mx-1"></div>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="openBulkMoveCopy('move')">
+                        <i class="fas fa-folder-open me-1"></i>Move
+                    </button>
+                    <button type="button" class="btn btn-sm btn-success" onclick="openBulkMoveCopy('copy')">
+                        <i class="fas fa-copy me-1"></i>Copy
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="bulkDelete()">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </div>
+
                 @if($media->count())
                 <div class="media-grid">
                     @foreach($media as $file)
                     <div class="media-item" id="media-{{ $file->id }}">
-                        @if(Str::startsWith($file->mime_type ?? '', 'image/'))
+                        <div class="media-checkbox-wrap">
+                            <input type="checkbox" class="media-checkbox" data-id="{{ $file->id }}"
+                                   onchange="toggleSelect({{ $file->id }}, this)"
+                                   onclick="event.stopPropagation()">
+                        </div>
+                        @if($file->isImage())
                             <img src="{{ $file->url }}" alt="{{ $file->name }}" class="media-thumb">
                         @elseif($file->mime_type === 'application/pdf')
                             <div class="media-thumb-icon text-danger"><i class="fas fa-file-pdf"></i></div>
@@ -598,6 +648,7 @@
         _moveCopyAction = action;
 
         var modal = document.getElementById('fileMoveCopyModal');
+        modal.dataset.bulk = '0';
         modal.querySelector('#fileMoveCopyModalLabel').innerHTML =
             action === 'move'
                 ? '<i class="fas fa-folder-open me-2"></i>Move File'
@@ -609,46 +660,148 @@
         modal.querySelector('#fileMoveCopyBtn').textContent =
             action === 'move' ? 'Move' : 'Copy';
 
-        // Clear radio selection
         modal.querySelectorAll('input[name="moveCopyFolder"]').forEach(r => r.checked = false);
+        new bootstrap.Modal(modal).show();
+    };
 
+    // ── Bulk Selection ──────────────────────────────────────────────────────────
+    var _selectedIds = new Set();
+
+    window.toggleSelect = function (id, checkbox) {
+        if (checkbox.checked) {
+            _selectedIds.add(id);
+            document.getElementById('media-' + id).classList.add('selected');
+        } else {
+            _selectedIds.delete(id);
+            document.getElementById('media-' + id).classList.remove('selected');
+        }
+        updateBulkBar();
+    };
+
+    window.selectAllVisible = function () {
+        document.querySelectorAll('.media-checkbox').forEach(function (cb) {
+            cb.checked = true;
+            _selectedIds.add(Number(cb.dataset.id));
+            cb.closest('.media-item').classList.add('selected');
+        });
+        updateBulkBar();
+    };
+
+    window.deselectAll = function () {
+        document.querySelectorAll('.media-checkbox').forEach(function (cb) {
+            cb.checked = false;
+            cb.closest('.media-item').classList.remove('selected');
+        });
+        _selectedIds.clear();
+        updateBulkBar();
+    };
+
+    function updateBulkBar() {
+        var bar   = document.getElementById('bulkBar');
+        var count = document.getElementById('bulkCount');
+        if (_selectedIds.size > 0) {
+            bar.classList.add('active');
+            count.textContent = _selectedIds.size + ' selected';
+        } else {
+            bar.classList.remove('active');
+        }
+    }
+
+    // ── Bulk Move / Copy ────────────────────────────────────────────────────────
+    var _bulkAction = null;
+
+    window.openBulkMoveCopy = function (action) {
+        if (_selectedIds.size === 0) return;
+        _bulkAction = action;
+
+        var modal = document.getElementById('fileMoveCopyModal');
+        var n     = _selectedIds.size;
+        modal.dataset.bulk = '1';
+        modal.querySelector('#fileMoveCopyModalLabel').innerHTML =
+            action === 'move'
+                ? '<i class="fas fa-folder-open me-2"></i>Move ' + n + ' File(s)'
+                : '<i class="fas fa-copy me-2"></i>Copy ' + n + ' File(s)';
+        modal.querySelector('#fileMoveCopyDesc').textContent =
+            action === 'move'
+                ? 'Select the destination folder for all selected files.'
+                : 'Copies of all selected files will be placed in the chosen folder.';
+        modal.querySelector('#fileMoveCopyBtn').textContent =
+            action === 'move' ? 'Move All' : 'Copy All';
+
+        modal.querySelectorAll('input[name="moveCopyFolder"]').forEach(r => r.checked = false);
         new bootstrap.Modal(modal).show();
     };
 
     window.executeFileMoveCopy = function () {
-        var selected = document.querySelector('input[name="moveCopyFolder"]:checked');
-        var folderId = selected ? selected.value : '';
+        var modal     = document.getElementById('fileMoveCopyModal');
+        var isBulk    = modal.dataset.bulk === '1';
+        var selRadio  = document.querySelector('input[name="moveCopyFolder"]:checked');
+        var folderId  = selRadio ? (selRadio.value || null) : null;
+        var csrfToken = '{{ csrf_token() }}';
+        var headers   = { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' };
 
-        var url    = '{{ url("admin/media") }}/' + _moveCopyFileId + '/' + _moveCopyAction;
-        var method = _moveCopyAction === 'move' ? 'PATCH' : 'POST';
+        var endpoint, method, body;
 
-        fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-            body: JSON.stringify({ folder_id: folderId || null }),
-        })
+        if (isBulk) {
+            endpoint = _bulkAction === 'move'
+                ? '{{ url("admin/media/bulk-move") }}'
+                : '{{ url("admin/media/bulk-copy") }}';
+            method   = 'POST';
+            body     = JSON.stringify({ ids: Array.from(_selectedIds), folder_id: folderId });
+        } else {
+            endpoint = '{{ url("admin/media") }}/' + _moveCopyFileId + '/' + _moveCopyAction;
+            method   = _moveCopyAction === 'move' ? 'PATCH' : 'POST';
+            body     = JSON.stringify({ folder_id: folderId });
+        }
+
+        fetch(endpoint, { method: method, headers: headers, body: body })
         .then(r => r.json())
         .then(data => {
+            bootstrap.Modal.getInstance(modal).hide();
             if (data.success) {
-                bootstrap.Modal.getInstance(document.getElementById('fileMoveCopyModal')).hide();
-                if (_moveCopyAction === 'move') {
-                    // Remove from grid only when browsing a specific folder and item moved away
-                    @if($currentFolder)
-                    var targetFolderId = selected ? selected.value : '';
-                    if (String(targetFolderId) !== '{{ $currentFolder->id }}') {
-                        var el = document.getElementById('media-' + _moveCopyFileId);
-                        if (el) el.remove();
-                    }
-                    @endif
-                    Swal.fire({ icon: 'success', title: 'Moved!', timer: 1200, showConfirmButton: false });
-                } else {
-                    Swal.fire({ icon: 'success', title: 'Copied!', text: 'A copy "' + data.name + '" was created.', timer: 2000, showConfirmButton: false });
-                }
+                var isMove = isBulk ? _bulkAction === 'move' : _moveCopyAction === 'move';
+                var title  = isMove
+                    ? (isBulk ? 'Moved ' + data.count + ' file(s)!' : 'Moved!')
+                    : (isBulk ? 'Copied ' + data.count + ' file(s)!' : 'Copied!');
+                var text   = (!isBulk && !isMove) ? 'A copy "' + data.name + '" was created.' : '';
+                Swal.fire({ icon: 'success', title: title, text: text || undefined, timer: 1500, showConfirmButton: false })
+                    .then(() => location.reload());
             } else {
                 alert(data.message || 'Operation failed.');
             }
         })
         .catch(() => alert('Network error. Please try again.'));
+    };
+
+    // ── Bulk Delete ─────────────────────────────────────────────────────────────
+    window.bulkDelete = function () {
+        if (_selectedIds.size === 0) return;
+        var n = _selectedIds.size;
+        Swal.fire({
+            title: 'Delete ' + n + ' file(s)?',
+            text: 'This cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Delete All',
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            fetch('{{ url("admin/media/bulk-delete") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                body: JSON.stringify({ ids: Array.from(_selectedIds) }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Deleted ' + data.count + ' file(s)!', timer: 1200, showConfirmButton: false })
+                        .then(() => location.reload());
+                } else {
+                    alert(data.message || 'Delete failed.');
+                }
+            })
+            .catch(() => alert('Network error. Please try again.'));
+        });
     };
 
     // Enter key on rename input triggers save

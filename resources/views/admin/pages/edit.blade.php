@@ -46,7 +46,7 @@
                         </div>
                         @error('slug')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                         <div class="form-text">
-                            Public URL: <a href="{{ route('pages.show', $page->slug) }}" target="_blank">{{ url('/') }}/{{ $page->slug }}</a>
+                            Public URL: <a href="{{ route('blog.show', $page->slug) }}" target="_blank">{{ url('/') }}/{{ $page->slug }}</a>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
                         <button type="submit" form="update-form" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>Update Page
                         </button>
-                        <a href="{{ route('pages.show', $page->slug) }}" target="_blank"
+                        <a href="{{ route('blog.show', $page->slug) }}" target="_blank"
                            class="btn btn-outline-secondary btn-sm">
                             <i class="fas fa-eye me-1"></i>View Page
                         </a>

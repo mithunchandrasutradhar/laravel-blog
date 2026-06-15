@@ -7,7 +7,7 @@
     <div class="container">
         @include('partials.breadcrumb', [
             'breadcrumbs' => [
-                ['label' => $page->title, 'url' => route('pages.show', $page->slug)],
+                ['label' => $page->title, 'url' => route('blog.show', $page->slug)],
             ]
         ])
         <h1 class="h3 fw-bold mt-2 mb-0">{{ $page->title }}</h1>

@@ -32,11 +32,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Blog listing & single post
+// Blog listing
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
-Route::get('/blog/{slug}', [BlogController::class, 'show'])
-    ->middleware('track.post.view')
-    ->name('blog.show'); // also aliased as posts.show for internal use
+
+// SEO backward-compat: old /blog/{slug} links redirect permanently to /{slug}
+Route::get('/blog/{slug}', fn (string $slug) => redirect('/' . $slug, 301))
+    ->where('slug', '[a-z0-9][a-z0-9\-]+');
 
 // Category / tag / author archives
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
@@ -196,10 +197,16 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::patch('/subscribers/{subscriber}/verify', [Admin\SubscriberController::class, 'verify'])->name('subscribers.verify');
     Route::delete('/subscribers/{subscriber}', [Admin\SubscriberController::class, 'destroy'])->name('subscribers.destroy');
 
+    // Notifications
+    Route::get('/notifications', [Admin\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/mark-all-read', [Admin\NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/{id}/mark-read', [Admin\NotificationController::class, 'markRead'])->name('notifications.mark-read');
+
     // Settings
     Route::get('/settings', [Admin\SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
     Route::put('/settings/{group}', [Admin\SettingsController::class, 'updateGroup'])->name('settings.update-group');
+    Route::post('/settings/test-email', [Admin\SettingsController::class, 'sendTestEmail'])->name('settings.test-email');
 
     // Advertisements
     Route::resource('advertisements', Admin\AdvertisementController::class);
@@ -211,6 +218,9 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/media/upload', [Admin\MediaController::class, 'store'])->name('media.upload');
     Route::get('/media/list', [Admin\MediaController::class, 'list'])->name('media.list');
     Route::get('/media/browse', [Admin\MediaController::class, 'browse'])->name('media.browse');
+    Route::post('/media/bulk-move', [Admin\MediaController::class, 'bulkMove'])->name('media.bulk-move');
+    Route::post('/media/bulk-copy', [Admin\MediaController::class, 'bulkCopy'])->name('media.bulk-copy');
+    Route::post('/media/bulk-delete', [Admin\MediaController::class, 'bulkDestroy'])->name('media.bulk-delete');
     Route::delete('/media/{media}', [Admin\MediaController::class, 'destroy'])->name('media.destroy');
     Route::patch('/media/{media}/rename', [Admin\MediaController::class, 'rename'])->name('media.rename');
     Route::patch('/media/{media}/move', [Admin\MediaController::class, 'move'])->name('media.move');
@@ -229,7 +239,14 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::resource('pages', Admin\PagesController::class);
 });
 
-// Dynamic pages — must be LAST so it doesn't shadow any named routes above
-Route::get('/{slug}', [PageController::class, 'show'])
-    ->name('pages.show')
-    ->where('slug', '[a-z0-9][a-z0-9\-]*');
+// Unified slug dispatcher — must be LAST so it doesn't shadow any named route above.
+// Tries blog post first, then a dynamic CMS page, then 404.
+Route::get('/{slug}', function (string $slug) {
+    if (\App\Models\Post::where('slug', $slug)->exists()) {
+        return app(\App\Http\Controllers\BlogController::class)->show($slug);
+    }
+    return app(\App\Http\Controllers\PageController::class)->show($slug);
+})
+->middleware('track.post.view')
+->name('blog.show')
+->where('slug', '[a-z0-9][a-z0-9\-]+');

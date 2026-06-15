@@ -47,6 +47,6 @@ class Page extends Model
 
     public function getUrlAttribute(): string
     {
-        return route('pages.show', $this->slug);
+        return route('blog.show', $this->slug);
     }
 }

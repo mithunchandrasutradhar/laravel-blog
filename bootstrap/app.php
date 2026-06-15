@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AuthorMiddleware;
+use App\Http\Middleware\CheckUserStatus;
 use App\Http\Middleware\HttpsRedirect;
 use App\Http\Middleware\TrackPostView;
 use Illuminate\Foundation\Application;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Web middleware group additions
         // -----------------------------------------------------------------------
         // (session, CSRF, etc. are already included by default in the web group)
+        $middleware->appendToGroup('web', CheckUserStatus::class);
 
         // -----------------------------------------------------------------------
         // Named / route-level middleware aliases

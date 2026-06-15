@@ -32,9 +32,27 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // ---- Eloquent model hardening ----------------------------------------
-        // Prevent lazy loading in non-production environments to catch N+1 issues
-        // during development.
         Model::preventLazyLoading(! app()->isProduction());
+
+        // ---- Apply mail settings from DB so all emails use admin-configured SMTP ----
+        try {
+            $s    = app(SettingService::class);
+            $host = $s->get('mail_host');
+            if ($host) {
+                config([
+                    'mail.default'                 => $s->get('mail_mailer', 'smtp'),
+                    'mail.mailers.smtp.host'       => $host,
+                    'mail.mailers.smtp.port'       => (int) $s->get('mail_port', 587),
+                    'mail.mailers.smtp.encryption' => $s->get('mail_encryption', 'tls') ?: null,
+                    'mail.mailers.smtp.username'   => $s->get('mail_username'),
+                    'mail.mailers.smtp.password'   => $s->get('mail_password'),
+                    'mail.from.address'            => $s->get('mail_from_address', config('mail.from.address')),
+                    'mail.from.name'               => $s->get('mail_from_name', config('mail.from.name')),
+                ]);
+            }
+        } catch (\Throwable) {
+            // DB unavailable during migrations — silently fall back to .env defaults
+        }
 
         // ---- Observers -------------------------------------------------------
         Post::observe(PostObserver::class);

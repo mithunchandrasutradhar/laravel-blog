@@ -99,7 +99,7 @@
                         @if($post->author)
                         <a href="{{ route('authors.show', $post->author->username ?? $post->author->id) }}" class="d-flex align-items-center gap-2 text-muted text-decoration-none" itemprop="author" itemscope itemtype="https://schema.org/Person">
                             @if($post->author->avatar)
-                            <img src="{{ asset($post->author->avatar) }}" alt="{{ $post->author->name }}" class="rounded-circle" width="36" height="36" style="object-fit:cover;">
+                            <img src="{{ asset($post->author->avatar) }}" alt="{{ $post->author->name }}" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;min-width:36px;min-height:36px;object-fit:cover;">
                             @else
                             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;">
                                 {{ strtoupper(substr($post->author->name, 0, 1)) }}
@@ -203,7 +203,7 @@
                         <div class="flex-shrink-0 text-center text-sm-start">
                             <a href="{{ route('authors.show', $post->author->username ?? $post->author->id) }}">
                                 @if($post->author->avatar)
-                                <img src="{{ asset($post->author->avatar) }}" alt="{{ $post->author->name }}" class="rounded-circle" width="88" height="88" style="object-fit:cover;">
+                                <img src="{{ asset($post->author->avatar) }}" alt="{{ $post->author->name }}" class="rounded-circle flex-shrink-0" style="width:88px;height:88px;min-width:88px;min-height:88px;object-fit:cover;">
                                 @else
                                 <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto fw-bold fs-2" style="width:88px;height:88px;">
                                     {{ strtoupper(substr($post->author->name, 0, 1)) }}
@@ -316,7 +316,7 @@
                             @else
                             <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded">
                                 @if(auth()->user()->avatar)
-                                <img src="{{ asset(auth()->user()->avatar) }}" alt="{{ auth()->user()->name }}" class="rounded-circle" width="36" height="36" style="object-fit:cover;">
+                                <img src="{{ asset(auth()->user()->avatar) }}" alt="{{ auth()->user()->name }}" class="rounded-circle flex-shrink-0" style="width:36px;height:36px;min-width:36px;min-height:36px;object-fit:cover;">
                                 @else
                                 <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;">
                                     {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
