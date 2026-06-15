@@ -139,7 +139,19 @@
                                 @endif
                             </td>
                             <td>
-                                <span class="small text-muted">{{ $post->category->name ?? '—' }}</span>
+                                @php
+                                    $listCats = ($post->relationLoaded('categories') && $post->categories->isNotEmpty())
+                                        ? $post->categories
+                                        : collect(array_filter([$post->category ?? null]));
+                                @endphp
+                                @forelse($listCats as $cat)
+                                    <span class="badge me-1"
+                                          style="background-color:{{ $cat->color ?? '#6c757d' }}15;color:{{ $cat->color ?? '#6c757d' }};border:1px solid {{ $cat->color ?? '#6c757d' }}40;font-size:.7rem;">
+                                        {{ $cat->name }}
+                                    </span>
+                                @empty
+                                    <span class="small text-muted">—</span>
+                                @endforelse
                             </td>
                             <td>
                                 <span class="small text-muted">{{ $post->author->name ?? '—' }}</span>

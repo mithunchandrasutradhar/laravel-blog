@@ -109,12 +109,15 @@ class AdvertisementController extends Controller
     public function update(UpdateAdvertisementRequest $request, Advertisement $advertisement): RedirectResponse
     {
         $data = $request->validated();
+        unset($data['image']); // handle image separately to preserve existing
 
         if ($request->hasFile('image')) {
             if ($advertisement->image) {
                 Storage::disk('public')->delete($advertisement->image);
             }
             $data['image'] = $request->file('image')->store('advertisements', 'public');
+        } elseif ($request->filled('media_path')) {
+            $data['image'] = $request->input('media_path');
         } elseif ($request->boolean('remove_image')) {
             if ($advertisement->image) {
                 Storage::disk('public')->delete($advertisement->image);

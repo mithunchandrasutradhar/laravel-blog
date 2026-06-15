@@ -26,7 +26,7 @@ class PostController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Post::with(['category', 'author'])
+        $query = Post::with(['category', 'categories', 'author'])
             ->withCount('comments');
 
         // Filters
@@ -85,12 +85,20 @@ class PostController extends Controller
         // Set author to the current admin user if not specified
         $data['user_id'] = $request->input('user_id', auth()->id());
 
+        // Use first selected category as the primary category_id
+        $categoryIds = array_map('intval', $data['category_ids']);
+        $data['category_id'] = $categoryIds[0];
+        unset($data['category_ids']);
+
         // Auto-set published_at when publishing immediately
         if ($data['status'] === 'published' && empty($data['published_at'])) {
             $data['published_at'] = now();
         }
 
         $post = Post::create($data);
+
+        // Sync categories pivot
+        $post->categories()->sync($categoryIds);
 
         // Sync tags
         if ($request->filled('tags')) {
@@ -107,11 +115,17 @@ class PostController extends Controller
      */
     public function edit(Post $post): View
     {
-        $categories  = Category::orderBy('name')->get();
-        $tags        = Tag::orderBy('name')->get();
-        $selectedIds = $post->tags->pluck('id')->toArray();
+        $categories          = Category::orderBy('name')->get();
+        $tags                = Tag::orderBy('name')->get();
+        $selectedIds         = $post->tags->pluck('id')->toArray();
+        $post->loadMissing('categories');
+        $selectedCategoryIds = $post->categories->pluck('id')->toArray();
+        // Fallback for posts that predate the pivot table
+        if (empty($selectedCategoryIds) && $post->category_id) {
+            $selectedCategoryIds = [$post->category_id];
+        }
 
-        return view('admin.posts.edit', compact('post', 'categories', 'tags', 'selectedIds'));
+        return view('admin.posts.edit', compact('post', 'categories', 'tags', 'selectedIds', 'selectedCategoryIds'));
     }
 
     /**
@@ -145,12 +159,20 @@ class PostController extends Controller
             $data['featured_image'] = null;
         }
 
+        // Use first selected category as the primary category_id
+        $categoryIds = array_map('intval', $data['category_ids']);
+        $data['category_id'] = $categoryIds[0];
+        unset($data['category_ids']);
+
         // If status changed to published and no published_at set, stamp it now
         if ($data['status'] === 'published' && empty($data['published_at']) && $post->status !== 'published') {
             $data['published_at'] = now();
         }
 
         $post->update($data);
+
+        // Sync categories pivot
+        $post->categories()->sync($categoryIds);
 
         // Sync tags
         $tagIds = $this->resolveTagIds($request->input('tags', []));

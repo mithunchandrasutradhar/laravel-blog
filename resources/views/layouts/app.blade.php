@@ -312,6 +312,9 @@
         </nav>
     </header>
 
+    {{-- Header Advertisement --}}
+    @include('partials.advertisement', ['position' => 'header'])
+
     {{-- Flash Messages --}}
     @include('partials.flash-messages')
 
@@ -319,6 +322,9 @@
     <main id="main-content">
         @yield('content')
     </main>
+
+    {{-- Footer Advertisement --}}
+    @include('partials.advertisement', ['position' => 'footer'])
 
     {{-- Footer --}}
     <footer class="site-footer">

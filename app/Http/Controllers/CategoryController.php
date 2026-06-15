@@ -19,8 +19,10 @@ class CategoryController extends Controller
      */
     public function index(): View
     {
+        $publishedScope = fn ($q) => $q->where('status', 'published')->where('published_at', '<=', now());
+
         $categories = Category::topLevel()
-            ->withCount(['posts' => fn ($q) => $q->where('status', 'published')->where('published_at', '<=', now())])
+            ->withCount(['posts' => $publishedScope])
             ->with('allChildren')
             ->orderBy('name')
             ->get();
@@ -28,6 +30,17 @@ class CategoryController extends Controller
         // Flatten the full descendant tree so any depth of sub-category appears
         foreach ($categories as $cat) {
             $cat->setRelation('descendants', $this->flatDescendants($cat->allChildren));
+        }
+
+        // Batch-load published post counts for every descendant in one query
+        $allDescendants = $categories->flatMap(fn ($cat) => $cat->descendants);
+        if ($allDescendants->isNotEmpty()) {
+            $counts = Category::whereIn('id', $allDescendants->pluck('id'))
+                ->withCount(['posts' => $publishedScope])
+                ->get()
+                ->pluck('posts_count', 'id');
+
+            $allDescendants->each(fn ($cat) => $cat->posts_count = $counts[$cat->id] ?? 0);
         }
 
         return view('categories.index', compact('categories'));
@@ -62,7 +75,10 @@ class CategoryController extends Controller
         $categoryIds = $this->getCategoryTree($category);
 
         $posts = Post::published()
-            ->whereIn('category_id', $categoryIds)
+            ->where(function ($q) use ($categoryIds) {
+                $q->whereIn('category_id', $categoryIds)
+                  ->orWhereHas('categories', fn ($q2) => $q2->whereIn('categories.id', $categoryIds));
+            })
             ->with(['category', 'author', 'tags'])
             ->latestPublished()
             ->paginate(self::PER_PAGE);

@@ -18,18 +18,17 @@
             <div class="col-md-3">
                 <label class="form-label small mb-1">From Date</label>
                 <input type="date" name="from" class="form-control form-control-sm"
-                       value="{{ request('from', now()->subDays(29)->format('Y-m-d')) }}">
+                       value="{{ $from->format('Y-m-d') }}">
             </div>
             <div class="col-md-3">
                 <label class="form-label small mb-1">To Date</label>
                 <input type="date" name="to" class="form-control form-control-sm"
-                       value="{{ request('to', now()->format('Y-m-d')) }}">
+                       value="{{ $to->format('Y-m-d') }}">
             </div>
             <div class="col-auto d-flex gap-2">
                 <button type="submit" class="btn btn-primary btn-sm">
                     <i class="fas fa-filter me-1"></i>Apply
                 </button>
-                {{-- Presets --}}
                 <div class="dropdown">
                     <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
                         Presets
@@ -56,12 +55,12 @@
                 </div>
                 <div>
                     <div class="text-muted small">Total Views</div>
-                    <div class="h4 fw-bold mb-0">{{ number_format($stats['total_views'] ?? 0) }}</div>
+                    <div class="h4 fw-bold mb-0">{{ number_format($stats['total_views']) }}</div>
                     <div class="small mt-1">
-                        @if(($stats['views_change'] ?? 0) >= 0)
-                            <span class="text-success"><i class="fas fa-arrow-up me-1"></i>{{ $stats['views_change'] ?? 0 }}%</span>
+                        @if($stats['views_change'] >= 0)
+                            <span class="text-success"><i class="fas fa-arrow-up me-1"></i>{{ $stats['views_change'] }}%</span>
                         @else
-                            <span class="text-danger"><i class="fas fa-arrow-down me-1"></i>{{ abs($stats['views_change'] ?? 0) }}%</span>
+                            <span class="text-danger"><i class="fas fa-arrow-down me-1"></i>{{ abs($stats['views_change']) }}%</span>
                         @endif
                         <span class="text-muted ms-1">vs previous period</span>
                     </div>
@@ -77,12 +76,12 @@
                 </div>
                 <div>
                     <div class="text-muted small">Unique Views</div>
-                    <div class="h4 fw-bold mb-0">{{ number_format($stats['unique_views'] ?? 0) }}</div>
+                    <div class="h4 fw-bold mb-0">{{ number_format($stats['unique_views']) }}</div>
                     <div class="small mt-1">
-                        @if(($stats['unique_change'] ?? 0) >= 0)
-                            <span class="text-success"><i class="fas fa-arrow-up me-1"></i>{{ $stats['unique_change'] ?? 0 }}%</span>
+                        @if($stats['unique_change'] >= 0)
+                            <span class="text-success"><i class="fas fa-arrow-up me-1"></i>{{ $stats['unique_change'] }}%</span>
                         @else
-                            <span class="text-danger"><i class="fas fa-arrow-down me-1"></i>{{ abs($stats['unique_change'] ?? 0) }}%</span>
+                            <span class="text-danger"><i class="fas fa-arrow-down me-1"></i>{{ abs($stats['unique_change']) }}%</span>
                         @endif
                         <span class="text-muted ms-1">vs previous period</span>
                     </div>
@@ -98,8 +97,8 @@
                 </div>
                 <div>
                     <div class="text-muted small">Avg. Views / Post</div>
-                    <div class="h4 fw-bold mb-0">{{ number_format($stats['avg_views_per_post'] ?? 0, 1) }}</div>
-                    <div class="small mt-1 text-muted">across published posts</div>
+                    <div class="h4 fw-bold mb-0">{{ number_format($stats['avg_views_per_post'], 1) }}</div>
+                    <div class="small mt-1 text-muted">across all published posts</div>
                 </div>
             </div>
         </div>
@@ -110,11 +109,9 @@
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between py-3">
         <h6 class="fw-bold mb-0"><i class="fas fa-chart-area text-primary me-2"></i>Daily Views</h6>
-        <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" id="chartTypeBtn" onclick="toggleChartType()">
-                <i class="fas fa-chart-bar"></i> Bar
-            </button>
-        </div>
+        <button class="btn btn-sm btn-outline-secondary" id="chartTypeBtn" onclick="toggleChartType()">
+            <i class="fas fa-chart-bar"></i> Bar
+        </button>
     </div>
     <div class="card-body pt-0">
         <canvas id="dailyViewsChart" height="80"></canvas>
@@ -123,6 +120,7 @@
 
 {{-- ── Bottom row ── --}}
 <div class="row g-4">
+
     {{-- Top Posts Table --}}
     <div class="col-xl-8">
         <div class="card border-0 shadow-sm">
@@ -142,7 +140,8 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($topPosts ?? [] as $index => $post)
+                            @php $maxViews = $topPosts->max('period_views') ?: 1; @endphp
+                            @forelse($topPosts as $index => $post)
                             <tr>
                                 <td class="ps-3">
                                     @if($index === 0)
@@ -165,14 +164,11 @@
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="progress flex-grow-1" style="height:6px;min-width:60px;">
-                                            @php
-                                                $maxViews = $topPosts->max('views_count') ?? 1;
-                                                $pct = $maxViews > 0 ? ($post->views_count / $maxViews) * 100 : 0;
-                                            @endphp
-                                            <div class="progress-bar bg-primary" style="width:{{ $pct }}%"></div>
+                                            <div class="progress-bar bg-primary"
+                                                 style="width:{{ $maxViews > 0 ? ($post->period_views / $maxViews) * 100 : 0 }}%"></div>
                                         </div>
-                                        <span class="small fw-bold" style="min-width:55px;">
-                                            {{ number_format($post->views_count ?? 0) }}
+                                        <span class="small fw-bold" style="min-width:45px;">
+                                            {{ number_format($post->period_views) }}
                                         </span>
                                     </div>
                                 </td>
@@ -183,7 +179,7 @@
                             @empty
                             <tr>
                                 <td colspan="5" class="text-center py-4 text-muted">
-                                    No data available for the selected period.
+                                    No views recorded in the selected period.
                                 </td>
                             </tr>
                             @endforelse
@@ -194,14 +190,18 @@
         </div>
     </div>
 
-    {{-- Summary panel --}}
+    {{-- Right panel --}}
     <div class="col-xl-4">
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-transparent border-0 py-3">
                 <h6 class="fw-bold mb-0"><i class="fas fa-pie-chart text-info me-2"></i>Traffic by Category</h6>
             </div>
             <div class="card-body pt-0">
-                <canvas id="categoryChart" height="200"></canvas>
+                @if($categoryStats->isEmpty())
+                    <p class="text-muted small text-center py-3 mb-0">No category data for this period.</p>
+                @else
+                    <canvas id="categoryChart" height="200"></canvas>
+                @endif
             </div>
         </div>
 
@@ -213,26 +213,31 @@
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item d-flex justify-content-between small py-2 px-3">
                         <span class="text-muted">Date range</span>
-                        <strong>
-                            {{ \Carbon\Carbon::parse(request('from', now()->subDays(29)))->format('M d') }}
-                            — {{ \Carbon\Carbon::parse(request('to', now()))->format('M d, Y') }}
-                        </strong>
+                        <strong>{{ $from->format('M d') }} — {{ $to->format('M d, Y') }}</strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between small py-2 px-3">
                         <span class="text-muted">Published posts</span>
-                        <strong>{{ $stats['published_in_period'] ?? 0 }}</strong>
+                        <strong>{{ $stats['published_in_period'] }}</strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between small py-2 px-3">
                         <span class="text-muted">New comments</span>
-                        <strong>{{ $stats['comments_in_period'] ?? 0 }}</strong>
+                        <strong>{{ $stats['comments_in_period'] }}</strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between small py-2 px-3">
                         <span class="text-muted">New subscribers</span>
-                        <strong>{{ $stats['subscribers_in_period'] ?? 0 }}</strong>
+                        <strong>{{ $stats['subscribers_in_period'] }}</strong>
                     </li>
                     <li class="list-group-item d-flex justify-content-between small py-2 px-3">
                         <span class="text-muted">New users</span>
-                        <strong>{{ $stats['new_users_in_period'] ?? 0 }}</strong>
+                        <strong>{{ $stats['new_users_in_period'] }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between small py-2 px-3">
+                        <span class="text-muted">Device breakdown</span>
+                        <span>
+                            @foreach($deviceTypes as $d)
+                                <span class="badge bg-light text-dark border me-1">{{ $d->device }}: {{ number_format($d->count) }}</span>
+                            @endforeach
+                        </span>
                     </li>
                 </ul>
             </div>
@@ -247,14 +252,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── Daily Views Chart ──
-    const labels = @json($chartLabels ?? []);
-    const viewsData = @json($chartData ?? []);
-    const uniqueData = @json($uniqueChartData ?? []);
+    // ── Daily Views Chart ──────────────────────────────────────────────────────
+    const labels     = @json($chartLabels);
+    const viewsData  = @json($chartData);
+    const uniqueData = @json($uniqueChartData);
 
     const ctx = document.getElementById('dailyViewsChart').getContext('2d');
     let chartType = 'line';
-    let chart = buildChart(chartType);
 
     function buildChart(type) {
         if (window.dailyChart) window.dailyChart.destroy();
@@ -292,13 +296,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     tooltip: { mode: 'index', intersect: false }
                 },
                 scales: {
-                    x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 11 } } },
-                    y: { grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } }
+                    x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 11 } } },
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 }, precision: 0 } }
                 }
             }
         });
-        return window.dailyChart;
     }
+
+    buildChart(chartType);
 
     window.toggleChartType = function () {
         chartType = chartType === 'line' ? 'bar' : 'line';
@@ -309,10 +314,11 @@ document.addEventListener('DOMContentLoaded', function () {
             : '<i class="fas fa-chart-line"></i> Line';
     };
 
-    // ── Category Doughnut Chart ──
-    const catCtx = document.getElementById('categoryChart').getContext('2d');
-    const catLabels = @json($categoryStats->pluck('name') ?? []);
-    const catData   = @json($categoryStats->pluck('total_views') ?? []);
+    // ── Category Doughnut Chart ────────────────────────────────────────────────
+    @if($categoryStats->isNotEmpty())
+    const catCtx    = document.getElementById('categoryChart').getContext('2d');
+    const catLabels = @json($categoryStats->pluck('name'));
+    const catData   = @json($categoryStats->pluck('total_views'));
     const catColors = [
         '#0d6efd','#198754','#dc3545','#ffc107','#0dcaf0',
         '#6f42c1','#fd7e14','#20c997','#6c757d','#d63384'
@@ -337,6 +343,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
+    @endif
 
 });
 </script>

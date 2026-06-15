@@ -114,6 +114,53 @@ class CategoryController extends Controller
     }
 
     /**
+     * Bulk-delete selected categories.
+     */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $ids = array_filter((array) $request->input('ids', []), 'is_numeric');
+
+        if (empty($ids)) {
+            return back()->withErrors(['error' => 'No categories selected.']);
+        }
+
+        $fallback = Category::where('slug', 'uncategorised')->first();
+        $deleted  = 0;
+        $skipped  = 0;
+
+        Category::whereIn('id', $ids)->each(function (Category $category) use ($fallback, &$deleted, &$skipped) {
+            // Never delete the fallback category itself
+            if ($fallback && $fallback->id === $category->id) {
+                $skipped++;
+                return;
+            }
+
+            if ($fallback) {
+                // Move all posts to the fallback before deleting
+                $category->posts()->update(['category_id' => $fallback->id]);
+            } elseif ($category->posts()->exists()) {
+                // No fallback available and category still has posts — skip
+                $skipped++;
+                return;
+            }
+
+            if ($category->image) {
+                Storage::disk('public')->delete($category->image);
+            }
+
+            $category->delete();
+            $deleted++;
+        });
+
+        $message = $deleted . ' category(s) deleted.';
+        if ($skipped > 0) {
+            $message .= ' ' . $skipped . ' skipped (default "Uncategorised" category cannot be removed).';
+        }
+
+        return redirect()->route('admin.categories.index')->with('success', $message);
+    }
+
+    /**
      * Delete a category.
      *
      * Before deleting, move all posts in this category to an "Uncategorised"
@@ -121,10 +168,16 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category): RedirectResponse
     {
-        // Move posts to uncategorised (id=1 by convention) before deleting
         $fallback = Category::where('slug', 'uncategorised')->first();
 
-        if ($fallback && $fallback->id !== $category->id) {
+        // Refuse to delete the fallback category itself
+        if ($fallback && $fallback->id === $category->id) {
+            return redirect()->route('admin.categories.index')
+                ->withErrors(['error' => 'The default "Uncategorised" category cannot be deleted.']);
+        }
+
+        // Move posts away before the FK-RESTRICT fires
+        if ($fallback) {
             $category->posts()->update(['category_id' => $fallback->id]);
         }
 

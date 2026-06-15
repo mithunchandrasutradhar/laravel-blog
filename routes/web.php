@@ -172,6 +172,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     // Categories
     Route::resource('categories', Admin\CategoryController::class);
+    Route::post('/categories/bulk-delete', [Admin\CategoryController::class, 'bulkDestroy'])->name('categories.bulk-delete');
 
     // Videos
     Route::resource('videos', Admin\VideoController::class);
@@ -211,6 +212,15 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/media/list', [Admin\MediaController::class, 'list'])->name('media.list');
     Route::get('/media/browse', [Admin\MediaController::class, 'browse'])->name('media.browse');
     Route::delete('/media/{media}', [Admin\MediaController::class, 'destroy'])->name('media.destroy');
+    Route::patch('/media/{media}/rename', [Admin\MediaController::class, 'rename'])->name('media.rename');
+    Route::patch('/media/{media}/move', [Admin\MediaController::class, 'move'])->name('media.move');
+    Route::post('/media/{media}/copy', [Admin\MediaController::class, 'copy'])->name('media.copy');
+
+    // Media folders
+    Route::get('/media-folders', [Admin\MediaFolderController::class, 'index'])->name('media-folders.index');
+    Route::post('/media-folders', [Admin\MediaFolderController::class, 'store'])->name('media-folders.store');
+    Route::put('/media-folders/{mediaFolder}', [Admin\MediaFolderController::class, 'update'])->name('media-folders.update');
+    Route::delete('/media-folders/{mediaFolder}', [Admin\MediaFolderController::class, 'destroy'])->name('media-folders.destroy');
 
     // Analytics
     Route::get('/analytics', [Admin\AnalyticsController::class, 'index'])->name('analytics.index');

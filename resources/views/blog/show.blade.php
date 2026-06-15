@@ -75,11 +75,20 @@
 
                 {{-- Post Header --}}
                 <header class="post-header mb-4">
-                    {{-- Category Badge --}}
-                    @if($post->category)
-                    <a href="{{ route('categories.show', $post->category->slug) }}" class="badge text-decoration-none mb-3 d-inline-block" style="background-color:{{ $post->category->color ?? 'var(--brand-primary)' }};">
-                        {{ $post->category->name }}
-                    </a>
+                    {{-- Category Badges --}}
+                    @php
+                        $showCats = ($post->relationLoaded('categories') && $post->categories->isNotEmpty())
+                            ? $post->categories
+                            : collect(array_filter([$post->category ?? null]));
+                    @endphp
+                    @if($showCats->isNotEmpty())
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @foreach($showCats as $cat)
+                        <a href="{{ route('categories.show', $cat->slug) }}" class="post-category-badge" style="background-color:{{ $cat->color ?? 'var(--brand-primary)' }};">
+                            {{ $cat->name }}
+                        </a>
+                        @endforeach
+                    </div>
                     @endif
 
                     {{-- Title --}}
@@ -407,7 +416,7 @@ document.querySelectorAll('.comment-reply-cancel').forEach(btn => {
 (function() {
     const postId = document.getElementById('post-article')?.dataset.postId;
     if (!postId) return;
-    fetch('/api/posts/' + postId + '/view', {
+    fetch('/posts/' + postId + '/view', {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
     }).catch(() => {});

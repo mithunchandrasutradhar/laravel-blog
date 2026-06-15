@@ -1,4 +1,4 @@
-﻿@extends('admin.layouts.admin')
+@extends('admin.layouts.admin')
 
 @section('title', 'Edit User')
 
@@ -26,14 +26,13 @@
         margin: 0 auto;
     }
     .avatar-upload-box:hover { border-color: #0d6efd; }
-    .avatar-upload-box img { width: 100%; height: 100%; object-fit: cover; }
+    #avatar-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 </style>
 @endpush
 
 @section('content')
 
-<form method="POST" action="{{ route('admin.users.update', $user->id) }}" enctype="multipart/form-data"
-      x-data="userEditForm()">
+<form method="POST" action="{{ route('admin.users.update', $user->id) }}" enctype="multipart/form-data" id="userEditForm">
     @csrf
     @method('PUT')
 
@@ -60,43 +59,52 @@
                                    value="{{ old('email', $user->email) }}" required>
                             @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+
+                        {{-- Change Password toggle --}}
                         <div class="col-12">
                             <div class="card bg-light border-0">
                                 <div class="card-body py-2 px-3">
                                     <div class="form-check mb-0">
-                                        <input class="form-check-input" type="checkbox" id="changePassword"
-                                               x-model="changePassword">
-                                        <label class="form-check-label small fw-semibold" for="changePassword">
+                                        <input class="form-check-input" type="checkbox"
+                                               id="changePasswordCb" onchange="togglePwSection(this)">
+                                        <label class="form-check-label small fw-semibold" for="changePasswordCb">
                                             Change Password
                                         </label>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <template x-if="changePassword">
-                            <div class="col-12">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">New Password</label>
-                                        <div class="input-group">
-                                            <input :type="showPassword ? 'text' : 'password'" name="password"
-                                                   class="form-control @error('password') is-invalid @enderror"
-                                                   minlength="8">
-                                            <button type="button" class="btn btn-outline-secondary"
-                                                    @click="showPassword=!showPassword">
-                                                <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
-                                            </button>
-                                        </div>
-                                        @error('password')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+
+                        {{-- Password fields (hidden until checkbox checked) --}}
+                        <div class="col-12" id="pw-section" style="display:none;">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">New Password</label>
+                                    <div class="input-group">
+                                        <input type="password" name="password" id="edit-pw"
+                                               class="form-control @error('password') is-invalid @enderror"
+                                               disabled minlength="8" autocomplete="new-password">
+                                        <button type="button" class="btn btn-outline-secondary px-3 pw-toggle-btn"
+                                                title="Toggle visibility">
+                                            <i class="fas fa-eye pw-eye-icon"></i>
+                                        </button>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Confirm Password</label>
-                                        <input :type="showPassword ? 'text' : 'password'" name="password_confirmation"
-                                               class="form-control" minlength="8">
+                                    @error('password')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Confirm Password</label>
+                                    <div class="input-group">
+                                        <input type="password" name="password_confirmation" id="edit-pw-confirm"
+                                               class="form-control" disabled minlength="8" autocomplete="new-password">
+                                        <button type="button" class="btn btn-outline-secondary px-3 pw-toggle-btn"
+                                                title="Toggle visibility">
+                                            <i class="fas fa-eye pw-eye-icon"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </template>
+                        </div>
+
                         <div class="col-md-6">
                             <label for="role" class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
                             <select name="role" id="role"
@@ -113,7 +121,7 @@
                             <select name="status" id="status" class="form-select @error('status') is-invalid @enderror">
                                 <option value="active"   {{ old('status', $user->status) === 'active'   ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ old('status', $user->status) === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                <option value="suspended"   {{ old('status', $user->status) === 'banned'   ? 'selected' : '' }}>Suspended</option>
+                                <option value="suspended" {{ old('status', $user->status) === 'suspended' ? 'selected' : '' }}>Suspended</option>
                             </select>
                             @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
@@ -161,24 +169,29 @@
                     <h6 class="fw-bold mb-0"><i class="fas fa-user-circle text-primary me-2"></i>Profile Image</h6>
                 </div>
                 <div class="card-body text-center">
-                    <div class="avatar-upload-box mb-3" @click="$refs.avatarInput.click()">
-                        <img x-show="avatarPreview" :src="avatarPreview || ''"
-                             alt="Avatar" style="width:100%;height:100%;object-fit:cover;display:block;">
-                        <div x-show="!avatarPreview" class="text-muted text-center">
+                    <div class="avatar-upload-box mb-3" onclick="document.getElementById('avatar-file').click()">
+                        @if($user->profile_image)
+                        <img id="avatar-img" src="{{ asset('storage/' . $user->profile_image) }}" alt="Avatar">
+                        @else
+                        <img id="avatar-img" src="" alt="Avatar" style="display:none;">
+                        @endif
+                        <div id="avatar-placeholder" class="text-muted text-center" style="{{ $user->profile_image ? 'display:none;' : '' }}">
                             <i class="fas fa-user fa-2x d-block mb-1"></i>
                             <span style="font-size:.7rem;">Upload</span>
                         </div>
                     </div>
-                    <input type="file" name="profile_image" class="d-none" accept="image/*"
-                           x-ref="avatarInput" @change="previewAvatar($event)">
-                    <input type="hidden" name="remove_avatar" x-bind:value="removeAvatar ? '1' : ''">
+                    <input type="file" name="profile_image" id="avatar-file"
+                           class="d-none" accept="image/*" onchange="previewAvatar(event)">
+                    <input type="hidden" name="remove_avatar" id="remove-avatar-flag" value="">
                     <div class="d-flex justify-content-center gap-2">
                         <button type="button" class="btn btn-outline-primary btn-sm"
-                                @click="$refs.avatarInput.click()">
+                                onclick="document.getElementById('avatar-file').click()">
                             <i class="fas fa-upload me-1"></i>Change
                         </button>
-                        <button type="button" class="btn btn-outline-danger btn-sm" x-show="avatarPreview"
-                                @click="avatarPreview=null; removeAvatar=true; $refs.avatarInput.value=''">
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                id="remove-avatar-btn"
+                                onclick="removeAvatar()"
+                                style="{{ $user->profile_image ? '' : 'display:none;' }}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -205,27 +218,83 @@
 
 @push('scripts')
 <script>
-    function userEditForm() {
-        return {
-            showPassword: false,
-            changePassword: false,
-            avatarPreview: {{ $user->profile_image ? json_encode(asset('storage/' . $user->profile_image)) : 'null' }},
-            removeAvatar: false,
-            previewAvatar(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = e => {
-                    this.avatarPreview = e.target.result;
-                    this.removeAvatar = false;
-                };
-                reader.readAsDataURL(file);
-            }
+(function () {
+    var pwVisible = false;
+
+    // Show / hide the password section when the checkbox is toggled
+    window.togglePwSection = function (cb) {
+        var section = document.getElementById('pw-section');
+        var pw      = document.getElementById('edit-pw');
+        var conf    = document.getElementById('edit-pw-confirm');
+
+        if (cb.checked) {
+            section.style.display = '';
+            if (pw)   pw.disabled   = false;
+            if (conf) conf.disabled = false;
+        } else {
+            section.style.display = 'none';
+            if (pw)   { pw.disabled = true;   pw.value = '';   }
+            if (conf) { conf.disabled = true; conf.value = ''; }
+            // reset visibility state
+            pwVisible = false;
+            if (pw)   pw.type   = 'password';
+            if (conf) conf.type = 'password';
+            document.querySelectorAll('.pw-eye-icon').forEach(function (el) {
+                el.className = 'fas fa-eye pw-eye-icon';
+            });
         }
-    }
+    };
+
+    // Avatar preview
+    window.previewAvatar = function (event) {
+        var file = event.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            var img         = document.getElementById('avatar-img');
+            var placeholder = document.getElementById('avatar-placeholder');
+            var removeBtn   = document.getElementById('remove-avatar-btn');
+            var removeFlag  = document.getElementById('remove-avatar-flag');
+            img.src = e.target.result;
+            img.style.display = '';
+            if (placeholder) placeholder.style.display = 'none';
+            if (removeBtn)   removeBtn.style.display   = '';
+            if (removeFlag)  removeFlag.value           = '';
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // Remove avatar
+    window.removeAvatar = function () {
+        var img         = document.getElementById('avatar-img');
+        var placeholder = document.getElementById('avatar-placeholder');
+        var removeBtn   = document.getElementById('remove-avatar-btn');
+        var removeFlag  = document.getElementById('remove-avatar-flag');
+        var fileInput   = document.getElementById('avatar-file');
+        img.src = '';
+        img.style.display = 'none';
+        if (placeholder) placeholder.style.display = '';
+        if (removeBtn)   removeBtn.style.display   = 'none';
+        if (removeFlag)  removeFlag.value           = '1';
+        if (fileInput)   fileInput.value            = '';
+    };
+
+    // Wire up eye-toggle buttons once DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.pw-toggle-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                pwVisible = !pwVisible;
+                var type = pwVisible ? 'text' : 'password';
+                var pw   = document.getElementById('edit-pw');
+                var conf = document.getElementById('edit-pw-confirm');
+                if (pw)   pw.type   = type;
+                if (conf) conf.type = type;
+                document.querySelectorAll('.pw-eye-icon').forEach(function (el) {
+                    el.className = (pwVisible ? 'fas fa-eye-slash' : 'fas fa-eye') + ' pw-eye-icon';
+                });
+            });
+        });
+    });
+}());
 </script>
 @endpush
-
-
-
-

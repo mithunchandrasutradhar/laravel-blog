@@ -12,28 +12,29 @@
 
 @push('styles')
 <style>
-    .banner-preview-box {
+    .image-preview-box {
         border: 2px dashed #dee2e6;
         border-radius: .5rem;
-        min-height: 140px;
+        min-height: 150px;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
         background: #f8f9fa;
+        cursor: pointer;
+        transition: border-color .2s;
     }
-    .banner-preview-box img { max-width: 100%; max-height: 200px; object-fit: contain; }
-    .media-picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .5rem; }
-    .media-picker-item { aspect-ratio: 1; cursor: pointer; border-radius: .375rem; overflow: hidden; border: 2px solid transparent; transition: border-color .15s; }
-    .media-picker-item:hover, .media-picker-item.selected { border-color: #0d6efd; }
-    .media-picker-item img { width: 100%; height: 100%; object-fit: cover; }
+    .image-preview-box:hover { border-color: #0d6efd; }
+    .image-preview-box img { max-width: 100%; max-height: 200px; object-fit: contain; }
 </style>
 @endpush
 
 @section('content')
 
 <form method="POST" action="{{ route('admin.advertisements.update', $advertisement->id) }}"
-      enctype="multipart/form-data" x-data="adEditForm()">
+      enctype="multipart/form-data"
+      x-data="adEditForm()"
+      @media-picked.window="onMediaPicked($event.detail)">
     @csrf
     @method('PUT')
 
@@ -58,7 +59,7 @@
                         <div class="col-md-6">
                             <label for="type" class="form-label fw-semibold">Type <span class="text-danger">*</span></label>
                             <select name="type" id="type" class="form-select @error('type') is-invalid @enderror"
-                                    x-model="adType" required>
+                                    @change="adType = $event.target.value" required>
                                 <option value="adsense" {{ old('type', $advertisement->type) === 'adsense' ? 'selected' : '' }}>Google AdSense</option>
                                 <option value="banner"  {{ old('type', $advertisement->type) === 'banner'  ? 'selected' : '' }}>Banner Image</option>
                             </select>
@@ -89,40 +90,45 @@
 
                     {{-- Banner --}}
                     <div x-show="adType === 'banner'" x-transition>
-                        <div class="mb-2">
+                        <div class="mb-3">
                             <label class="form-label fw-semibold">Banner Image</label>
-                            <div class="banner-preview-box mb-2">
-                                <img x-show="bannerPreview" :src="bannerPreview" alt="Banner preview">
-                                <div x-show="!bannerPreview" class="text-center text-muted p-3">
-                                    <i class="fas fa-image fa-2x mb-2 d-block"></i>
-                                    <span class="small">No image selected</span>
-                                </div>
+                            <div class="image-preview-box mb-2" @click="openPicker()">
+                                <template x-if="bannerPreview">
+                                    <img :src="bannerPreview" alt="Banner preview">
+                                </template>
+                                <template x-if="!bannerPreview">
+                                    <div class="text-center text-muted p-3">
+                                        <i class="fas fa-images fa-2x mb-2 d-block"></i>
+                                        <span class="small">Click to choose from media library</span>
+                                    </div>
+                                </template>
                             </div>
                             <input type="hidden" name="media_path" :value="mediaPath">
                             <input type="hidden" name="remove_image" :value="removeImage ? '1' : ''">
-                            <input type="file" name="image" class="d-none" accept="image/*"
-                                   x-ref="bannerInput" @change="previewUpload($event)">
-                            <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" class="btn btn-primary btn-sm"
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1"
                                         @click="openPicker()">
-                                    <i class="fas fa-photo-video me-1"></i>Media Library
+                                    <i class="fas fa-images me-1"></i>Choose Image
                                 </button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm"
-                                        @click="$refs.bannerInput.click()">
-                                    <i class="fas fa-upload me-1"></i>Upload File
+                                <button type="button" class="btn btn-outline-warning btn-sm"
+                                        x-show="bannerPreview && bannerPreview !== originalPreview && originalPreview"
+                                        @click="undoChange()"
+                                        title="Revert to saved image">
+                                    <i class="fas fa-undo"></i>
                                 </button>
                                 <button type="button" class="btn btn-outline-danger btn-sm"
                                         x-show="bannerPreview"
                                         @click="clearBanner()">
-                                    <i class="fas fa-times"></i> Remove
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="mb-3 mt-3">
+                        <div class="mb-3">
                             <label for="url" class="form-label fw-semibold">Click URL</label>
                             <input type="url" name="url" id="url"
                                    class="form-control @error('url') is-invalid @enderror"
+                                   placeholder="https://advertiser-website.com"
                                    value="{{ old('url', $advertisement->url) }}">
                             @error('url')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
@@ -157,135 +163,53 @@
         </div>
     </div>
 
-    {{-- ── Media Picker Modal ── --}}
-    <div class="modal fade" id="mediaPickerModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h6 class="modal-title fw-bold">Select from Media Library</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <input type="text" class="form-control form-control-sm" placeholder="Search images..."
-                               x-model="pickerSearch" @input.debounce.400ms="pickerLoad(1)">
-                    </div>
-                    <div x-show="pickerLoading" class="text-center py-4 text-muted">
-                        <i class="fas fa-spinner fa-spin fa-2x"></i>
-                    </div>
-                    <div x-show="!pickerLoading && pickerImages.length === 0" class="text-center py-4 text-muted">
-                        <i class="fas fa-image fa-2x mb-2 d-block"></i>No images found.
-                    </div>
-                    <div class="media-picker-grid" x-show="!pickerLoading">
-                        <template x-for="img in pickerImages" :key="img.id">
-                            <div class="media-picker-item"
-                                 :class="{ selected: pickerSelected === img.id }"
-                                 @click="pickerSelect(img)">
-                                <img :src="img.url" :alt="img.name" loading="lazy">
-                            </div>
-                        </template>
-                    </div>
-                    <div class="text-center mt-3" x-show="pickerHasMore && !pickerLoading">
-                        <button type="button" class="btn btn-outline-secondary btn-sm"
-                                @click="pickerLoad(pickerPage + 1, true)">
-                            Load more
-                        </button>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary btn-sm"
-                            :disabled="!pickerSelected"
-                            @click="confirmPicker()">
-                        Use Selected Image
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </form>
+
+@include('admin.partials.media-picker-modal')
 
 @endsection
 
 @push('scripts')
 <script>
 function adEditForm() {
-    return {
-        adType: '{{ old("type", $advertisement->type ?? "") }}',
-        bannerPreview: {{ $advertisement->image ? json_encode(asset('storage/' . $advertisement->image)) : 'null' }},
-        mediaPath: '',
-        removeImage: false,
+    @php
+        $initPreview = null;
+        if (old('media_path')) {
+            $initPreview = asset('storage/' . old('media_path'));
+        } elseif ($advertisement->image_url) {
+            $initPreview = $advertisement->image_url;
+        }
+    @endphp
 
-        // Media picker state
-        pickerModal: null,
-        pickerImages: [],
-        pickerSearch: '',
-        pickerPage: 1,
-        pickerHasMore: false,
-        pickerLoading: false,
-        pickerSelected: null,
-        pickerSelectedImg: null,
+    return {
+        adType:        @json(old('type', $advertisement->type ?? '')),
+        bannerPreview: @json($initPreview),
+        originalPreview: @json($advertisement->image_url),
+        mediaPath:     @json(old('media_path', '')),
+        removeImage:   false,
 
         openPicker() {
-            if (!this.pickerModal) {
-                this.pickerModal = new bootstrap.Modal(document.getElementById('mediaPickerModal'));
-            }
-            this.pickerSelected = null;
-            this.pickerSelectedImg = null;
-            this.pickerLoad(1);
-            this.pickerModal.show();
+            window.dispatchEvent(new CustomEvent('open-media-picker', { detail: { context: 'banner' } }));
         },
 
-        async pickerLoad(page = 1, append = false) {
-            this.pickerLoading = true;
-            this.pickerPage = page;
-            const params = new URLSearchParams({ page });
-            if (this.pickerSearch) params.set('q', this.pickerSearch);
-            try {
-                const res = await fetch(`{{ route('admin.media.list') }}?` + params, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                const json = await res.json();
-                this.pickerImages = append ? [...this.pickerImages, ...json.data] : json.data;
-                this.pickerHasMore = json.has_more;
-            } finally {
-                this.pickerLoading = false;
-            }
-        },
-
-        pickerSelect(img) {
-            this.pickerSelected = img.id;
-            this.pickerSelectedImg = img;
-        },
-
-        confirmPicker() {
-            if (!this.pickerSelectedImg) return;
-            this.bannerPreview = this.pickerSelectedImg.url;
-            this.mediaPath     = this.pickerSelectedImg.file_name;
+        onMediaPicked(detail) {
+            if (detail.context !== 'banner') return;
+            this.bannerPreview = detail.url;
+            this.mediaPath     = detail.file_name;
             this.removeImage   = false;
-            this.$refs.bannerInput.value = '';
-            this.pickerModal.hide();
-        },
-
-        previewUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = e => {
-                this.bannerPreview = e.target.result;
-                this.mediaPath = '';
-                this.removeImage = false;
-            };
-            reader.readAsDataURL(file);
         },
 
         clearBanner() {
             this.bannerPreview = null;
-            this.mediaPath = '';
-            this.removeImage = true;
-            this.$refs.bannerInput.value = '';
-        }
+            this.mediaPath     = '';
+            this.removeImage   = true;
+        },
+
+        undoChange() {
+            this.bannerPreview = this.originalPreview;
+            this.mediaPath     = '';
+            this.removeImage   = false;
+        },
     }
 }
 </script>

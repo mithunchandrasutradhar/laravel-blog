@@ -61,20 +61,29 @@
                         <div class="col-md-6">
                             <label for="password" class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input :type="showPassword ? 'text' : 'password'" name="password" id="password"
+                                <input type="password" name="password" id="password"
+                                       x-ref="pwInput"
                                        class="form-control @error('password') is-invalid @enderror"
-                                       minlength="8" required>
-                                <button type="button" class="btn btn-outline-secondary" @click="showPassword=!showPassword">
-                                    <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                       minlength="8" required autocomplete="new-password">
+                                <button type="button" class="btn btn-outline-secondary px-3"
+                                        @click="togglePw()" title="Toggle visibility">
+                                    <i class="fas fa-eye pw-eye-icon"></i>
                                 </button>
                                 @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label for="password_confirmation" class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
-                            <input :type="showPassword ? 'text' : 'password'" name="password_confirmation"
+                            <div class="input-group">
+                            <input type="password" name="password_confirmation"
                                    id="password_confirmation"
-                                   class="form-control" minlength="8" required>
+                                   x-ref="pwConfirm"
+                                   class="form-control" minlength="8" required autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary px-3"
+                                    @click="togglePw()" title="Toggle visibility">
+                                <i class="fas fa-eye pw-eye-icon"></i>
+                            </button>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label for="role" class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
@@ -168,6 +177,16 @@
         return {
             showPassword: false,
             avatarPreview: null,
+
+            togglePw() {
+                this.showPassword = !this.showPassword;
+                const type = this.showPassword ? 'text' : 'password';
+                const icon = this.showPassword ? 'fas fa-eye-slash pw-eye-icon' : 'fas fa-eye pw-eye-icon';
+                if (this.$refs.pwInput)   this.$refs.pwInput.type   = type;
+                if (this.$refs.pwConfirm) this.$refs.pwConfirm.type = type;
+                document.querySelectorAll('.pw-eye-icon').forEach(el => el.className = icon);
+            },
+
             previewAvatar(event) {
                 const file = event.target.files[0];
                 if (!file) return;

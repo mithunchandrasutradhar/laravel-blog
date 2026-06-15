@@ -29,7 +29,7 @@ class BlogController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Post::published()->with(['category', 'author', 'tags']);
+        $query = Post::published()->with(['category', 'categories', 'author', 'tags']);
 
         // Filter by category
         if ($request->filled('category')) {
@@ -71,6 +71,7 @@ class BlogController extends Controller
     {
         $post = Post::with([
             'category',
+            'categories',
             'author',
             'tags',
             'approvedComments.user',
@@ -94,7 +95,7 @@ class BlogController extends Controller
         $relatedPosts = Post::published()
             ->where('category_id', $post->category_id)
             ->where('id', '!=', $post->id)
-            ->with(['category', 'author'])
+            ->with(['category', 'categories', 'author'])
             ->latestPublished()
             ->limit(3)
             ->get();
@@ -125,7 +126,7 @@ class BlogController extends Controller
 
         $posts = Post::published()
             ->whereIn('id', $savedIds)
-            ->with(['category', 'author'])
+            ->with(['category', 'categories', 'author'])
             ->latestPublished()
             ->paginate(self::PER_PAGE);
 

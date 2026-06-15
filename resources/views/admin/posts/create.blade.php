@@ -152,18 +152,18 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="category_id" class="form-label small fw-semibold">Category <span class="text-danger">*</span></label>
-                        <select name="category_id" id="category_id"
-                                class="form-select form-select-sm @error('category_id') is-invalid @enderror" required>
-                            <option value="">Select Category</option>
+                        <label for="categorySelect" class="form-label small fw-semibold">Category <span class="text-danger">*</span></label>
+                        <select name="category_ids[]" id="categorySelect" multiple
+                                class="form-select form-select-sm @error('category_ids') is-invalid @enderror"
+                                placeholder="Select categories...">
                             @foreach($categories ?? [] as $category)
                                 <option value="{{ $category->id }}"
-                                    {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                    {{ in_array($category->id, old('category_ids', [])) ? 'selected' : '' }}>
                                     {{ $category->name }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        @error('category_ids')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="form-check form-switch mb-3">
@@ -373,5 +373,14 @@
             placeholder: 'Select or create tags...',
         });
     } catch (e) { console.error('TomSelect failed to init:', e); }
+
+    try {
+        new TomSelect('#categorySelect', {
+            plugins: ['remove_button'],
+            create: false,
+            placeholder: 'Select categories...',
+            maxItems: null,
+        });
+    } catch (e) { console.error('TomSelect category failed to init:', e); }
 </script>
 @endpush

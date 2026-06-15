@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ProfileUpdateRequest;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -40,15 +43,28 @@ class ProfileController extends Controller
             $data['email_verified_at'] = null;
         }
 
-        // Handle profile image upload
+        // Handle profile image upload — stored in the Users media folder
         if ($request->hasFile('profile_image')) {
-            // Delete old image
             if ($user->profile_image) {
                 Storage::disk('public')->delete($user->profile_image);
             }
+            $file       = $request->file('profile_image');
+            $safeName   = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path       = $file->storeAs('media/users', $safeName, 'public');
 
-            $data['profile_image'] = $request->file('profile_image')
-                ->store('profile-images', 'public');
+            $data['profile_image'] = $path;
+
+            $usersFolder = MediaFolder::where('slug', 'users')->first();
+            Media::create([
+                'name'            => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                'file_name'       => $path,
+                'mime_type'       => $file->getMimeType(),
+                'disk'            => 'public',
+                'size'            => $file->getSize(),
+                'collection_name' => 'users',
+                'folder_id'       => $usersFolder?->id,
+            ]);
         }
 
         // Handle password change

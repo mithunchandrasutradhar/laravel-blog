@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Media extends Model
@@ -20,6 +21,7 @@ class Media extends Model
         'model_type',
         'model_id',
         'collection_name',
+        'folder_id',
         'name',
         'file_name',
         'mime_type',
@@ -49,6 +51,14 @@ class Media extends Model
     public function model(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * The folder this media item belongs to.
+     */
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(MediaFolder::class, 'folder_id');
     }
 
     // -------------------------------------------------------------------------

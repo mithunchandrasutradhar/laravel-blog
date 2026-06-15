@@ -58,11 +58,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Track post view after 5 seconds
-    const postSlug = document.body.dataset.postSlug;
-    if (postSlug) {
-        setTimeout(() => {
-            axios.post('/api/posts/' + postSlug + '/view').catch(() => {});
-        }, 5000);
-    }
 });

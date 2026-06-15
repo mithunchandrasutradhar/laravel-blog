@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
+use App\Models\Media;
+use App\Models\MediaFolder;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 
@@ -114,13 +117,28 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        // Optional profile image
+        // Optional profile image — stored in the Users media folder
         if ($request->hasFile('profile_image')) {
             if ($user->profile_image) {
                 Storage::disk('public')->delete($user->profile_image);
             }
-            $data['profile_image'] = $request->file('profile_image')
-                ->store('profile-images', 'public');
+            $file       = $request->file('profile_image');
+            $safeName   = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME))
+                . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $path       = $file->storeAs('media/users', $safeName, 'public');
+
+            $data['profile_image'] = $path;
+
+            $usersFolder = MediaFolder::where('slug', 'users')->first();
+            Media::create([
+                'name'            => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                'file_name'       => $path,
+                'mime_type'       => $file->getMimeType(),
+                'disk'            => 'public',
+                'size'            => $file->getSize(),
+                'collection_name' => 'users',
+                'folder_id'       => $usersFolder?->id,
+            ]);
         } elseif ($request->boolean('remove_avatar')) {
             if ($user->profile_image) {
                 Storage::disk('public')->delete($user->profile_image);

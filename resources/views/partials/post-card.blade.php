@@ -6,14 +6,17 @@
       $cardClass   - extra CSS class string
 --}}
 @php
-    $showExcerpt = $showExcerpt ?? true;
-    $cardClass   = $cardClass ?? '';
-    $catColor    = $post->category->color ?? 'var(--brand-primary)';
+    $showExcerpt    = $showExcerpt ?? true;
+    $cardClass      = $cardClass ?? '';
+    $postCategories = ($post->relationLoaded('categories') && $post->categories->isNotEmpty())
+        ? $post->categories
+        : collect(array_filter([$post->category ?? null]));
+    $catColor       = $postCategories->first()?->color ?? 'var(--brand-primary)';
 @endphp
 
-<article class="card post-card h-100 {{ $cardClass }}" itemscope itemtype="https://schema.org/BlogPosting">
+<article class="card post-card h-100 {{ $cardClass }}" style="position:relative;" itemscope itemtype="https://schema.org/BlogPosting">
 
-    {{-- Thumbnail with category badge overlay --}}
+    {{-- Thumbnail image link --}}
     <a href="{{ route('blog.show', $post->slug) }}" class="text-decoration-none post-card-img-link d-block" tabindex="-1">
         <div class="post-card-thumbnail">
             <img
@@ -24,20 +27,22 @@
                 itemprop="image"
                 loading="lazy"
             >
-
-            {{-- Category badge overlaid on image --}}
-            @if($post->category)
-            <div class="position-absolute top-0 start-0 p-3" style="z-index:2;">
-                <a href="{{ route('categories.show', $post->category->slug) }}"
-                   class="post-category-badge text-decoration-none"
-                   style="background-color:{{ $catColor }};"
-                   itemprop="articleSection">
-                    {{ $post->category->name }}
-                </a>
-            </div>
-            @endif
         </div>
     </a>
+
+    {{-- Category badges — outside the <a> wrapper to avoid invalid nesting and to sit above the stretched-link overlay --}}
+    @if($postCategories->isNotEmpty())
+    <div class="position-absolute top-0 start-0 p-3 d-flex flex-wrap gap-1" style="z-index:5;pointer-events:none;">
+        @foreach($postCategories as $cat)
+        <a href="{{ route('categories.show', $cat->slug) }}"
+           class="post-category-badge text-decoration-none"
+           style="background-color:{{ $cat->color ?? 'var(--brand-primary)' }};position:relative;z-index:5;pointer-events:auto;"
+           itemprop="articleSection">
+            {{ $cat->name }}
+        </a>
+        @endforeach
+    </div>
+    @endif
 
     {{-- Card Body --}}
     <div class="card-body d-flex flex-column" style="padding:1.125rem 1.25rem .875rem;">

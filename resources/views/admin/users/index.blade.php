@@ -25,8 +25,8 @@
                 <label class="form-label small mb-1">Search</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" name="search" class="form-control"
-                           placeholder="Name or email..." value="{{ request('search') }}">
+                    <input type="text" name="q" class="form-control"
+                           placeholder="Name or email..." value="{{ request('q') }}">
                 </div>
             </div>
             <div class="col-md-2">

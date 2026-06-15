@@ -117,6 +117,14 @@ class Post extends Model
     }
 
     /**
+     * All categories this post belongs to (pivot).
+     */
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'category_post');
+    }
+
+    /**
      * All comments on this post.
      */
     public function comments(): HasMany

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
+use App\Models\MediaFolder;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,11 +15,6 @@ use Illuminate\View\View;
 
 class MediaController extends Controller
 {
-    /**
-     * Allowed upload MIME types.
-     *
-     * @var array<string>
-     */
     private const ALLOWED_MIMES = [
         'image/jpeg',
         'image/png',
@@ -27,22 +24,21 @@ class MediaController extends Controller
         'application/pdf',
     ];
 
-    /**
-     * Max upload size in kilobytes (5 MB).
-     */
     private const MAX_SIZE_KB = 5120;
 
-    /**
-     * Media per page.
-     */
     private const PER_PAGE = 24;
 
-    /**
-     * Display the media library.
-     */
     public function index(Request $request): View
     {
+        $folders       = MediaFolder::withCount('media')->orderBy('name')->get();
+        $currentFolder = null;
+
         $query = Media::latest();
+
+        if ($request->filled('folder')) {
+            $currentFolder = MediaFolder::where('slug', $request->folder)->firstOrFail();
+            $query->where('folder_id', $currentFolder->id);
+        }
 
         if ($request->filled('type')) {
             if ($request->type === 'image') {
@@ -58,14 +54,9 @@ class MediaController extends Controller
 
         $media = $query->paginate(self::PER_PAGE)->withQueryString();
 
-        return view('admin.media.index', compact('media'));
+        return view('admin.media.index', compact('media', 'folders', 'currentFolder'));
     }
 
-    /**
-     * Handle multiple file uploads.
-     *
-     * Returns a JSON response so it can be used by JavaScript uploaders.
-     */
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -78,6 +69,11 @@ class MediaController extends Controller
             ],
         ]);
 
+        $folder = null;
+        if ($request->filled('folder_id')) {
+            $folder = MediaFolder::find($request->folder_id);
+        }
+
         $uploaded = [];
 
         foreach ($request->file('files') as $file) {
@@ -86,7 +82,11 @@ class MediaController extends Controller
                 . '-' . uniqid()
                 . '.' . $file->getClientOriginalExtension();
 
-            $path = $file->storeAs('media/' . now()->format('Y/m'), $safeName, 'public');
+            $subDir = $folder
+                ? 'media/' . $folder->slug
+                : 'media/' . now()->format('Y/m');
+
+            $path = $file->storeAs($subDir, $safeName, 'public');
 
             $media = Media::create([
                 'name'            => pathinfo($originalName, PATHINFO_FILENAME),
@@ -94,7 +94,8 @@ class MediaController extends Controller
                 'mime_type'       => $file->getMimeType(),
                 'disk'            => 'public',
                 'size'            => $file->getSize(),
-                'collection_name' => 'default',
+                'collection_name' => $folder ? $folder->slug : 'default',
+                'folder_id'       => $folder?->id,
             ]);
 
             $uploaded[] = [
@@ -113,15 +114,19 @@ class MediaController extends Controller
         ]);
     }
 
-    /**
-     * List images for the media picker modal (paginated JSON).
-     */
     public function list(Request $request): JsonResponse
     {
         $query = Media::where('mime_type', 'LIKE', 'image/%')->latest();
 
         if ($request->filled('q')) {
             $query->where('name', 'LIKE', "%{$request->q}%");
+        }
+
+        if ($request->filled('folder')) {
+            $folder = MediaFolder::where('slug', $request->folder)->first();
+            if ($folder) {
+                $query->where('folder_id', $folder->id);
+            }
         }
 
         $paginator = $query->paginate(self::PER_PAGE);
@@ -140,9 +145,65 @@ class MediaController extends Controller
         ]);
     }
 
-    /**
-     * Delete a media file from disk and the database.
-     */
+    public function rename(Request $request, Media $media): JsonResponse
+    {
+        $request->validate(['name' => ['required', 'string', 'max:255']]);
+        $media->update(['name' => $request->name]);
+
+        return response()->json(['success' => true, 'name' => $media->name]);
+    }
+
+    public function move(Request $request, Media $media): JsonResponse
+    {
+        $request->validate([
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+        ]);
+
+        $folder = $request->folder_id ? MediaFolder::find($request->folder_id) : null;
+
+        $media->update([
+            'folder_id'       => $folder?->id,
+            'collection_name' => $folder ? $folder->slug : 'default',
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function copy(Request $request, Media $media): JsonResponse
+    {
+        $request->validate([
+            'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
+        ]);
+
+        $folder   = $request->folder_id ? MediaFolder::find($request->folder_id) : null;
+        $ext      = pathinfo($media->file_name, PATHINFO_EXTENSION);
+        $safeName = Str::slug($media->name) . '-copy-' . uniqid() . '.' . $ext;
+        $subDir   = $folder ? 'media/' . $folder->slug : 'media/' . now()->format('Y/m');
+        $newPath  = $subDir . '/' . $safeName;
+
+        if (Storage::disk($media->disk)->exists($media->file_name)) {
+            Storage::disk($media->disk)->copy($media->file_name, $newPath);
+        }
+
+        $copy = Media::create([
+            'name'            => $media->name . ' (copy)',
+            'file_name'       => $newPath,
+            'mime_type'       => $media->mime_type,
+            'disk'            => $media->disk,
+            'size'            => $media->size,
+            'collection_name' => $folder ? $folder->slug : $media->collection_name,
+            'folder_id'       => $folder?->id,
+        ]);
+
+        return response()->json([
+            'success'    => true,
+            'id'         => $copy->id,
+            'name'       => $copy->name,
+            'url'        => $copy->url,
+            'human_size' => $copy->human_size,
+        ]);
+    }
+
     public function destroy(Media $media): JsonResponse|RedirectResponse
     {
         Storage::disk($media->disk)->delete($media->file_name);
@@ -155,11 +216,6 @@ class MediaController extends Controller
         return back()->with('success', 'File deleted successfully.');
     }
 
-    /**
-     * Browse endpoint for CKEditor's image browser plugin.
-     *
-     * Returns a JSON array of image media items.
-     */
     public function browse(Request $request): JsonResponse
     {
         $images = Media::where('mime_type', 'LIKE', 'image/%')
