@@ -27,6 +27,7 @@ class Category extends Model
         'icon',
         'meta_title',
         'meta_description',
+        'meta_keywords',
         'parent_id',
     ];
 

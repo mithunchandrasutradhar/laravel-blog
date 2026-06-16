@@ -11,7 +11,7 @@ class SearchController extends Controller
     /**
      * Minimum keyword length to trigger a FULLTEXT search.
      */
-    private const MIN_QUERY_LENGTH = 3;
+    private const MIN_QUERY_LENGTH = 2;
 
     /**
      * Results per page.

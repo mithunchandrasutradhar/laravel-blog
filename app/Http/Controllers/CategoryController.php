@@ -79,7 +79,7 @@ class CategoryController extends Controller
                 $q->whereIn('category_id', $categoryIds)
                   ->orWhereHas('categories', fn ($q2) => $q2->whereIn('categories.id', $categoryIds));
             })
-            ->with(['category', 'author', 'tags'])
+            ->with(['category', 'categories', 'author', 'tags'])
             ->latestPublished()
             ->paginate(self::PER_PAGE);
 

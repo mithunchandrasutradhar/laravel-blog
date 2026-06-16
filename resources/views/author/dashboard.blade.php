@@ -20,7 +20,7 @@
 <div class="row g-3 mb-4">
 
     {{-- Total Posts --}}
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl-2">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body d-flex align-items-center gap-3">
                 <div class="flex-shrink-0 bg-primary bg-opacity-10 rounded-3 p-3">
@@ -36,7 +36,7 @@
     </div>
 
     {{-- Published --}}
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl-2">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body d-flex align-items-center gap-3">
                 <div class="flex-shrink-0 bg-success bg-opacity-10 rounded-3 p-3">
@@ -54,7 +54,7 @@
     </div>
 
     {{-- Draft --}}
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl-2">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body d-flex align-items-center gap-3">
                 <div class="flex-shrink-0 bg-secondary bg-opacity-10 rounded-3 p-3">
@@ -70,7 +70,7 @@
     </div>
 
     {{-- Total Views --}}
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl-2">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body d-flex align-items-center gap-3">
                 <div class="flex-shrink-0 bg-info bg-opacity-10 rounded-3 p-3">
@@ -80,6 +80,38 @@
                     <div class="text-muted small">Total Views</div>
                     <div class="h4 fw-bold mb-0">{{ number_format($stats['total_views'] ?? 0) }}</div>
                     <div class="small text-muted mt-1">across all posts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Approved Comments --}}
+    <div class="col-sm-6 col-xl-2">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="flex-shrink-0 bg-warning bg-opacity-10 rounded-3 p-3">
+                    <i class="fas fa-comments fa-2x text-warning"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="text-muted small">Comments</div>
+                    <div class="h4 fw-bold mb-0">{{ $stats['total_comments'] ?? 0 }}</div>
+                    <div class="small text-muted mt-1">approved</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Pending Comments --}}
+    <div class="col-sm-6 col-xl-2">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="flex-shrink-0 bg-danger bg-opacity-10 rounded-3 p-3">
+                    <i class="fas fa-clock fa-2x text-danger"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="text-muted small">Pending</div>
+                    <div class="h4 fw-bold mb-0">{{ $stats['pending_comments'] ?? 0 }}</div>
+                    <div class="small text-muted mt-1">needs review</div>
                 </div>
             </div>
         </div>
@@ -132,7 +164,7 @@
                                     </span>
                                 </td>
                                 <td class="small text-muted text-nowrap">
-                                    {{ $comment->author_name ?? $comment->user->name ?? 'Guest' }}
+                                    {{ $comment->commenter_name }}
                                 </td>
                                 <td class="small text-muted">
                                     {{ Str::limit($comment->content ?? '', 40) }}

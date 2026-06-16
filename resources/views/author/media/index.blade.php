@@ -1,162 +1,117 @@
 @extends('author.layouts.author')
 
 @section('title', 'My Media')
-
-@section('page-title', 'My Media')
-@section('page-subtitle', 'Upload and manage your media files')
+@section('page-title', 'Media Library')
+@section('page-subtitle', 'Upload and manage images for your posts')
 
 @push('styles')
 <style>
-    /* ── Upload zone ── */
+    /* ── Upload zone ─────────────────────────────────── */
     .upload-zone {
-        border: 3px dashed #dee2e6;
-        border-radius: 1rem;
-        padding: 2.5rem 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all .2s;
-        background: #fafafa;
-        position: relative;
+        border: 2px dashed #dee2e6; border-radius: .875rem;
+        padding: 2rem 1.5rem; text-align: center;
+        cursor: pointer; transition: all .2s; background: #fafafa;
     }
-    .upload-zone:hover,
-    .upload-zone.drag-over {
-        border-color: #0d6efd;
-        background: rgba(13,110,253,.04);
+    .upload-zone:hover, .upload-zone.drag-over {
+        border-color: #0d6efd; background: rgba(13,110,253,.03);
     }
-    .upload-zone.drag-over .upload-icon { transform: scale(1.1); }
-    .upload-icon { transition: transform .2s; }
 
-    /* ── Media grid ── */
+    /* ── Media grid ─────────────────────────────────── */
     .media-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+        gap: .875rem;
     }
-
     .media-item {
-        position: relative;
-        border-radius: .5rem;
-        overflow: hidden;
-        border: 1px solid #dee2e6;
-        background: #fff;
+        position: relative; border-radius: .5rem; overflow: hidden;
+        border: 1px solid #dee2e6; background: #fff;
         transition: box-shadow .15s, border-color .15s;
     }
-    .media-item:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,.12);
-        border-color: #0d6efd;
-    }
-
-    .media-thumb {
-        width: 100%;
-        height: 115px;
-        object-fit: cover;
-        display: block;
-    }
+    .media-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); border-color: #0d6efd; }
+    .media-thumb { width: 100%; height: 110px; object-fit: cover; display: block; }
     .media-thumb-icon {
-        width: 100%;
-        height: 115px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-        font-size: 2.5rem;
+        width: 100%; height: 110px;
+        display: flex; align-items: center; justify-content: center;
+        background: #f8f9fa; font-size: 2rem;
     }
-
-    .media-info {
-        padding: .45rem .5rem;
-        border-top: 1px solid #f0f0f0;
-    }
-    .media-name {
-        font-size: .72rem;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .media-meta {
-        font-size: .65rem;
-        color: #6c757d;
-    }
-
+    .media-info { padding: .45rem .5rem; border-top: 1px solid #f0f0f0; }
+    .media-name { font-size: .7rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .media-meta { font-size: .62rem; color: #6c757d; }
     .media-overlay {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,.58);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        gap: .4rem;
-        flex-direction: column;
-        padding: .5rem;
+        position: absolute; inset: 0; background: rgba(0,0,0,.55);
+        display: none; align-items: center; justify-content: center;
+        gap: .35rem; padding: .35rem;
     }
     .media-item:hover .media-overlay { display: flex; }
-
-    #mediaFileInput { display: none; }
-
-    /* ── Filter tabs ── */
-    .filter-tab {
-        cursor: pointer;
-        padding: .35rem .85rem;
-        border-radius: 20px;
-        font-size: .82rem;
-        font-weight: 500;
-        color: #6c757d;
-        text-decoration: none;
-        transition: background .15s, color .15s;
+    .media-action-btn {
+        width: 32px; height: 32px; padding: 0;
+        display: flex; align-items: center; justify-content: center; font-size: .75rem;
     }
-    .filter-tab:hover { background: #f0f0f0; color: #212529; }
-    .filter-tab.active { background: #0d6efd; color: #fff; }
+
+    /* ── Bulk selection ──────────────────────────────── */
+    .media-checkbox-wrap {
+        position: absolute; top: 6px; left: 6px; z-index: 10;
+        opacity: 0; transition: opacity .15s;
+    }
+    .media-item:hover .media-checkbox-wrap,
+    .media-item.selected .media-checkbox-wrap { opacity: 1; }
+    .media-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #0d6efd; }
+    .media-item.selected { border-color: #0d6efd !important; box-shadow: 0 0 0 2px rgba(13,110,253,.3) !important; }
+
+    /* ── Bulk action bar ─────────────────────────────── */
+    .bulk-bar {
+        display: none; align-items: center; gap: .5rem; flex-wrap: wrap;
+        background: #e7f1ff; border: 1px solid #b8d4f9;
+        border-radius: .5rem; padding: .5rem .75rem; margin-bottom: .75rem;
+    }
+    .bulk-bar.active { display: flex; }
 </style>
 @endpush
 
 @section('content')
 
-{{-- ── Upload Area ── --}}
-<div class="card border-0 shadow-sm mb-4" x-data="authorMediaUploader()">
-    <div class="card-header bg-transparent border-0 py-3">
-        <h6 class="fw-bold mb-0">
-            <i class="fas fa-cloud-upload-alt text-primary me-2"></i>Upload Files
-        </h6>
-    </div>
-    <div class="card-body pt-0">
+{{-- Hidden delete form --}}
+<form id="deleteMediaForm" method="POST" action="" class="d-none">@csrf @method('DELETE')</form>
 
-        {{-- Drag-drop zone --}}
-        <div class="upload-zone"
-             @click="$refs.fileInput.click()"
-             @dragover.prevent="isDragging = true"
-             @dragleave.prevent="isDragging = false"
-             @drop.prevent="handleDrop($event)"
-             :class="{ 'drag-over': isDragging }">
-            <div class="upload-icon mb-3">
-                <i class="fas fa-cloud-upload-alt fa-3x text-primary"></i>
-            </div>
-            <h6 class="fw-bold mb-1">Drag &amp; drop files here</h6>
-            <p class="text-muted small mb-3">or click to browse from your computer</p>
-            <span class="badge bg-light text-secondary border" style="font-size:.75rem;">
-                JPG &bull; PNG &bull; GIF &bull; WebP &bull; PDF &mdash; Max 10 MB each
+{{-- ── Upload Card ── --}}
+<div class="card border-0 shadow-sm mb-3" x-data="authorMediaUploader()">
+    <div class="card-body">
+
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="fas fa-folder-open text-warning"></i>
+            <span class="fw-semibold small">
+                Posts Folder
+                <span class="text-muted fw-normal">— all uploads go here automatically</span>
             </span>
         </div>
 
-        <input type="file"
-               id="mediaFileInput"
-               x-ref="fileInput"
-               multiple
-               accept="image/*,application/pdf"
-               @change="handleFiles($event.target.files)">
+        <div class="upload-zone"
+             @click="$refs.fileInput.click()"
+             @dragover.prevent="isDragging=true"
+             @dragleave.prevent="isDragging=false"
+             @drop.prevent="isDragging=false; handleDrop($event)"
+             :class="{ 'drag-over': isDragging }">
+            <i class="fas fa-cloud-upload-alt fa-2x text-primary mb-2 d-block"></i>
+            <p class="fw-semibold mb-1">Drag &amp; drop images here</p>
+            <p class="text-muted small mb-0">or click to browse — JPG, PNG, GIF, WebP · Max 5 MB</p>
+        </div>
 
-        {{-- Upload queue / progress --}}
+        <div style="display:none;position:absolute;">
+            <input type="file" x-ref="fileInput" multiple accept="image/*"
+                   @change="handleFiles($event.target.files)">
+        </div>
+
         <div x-show="uploads.length" x-transition class="mt-3">
-            <h6 class="small fw-semibold mb-2 text-muted">Uploading...</h6>
-            <template x-for="(file, idx) in uploads" :key="idx">
+            <h6 class="small fw-semibold mb-2">Uploading...</h6>
+            <template x-for="(file, i) in uploads" :key="i">
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <i class="fas fa-file text-muted flex-shrink-0" style="font-size:.85rem;"></i>
-                    <span class="small text-truncate" x-text="file.name" style="max-width:200px; flex-shrink:0;"></span>
+                    <span class="small text-truncate flex-grow-1" x-text="file.name" style="max-width:200px;"></span>
                     <div class="progress flex-grow-1" style="height:7px;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
                              :style="'width:' + file.progress + '%'"></div>
                     </div>
-                    <span class="small text-muted" style="width:36px;text-align:right;" x-text="file.progress + '%'"></span>
-                    <i class="fas fa-check-circle text-success" x-show="file.progress >= 100" style="font-size:.9rem;"></i>
+                    <span class="small text-muted" style="width:36px;" x-text="file.progress + '%'"></span>
+                    <i class="fas fa-check-circle text-success" x-show="file.progress >= 100"></i>
                 </div>
             </template>
         </div>
@@ -164,78 +119,85 @@
     </div>
 </div>
 
-{{-- ── Filter Tabs & Grid ── --}}
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between py-3 flex-wrap gap-2">
+{{-- ── Filter bar ── --}}
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2 px-3">
+        <form method="GET" class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="text-muted small">
+                <strong>{{ $media->total() }}</strong> file(s) in Posts folder
+            </span>
+            <div class="ms-auto d-flex gap-2">
+                <select name="type" class="form-select form-select-sm" style="width:120px;"
+                        onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    <option value="image"    {{ request('type') === 'image'    ? 'selected' : '' }}>Images</option>
+                    <option value="document" {{ request('type') === 'document' ? 'selected' : '' }}>Documents</option>
+                </select>
+                <div class="input-group input-group-sm" style="width:210px;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" name="q" class="form-control"
+                           placeholder="Search..." value="{{ request('q') }}">
+                    <button type="submit" class="btn btn-primary btn-sm">Go</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 
-        {{-- Filter tabs --}}
-        <div class="d-flex align-items-center gap-1">
-            <a href="{{ route('author.media.index') }}"
-               class="filter-tab {{ !request('type') ? 'active' : '' }}">
-                <i class="fas fa-th me-1"></i>All
-            </a>
-            <a href="{{ route('author.media.index', ['type' => 'image']) }}"
-               class="filter-tab {{ request('type') === 'image' ? 'active' : '' }}">
-                <i class="fas fa-image me-1"></i>Images
-            </a>
-            <a href="{{ route('author.media.index', ['type' => 'document']) }}"
-               class="filter-tab {{ request('type') === 'document' ? 'active' : '' }}">
-                <i class="fas fa-file-pdf me-1"></i>Documents
-            </a>
+{{-- ── Media Grid ── --}}
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+
+        {{-- Bulk bar --}}
+        <div class="bulk-bar" id="bulkBar">
+            <span class="small fw-semibold text-primary" id="bulkCount">0 selected</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAllVisible()">Select All</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">Deselect</button>
+            <div class="vr mx-1"></div>
+            <button type="button" class="btn btn-sm btn-danger" onclick="bulkDelete()">
+                <i class="fas fa-trash me-1"></i>Delete Selected
+            </button>
         </div>
 
-        {{-- File count --}}
-        <span class="text-muted small">
-            {{ $media->total() ?? 0 }} file{{ ($media->total() ?? 0) !== 1 ? 's' : '' }}
-        </span>
-
-    </div>
-
-    <div class="card-body">
-        @if(isset($media) && $media->count())
+        @if($media->count())
         <div class="media-grid">
             @foreach($media as $file)
             <div class="media-item" id="media-{{ $file->id }}">
 
-                {{-- Thumbnail or icon --}}
-                @if(Str::startsWith($file->mime_type ?? '', 'image/'))
-                    <img src="{{ asset('storage/' . $file->path) }}"
-                         alt="{{ $file->original_name }}"
-                         class="media-thumb"
-                         loading="lazy">
+                <div class="media-checkbox-wrap">
+                    <input type="checkbox" class="media-checkbox" data-id="{{ $file->id }}"
+                           onchange="toggleSelect({{ $file->id }}, this)"
+                           onclick="event.stopPropagation()">
+                </div>
+
+                @if($file->isImage())
+                    <img src="{{ $file->url }}" alt="{{ $file->name }}" class="media-thumb">
                 @elseif($file->mime_type === 'application/pdf')
-                    <div class="media-thumb-icon text-danger">
-                        <i class="fas fa-file-pdf"></i>
-                    </div>
+                    <div class="media-thumb-icon text-danger"><i class="fas fa-file-pdf"></i></div>
                 @else
-                    <div class="media-thumb-icon text-muted">
-                        <i class="fas fa-file"></i>
-                    </div>
+                    <div class="media-thumb-icon text-muted"><i class="fas fa-file"></i></div>
                 @endif
 
-                {{-- Hover overlay --}}
                 <div class="media-overlay">
-                    <button type="button"
-                            class="btn btn-sm btn-light w-100"
-                            style="font-size:.75rem;"
-                            onclick="copyMediaUrl('{{ asset('storage/' . $file->path) }}')">
-                        <i class="fas fa-link me-1"></i>Copy URL
+                    <button type="button" class="btn btn-sm btn-light media-action-btn"
+                            title="Copy URL" onclick="copyUrl('{{ $file->url }}')">
+                        <i class="fas fa-link"></i>
                     </button>
-                    <button type="button"
-                            class="btn btn-sm btn-danger w-100"
-                            style="font-size:.75rem;"
-                            onclick="deleteMedia({{ $file->id }}, '{{ addslashes($file->original_name) }}')">
-                        <i class="fas fa-trash me-1"></i>Delete
+                    <button type="button" class="btn btn-sm btn-info media-action-btn"
+                            title="Rename"
+                            onclick="openRename({{ $file->id }}, '{{ addslashes($file->name) }}')">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger media-action-btn"
+                            title="Delete" onclick="deleteMedia({{ $file->id }})">
+                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
 
-                {{-- Info --}}
                 <div class="media-info">
-                    <div class="media-name" title="{{ $file->original_name }}">
-                        {{ $file->original_name }}
-                    </div>
-                    <div class="media-meta d-flex justify-content-between mt-1">
-                        <span>{{ $file->human_size ?? number_format(($file->size ?? 0) / 1024, 1) . ' KB' }}</span>
+                    <div class="media-name" title="{{ $file->name }}">{{ $file->name }}</div>
+                    <div class="media-meta d-flex justify-content-between">
+                        <span>{{ $file->human_size }}</span>
                         <span>{{ $file->created_at->format('M d') }}</span>
                     </div>
                 </div>
@@ -245,32 +207,47 @@
         </div>
         @else
         <div class="text-center py-5 text-muted">
-            <i class="fas fa-images fa-3x mb-3 d-block opacity-50"></i>
-            <p class="mb-1">No media files yet.</p>
-            <p class="small">Use the upload area above to add images or documents.</p>
+            <i class="fas fa-images fa-3x mb-3 d-block opacity-25"></i>
+            <p class="mb-0">No files yet. Upload some above!</p>
         </div>
         @endif
+
     </div>
 
-    {{-- Pagination --}}
-    @if(isset($media) && $media->hasPages())
+    @if($media->hasPages())
     <div class="card-footer bg-transparent border-0 py-3">
         {{ $media->appends(request()->query())->links('pagination::bootstrap-5') }}
     </div>
     @endif
 </div>
 
-{{-- Hidden delete form --}}
-<form id="deleteMediaForm" method="POST" action="" class="d-none">
-    @csrf
-    @method('DELETE')
-</form>
+{{-- ── Rename Modal ── --}}
+<div class="modal fade" id="renameModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title fw-semibold"><i class="fas fa-pencil-alt me-2"></i>Rename File</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2">
+                <input type="text" id="renameInput" class="form-control form-control-sm"
+                       placeholder="File display name">
+            </div>
+            <div class="modal-footer pt-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="executeRename()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
 
 @push('scripts')
 <script>
-    // ── Alpine uploader component ──
+(function () {
+
+    // ── Upload ──────────────────────────────────────────────────────────────────
     function authorMediaUploader() {
         return {
             isDragging: false,
@@ -287,61 +264,46 @@
                     this.uploads.push(entry);
                     await this.uploadFile(file, entry);
                 }
-                // Reload page after all uploads finish
-                setTimeout(() => location.reload(), 900);
+                setTimeout(() => location.reload(), 600);
             },
 
             uploadFile(file, entry) {
                 return new Promise(resolve => {
                     const formData = new FormData();
-                    formData.append('file', file);
+                    formData.append('files[]', file);
                     formData.append('_token', '{{ csrf_token() }}');
 
                     const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '{{ route("author.media.store") }}');
-
+                    xhr.open('POST', '{{ route("author.media.upload") }}');
                     xhr.upload.onprogress = e => {
                         if (e.lengthComputable)
                             entry.progress = Math.round((e.loaded / e.total) * 100);
                     };
-
                     xhr.onload = () => { entry.progress = 100; resolve(); };
                     xhr.onerror = resolve;
-
                     xhr.send(formData);
                 });
             }
-        }
+        };
     }
+    window.authorMediaUploader = authorMediaUploader;
 
-    // ── Copy URL to clipboard ──
-    function copyMediaUrl(url) {
+    // ── Copy URL ────────────────────────────────────────────────────────────────
+    window.copyUrl = function (url) {
         navigator.clipboard.writeText(url).then(() => {
-            Swal.fire({
-                icon: 'success',
-                title: 'URL Copied!',
-                text: url,
-                timer: 2500,
-                showConfirmButton: false,
-                toast: true,
-                position: 'bottom-end',
-            });
-        }).catch(() => {
-            prompt('Copy this URL:', url);
+            Swal.fire({ icon: 'success', title: 'Copied!', text: url, timer: 1800, showConfirmButton: false });
         });
-    }
+    };
 
-    // ── Delete with SweetAlert2 confirm ──
-    function deleteMedia(id, name) {
+    // ── Delete ──────────────────────────────────────────────────────────────────
+    window.deleteMedia = function (id) {
         Swal.fire({
             title: 'Delete this file?',
-            html: '<span class="small text-muted">' + name + '</span><br>This cannot be undone.',
+            text: 'This cannot be undone.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="fas fa-trash me-1"></i>Delete',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: 'Delete',
         }).then(result => {
             if (result.isConfirmed) {
                 const form = document.getElementById('deleteMediaForm');
@@ -349,6 +311,125 @@
                 form.submit();
             }
         });
+    };
+
+    // ── Rename ──────────────────────────────────────────────────────────────────
+    var _renameId = null;
+
+    window.openRename = function (id, name) {
+        _renameId = id;
+        document.getElementById('renameInput').value = name;
+        new bootstrap.Modal(document.getElementById('renameModal')).show();
+        setTimeout(() => document.getElementById('renameInput').select(), 300);
+    };
+
+    window.executeRename = function () {
+        const name = document.getElementById('renameInput').value.trim();
+        if (!name) return;
+
+        fetch('{{ url("author/media") }}/' + _renameId + '/rename', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ name }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const el = document.querySelector('#media-' + _renameId + ' .media-name');
+                if (el) { el.textContent = data.name; el.title = data.name; }
+                bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
+                Swal.fire({ icon: 'success', title: 'Renamed!', timer: 1200, showConfirmButton: false });
+            } else {
+                alert(data.message || 'Could not rename file.');
+            }
+        })
+        .catch(() => alert('Network error. Please try again.'));
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const inp = document.getElementById('renameInput');
+        if (inp) inp.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); executeRename(); }
+        });
+    });
+
+    // ── Bulk Selection ──────────────────────────────────────────────────────────
+    var _selectedIds = new Set();
+
+    window.toggleSelect = function (id, checkbox) {
+        if (checkbox.checked) {
+            _selectedIds.add(id);
+            document.getElementById('media-' + id).classList.add('selected');
+        } else {
+            _selectedIds.delete(id);
+            document.getElementById('media-' + id).classList.remove('selected');
+        }
+        updateBulkBar();
+    };
+
+    window.selectAllVisible = function () {
+        document.querySelectorAll('.media-checkbox').forEach(cb => {
+            cb.checked = true;
+            _selectedIds.add(Number(cb.dataset.id));
+            cb.closest('.media-item').classList.add('selected');
+        });
+        updateBulkBar();
+    };
+
+    window.deselectAll = function () {
+        document.querySelectorAll('.media-checkbox').forEach(cb => {
+            cb.checked = false;
+            cb.closest('.media-item').classList.remove('selected');
+        });
+        _selectedIds.clear();
+        updateBulkBar();
+    };
+
+    function updateBulkBar() {
+        const bar = document.getElementById('bulkBar');
+        document.getElementById('bulkCount').textContent = _selectedIds.size + ' selected';
+        bar.classList.toggle('active', _selectedIds.size > 0);
     }
+
+    // ── Bulk Delete ─────────────────────────────────────────────────────────────
+    window.bulkDelete = function () {
+        if (_selectedIds.size === 0) return;
+        const n = _selectedIds.size;
+        Swal.fire({
+            title: 'Delete ' + n + ' file(s)?',
+            text: 'This cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Delete All',
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            fetch('{{ url("author/media/bulk-delete") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ ids: Array.from(_selectedIds) }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Deleted ' + data.count + ' file(s)!', timer: 1200, showConfirmButton: false })
+                        .then(() => location.reload());
+                } else {
+                    alert(data.message || 'Delete failed.');
+                }
+            })
+            .catch(() => alert('Network error. Please try again.'));
+        });
+    };
+
+}());
 </script>
 @endpush

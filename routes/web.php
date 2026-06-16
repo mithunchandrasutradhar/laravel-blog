@@ -46,7 +46,7 @@ Route::get('/tags', fn () => redirect()->route('blog.index'))->name('tags.index'
 Route::get('/tag/{slug}', [TagController::class, 'show'])->name('tags.show');
 Route::get('/author/{username}', [AuthorController::class, 'show'])
     ->name('authors.show')
-    ->where('username', '(?!dashboard|posts|media|settings|profile)[\w\-]+');
+    ->where('username', '(?!dashboard|posts|media|comments|settings|profile)[\w\-]+');
 
 // Search
 Route::get('/search', [SearchController::class, 'index'])->name('search');
@@ -151,10 +151,21 @@ Route::middleware(['auth', 'verified', 'author'])->prefix('author')->name('autho
     // Author's own posts
     Route::resource('posts', Author\PostController::class);
 
-    // Media
-    Route::get('/media', [Author\MediaController::class, 'index'])->name('media.index');
-    Route::post('/media', [Author\MediaController::class, 'store'])->name('media.store');
-    Route::delete('/media/{media}', [Author\MediaController::class, 'destroy'])->name('media.destroy');
+    // Comments on author's own posts
+    Route::get('/comments', [Author\CommentController::class, 'index'])->name('comments.index');
+    Route::patch('/comments/{comment}/approve', [Author\CommentController::class, 'approve'])->name('comments.approve');
+    Route::patch('/comments/{comment}/reject', [Author\CommentController::class, 'reject'])->name('comments.reject');
+    Route::delete('/comments/{comment}', [Author\CommentController::class, 'destroy'])->name('comments.destroy');
+
+    // Media library (Posts folder only)
+    Route::get('/media',                  [Author\MediaController::class, 'index'])->name('media.index');
+    Route::post('/media',                 [Author\MediaController::class, 'store'])->name('media.store');
+    Route::post('/media/upload',          [Author\MediaController::class, 'store'])->name('media.upload');
+    Route::get('/media/list',             [Author\MediaController::class, 'list'])->name('media.list');
+    Route::post('/media/ckeditor-upload', [Author\MediaController::class, 'ckeditorUpload'])->name('media.ckeditor-upload');
+    Route::post('/media/bulk-delete',     [Author\MediaController::class, 'bulkDestroy'])->name('media.bulk-delete');
+    Route::patch('/media/{media}/rename', [Author\MediaController::class, 'rename'])->name('media.rename');
+    Route::delete('/media/{media}',       [Author\MediaController::class, 'destroy'])->name('media.destroy');
 });
 
 /*

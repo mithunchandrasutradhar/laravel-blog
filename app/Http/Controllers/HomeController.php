@@ -36,7 +36,7 @@ class HomeController extends Controller
     {
         // Featured posts: admin-flagged via is_featured; fall back to most-viewed
         $featuredPosts = Post::published()
-            ->with(['category', 'author'])
+            ->with(['category', 'categories', 'author'])
             ->featured()
             ->latestPublished()
             ->limit(self::FEATURED_COUNT)
@@ -44,7 +44,7 @@ class HomeController extends Controller
 
         if ($featuredPosts->isEmpty()) {
             $featuredPosts = Post::published()
-                ->with(['category', 'author'])
+                ->with(['category', 'categories', 'author'])
                 ->popular()
                 ->limit(self::FEATURED_COUNT)
                 ->get();
@@ -52,7 +52,7 @@ class HomeController extends Controller
 
         // Latest posts
         $latestPosts = Post::published()
-            ->with(['category', 'author'])
+            ->with(['category', 'categories', 'author'])
             ->latestPublished()
             ->limit(self::LATEST_COUNT)
             ->get();
@@ -61,7 +61,7 @@ class HomeController extends Controller
         $featuredIds = $featuredPosts->pluck('id');
 
         $trendingPosts = Post::published()
-            ->with(['category', 'author'])
+            ->with(['category', 'categories', 'author'])
             ->withCount('approvedComments')
             ->whereNotIn('id', $featuredIds)
             ->latestPublished()

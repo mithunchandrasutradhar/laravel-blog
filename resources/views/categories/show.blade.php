@@ -2,8 +2,11 @@
 
 @php
     $seo = [
-        'title'       => $category->seo_title ?? $category->name . ' — ' . settings('site_name', config('app.name')),
-        'description' => $category->seo_description ?? $category->description,
+        'title'       => $category->meta_title ?? $category->name . ' — ' . settings('site_name', config('app.name')),
+        'description' => $category->meta_description ?? $category->description,
+        'keywords'    => $category->meta_keywords ?? '',
+        'og_title'    => $category->meta_title ?? $category->name,
+        'og_description' => $category->meta_description ?? $category->description,
         'og_image'    => $category->image ? asset($category->image) : null,
         'canonical'   => route('categories.show', $category->slug),
     ];

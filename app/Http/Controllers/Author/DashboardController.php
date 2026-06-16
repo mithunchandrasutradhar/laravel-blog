@@ -19,12 +19,12 @@ class DashboardController extends Controller
         $authorId = auth()->id();
 
         // --- Own post stats ---
-        $metrics = [
-            'total_posts'     => Post::where('user_id', $authorId)->count(),
-            'published_posts' => Post::where('user_id', $authorId)->published()->count(),
-            'draft_posts'     => Post::where('user_id', $authorId)->draft()->count(),
-            'total_views'     => Post::where('user_id', $authorId)->sum('views_count'),
-            'total_comments'  => Comment::whereHas('post', fn ($q) => $q->where('user_id', $authorId))
+        $stats = [
+            'total_posts'      => Post::where('user_id', $authorId)->count(),
+            'published_posts'  => Post::where('user_id', $authorId)->published()->count(),
+            'draft_posts'      => Post::where('user_id', $authorId)->draft()->count(),
+            'total_views'      => Post::where('user_id', $authorId)->sum('views_count'),
+            'total_comments'   => Comment::whereHas('post', fn ($q) => $q->where('user_id', $authorId))
                 ->where('status', 'approved')
                 ->count(),
             'pending_comments' => Comment::whereHas('post', fn ($q) => $q->where('user_id', $authorId))
@@ -62,10 +62,9 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // --- Recent comments on author's posts ---
-        $recentComments = Comment::with('post')
+        // --- Recent comments on author's posts (all statuses) ---
+        $recentComments = Comment::with(['post', 'user'])
             ->whereHas('post', fn ($q) => $q->where('user_id', $authorId))
-            ->pending()
             ->latest()
             ->limit(5)
             ->get();
@@ -78,7 +77,7 @@ class DashboardController extends Controller
             ->get();
 
         return view('author.dashboard', compact(
-            'metrics',
+            'stats',
             'chartLabels',
             'chartData',
             'topPosts',

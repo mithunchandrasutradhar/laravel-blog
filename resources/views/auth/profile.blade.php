@@ -88,8 +88,14 @@
                     @if($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                     <p class="text-warning mt-1 mb-0" style="font-size:.8rem;">
                         <i class="fas fa-exclamation-triangle me-1"></i>Email not verified.
-                        <button form="resend-verification" class="btn btn-link btn-sm p-0 text-warning text-decoration-underline">Resend verification email</button>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-warning text-decoration-underline"
+                                onclick="resendVerificationEmail(this)">Resend verification email</button>
                     </p>
+                    <div id="verificationSentAlert" class="d-none mt-2 d-flex align-items-center gap-2 px-3 py-2 rounded-2"
+                         style="background:#d1fae5;color:#065f46;font-size:.82rem;">
+                        <i class="fas fa-check-circle"></i>
+                        Verification email sent! Please check your inbox (and spam folder).
+                    </div>
                     @endif
                 </div>
 
@@ -108,8 +114,6 @@
 
             </form>
 
-            {{-- Hidden resend verification form --}}
-            <form id="resend-verification" method="POST" action="{{ route('verification.send') }}" class="d-none">@csrf</form>
 
         </div>
     </div>
@@ -233,6 +237,28 @@ function previewAvatar(input) {
         };
         reader.readAsDataURL(input.files[0]);
     }
+}
+
+function resendVerificationEmail(btn) {
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    fetch('{{ route('verification.send') }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        },
+        redirect: 'follow',
+    })
+    .then(() => {
+        document.getElementById('verificationSentAlert').classList.remove('d-none');
+        btn.textContent = 'Email sent';
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.textContent = 'Resend verification email';
+    });
 }
 
 // Open delete modal if there were validation errors for it

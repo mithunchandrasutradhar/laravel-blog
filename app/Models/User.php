@@ -149,4 +149,12 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasRole('author');
     }
+
+    /**
+     * Send the email verification notification using the site-branded template.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new \App\Notifications\VerifyEmail);
+    }
 }

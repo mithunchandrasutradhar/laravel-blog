@@ -104,7 +104,14 @@
                                 {{ $user->name }}
                             </a>
                         </td>
-                        <td class="small text-muted">{{ $user->email }}</td>
+                        <td class="small text-muted">
+                            {{ $user->email }}
+                            @if($user->email_verified_at)
+                                <i class="fas fa-check-circle text-success ms-1" title="Verified on {{ $user->email_verified_at->format('M d, Y') }}"></i>
+                            @else
+                                <i class="fas fa-times-circle text-danger ms-1" title="Not verified"></i>
+                            @endif
+                        </td>
                         <td>
                             @php $userRole = $user->roles->first()?->name ?? 'user'; $roleColors = ['admin'=>'danger','editor'=>'primary','author'=>'info','user'=>'secondary']; @endphp
                             <span class="badge bg-{{ $roleColors[$userRole] ?? 'secondary' }} bg-opacity-10

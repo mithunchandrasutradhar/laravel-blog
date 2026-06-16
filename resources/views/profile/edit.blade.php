@@ -63,6 +63,31 @@
             {{-- Right: Forms --}}
             <div class="col-lg-7 col-md-8">
 
+                {{-- Email verification notice --}}
+                @if(!auth()->user()->hasVerifiedEmail())
+                <div class="alert d-flex align-items-start gap-3 mb-4 border-0 rounded-3"
+                     style="background:#fff8e1;color:#7c5300;">
+                    <i class="fas fa-exclamation-triangle mt-1" style="color:#f59e0b;flex-shrink:0;"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold mb-1">Email not verified</div>
+                        <div class="small mb-2">
+                            Please verify <strong>{{ auth()->user()->email }}</strong> to unlock all features.
+                            Check your inbox or click below to resend the link.
+                        </div>
+                        <div id="verificationAlert" class="d-none d-flex align-items-center gap-2 p-2 rounded-2 mb-2"
+                             style="background:#d1fae5;color:#065f46;font-size:.85rem;">
+                            <i class="fas fa-check-circle"></i>
+                            Verification email sent! Please check your inbox (and spam folder).
+                        </div>
+                        <button type="button" id="resendVerificationBtn"
+                                class="btn btn-warning btn-sm fw-semibold"
+                                onclick="resendVerificationEmail(this)">
+                            <i class="fas fa-paper-plane me-1"></i>Resend Verification Email
+                        </button>
+                    </div>
+                </div>
+                @endif
+
                 {{-- Profile Info --}}
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body p-4">
@@ -286,5 +311,27 @@ document.getElementById('avatar')?.addEventListener('change', function() {
 document.getElementById('profile_bio')?.addEventListener('input', function() {
     document.getElementById('bioCharCount').textContent = this.value.length + '/500';
 });
+
+// Resend verification email via AJAX
+function resendVerificationEmail(btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    fetch('{{ route('verification.send') }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
+        redirect: 'follow',
+    })
+    .then(() => {
+        document.getElementById('verificationAlert').classList.remove('d-none');
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>Email Sent';
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Resend Verification Email';
+    });
+}
 </script>
 @endpush

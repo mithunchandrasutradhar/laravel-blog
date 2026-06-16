@@ -237,6 +237,12 @@
                                   placeholder="Meta description..." maxlength="160">{{ old('meta_description') }}</textarea>
                         <div class="form-text">Max 160 chars.</div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Meta Keywords</label>
+                        <input type="text" name="meta_keywords" class="form-control form-control-sm"
+                               placeholder="keyword1, keyword2, keyword3..." value="{{ old('meta_keywords') }}" maxlength="500">
+                        <div class="form-text">Comma-separated keywords. Max 500 chars.</div>
+                    </div>
                     <div class="mb-0">
                         <label class="form-label small fw-semibold">Canonical URL</label>
                         <input type="url" name="canonical_url" class="form-control form-control-sm"

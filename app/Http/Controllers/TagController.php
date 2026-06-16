@@ -22,7 +22,7 @@ class TagController extends Controller
 
         $posts = Post::published()
             ->withTag($tag->id)
-            ->with(['category', 'author', 'tags'])
+            ->with(['category', 'categories', 'author', 'tags'])
             ->latestPublished()
             ->paginate(self::PER_PAGE);
 

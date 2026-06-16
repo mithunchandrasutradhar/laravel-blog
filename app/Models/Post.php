@@ -32,6 +32,7 @@ class Post extends Model
         'content',
         'meta_title',
         'meta_description',
+        'meta_keywords',
         'canonical_url',
         'status',
         'published_at',

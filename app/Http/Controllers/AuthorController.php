@@ -35,7 +35,7 @@ class AuthorController extends Controller
 
         $posts = Post::published()
             ->where('user_id', $author->id)
-            ->with(['category', 'tags', 'author'])
+            ->with(['category', 'categories', 'tags', 'author'])
             ->latestPublished()
             ->paginate(self::PER_PAGE);
 

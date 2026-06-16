@@ -107,11 +107,18 @@
                                placeholder="Meta title..." value="{{ old('meta_title') }}" maxlength="60">
                         <div class="form-text">Leave blank to auto-generate from name. Max 60 chars.</div>
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label class="form-label small fw-semibold">Meta Description</label>
                         <textarea name="meta_description" class="form-control" rows="3"
                                   placeholder="Meta description..." maxlength="160">{{ old('meta_description') }}</textarea>
                         <div class="form-text">Max 160 chars.</div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small fw-semibold">Meta Keywords</label>
+                        <input type="text" name="meta_keywords" class="form-control"
+                               placeholder="keyword1, keyword2, keyword3..."
+                               value="{{ old('meta_keywords') }}" maxlength="500">
+                        <div class="form-text">Comma-separated keywords. Max 500 chars.</div>
                     </div>
                 </div>
             </div>

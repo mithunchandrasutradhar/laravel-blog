@@ -298,7 +298,6 @@
             <i class="fas fa-pencil-alt text-white" style="font-size:.8rem;"></i>
         </div>
         @endif
-        <span class="brand-name">{{ settings('site_name', config('app.name', 'Blog')) }}</span>
     </div>
 
     {{-- Navigation --}}

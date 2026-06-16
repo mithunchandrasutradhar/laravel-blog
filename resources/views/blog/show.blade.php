@@ -2,12 +2,12 @@
 
 @php
     $seo = [
-        'title'           => $post->seo_title ?? $post->title . ' — ' . settings('site_name', config('app.name')),
-        'description'     => $post->seo_description ?? $post->excerpt,
-        'keywords'        => $post->seo_keywords ?? ($post->tags->pluck('name')->join(', ')),
+        'title'           => $post->meta_title ?? $post->title . ' — ' . settings('site_name', config('app.name')),
+        'description'     => $post->meta_description ?? $post->excerpt,
+        'keywords'        => $post->meta_keywords ?? ($post->tags->pluck('name')->join(', ')),
         'og_type'         => 'article',
-        'og_title'        => $post->seo_title ?? $post->title,
-        'og_description'  => $post->seo_description ?? $post->excerpt,
+        'og_title'        => $post->meta_title ?? $post->title,
+        'og_description'  => $post->meta_description ?? $post->excerpt,
         'og_image'        => $post->thumbnail ? asset($post->thumbnail) : null,
         'og_url'          => route('blog.show', $post->slug),
         'twitter_card'    => 'summary_large_image',

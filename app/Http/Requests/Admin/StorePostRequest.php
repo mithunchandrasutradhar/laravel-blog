@@ -36,6 +36,7 @@ class StorePostRequest extends FormRequest
             'published_at'      => ['nullable', 'date'],
             'meta_title'        => ['nullable', 'string', 'max:255'],
             'meta_description'  => ['nullable', 'string', 'max:320'],
+            'meta_keywords'     => ['nullable', 'string', 'max:500'],
             'canonical_url'     => ['nullable', 'url', 'max:2048'],
             'tags'              => ['nullable', 'array'],
             'tags.*'            => ['required'],

@@ -29,6 +29,7 @@ class UpdateCategoryRequest extends FormRequest
             'parent_id'        => ['nullable', 'integer', 'exists:categories,id', Rule::notIn([$categoryId])],
             'meta_title'       => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:320'],
+            'meta_keywords'    => ['nullable', 'string', 'max:500'],
         ];
     }
 }

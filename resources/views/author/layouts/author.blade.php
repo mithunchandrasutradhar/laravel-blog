@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Author Panel') — {{ config('app.name', 'Blog') }}</title>
+    <title>@yield('title', 'Author Panel') — {{ settings('site_name', config('app.name', 'Blog')) }}</title>
+    @if(settings('favicon'))
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . settings('favicon')) }}">
+    @endif
 
     {{-- Bootstrap 5.3 --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -180,6 +183,14 @@
             z-index: 9999;
         }
 
+        /* Hide sidebar footer user info when collapsed */
+        #sidebar.collapsed #sidebarUserInfo {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
         /* Author role badge in sidebar footer */
         .role-badge {
             display: inline-block;
@@ -231,15 +242,15 @@
 
     {{-- Brand --}}
     <div class="sidebar-brand">
-        <img src="{{ asset('images/admin-logo.png') }}" alt="Logo" class="brand-logo"
+        @if(settings('logo'))
+        @php $authorLogoH = (int) settings('logo_height', 32); $authorLogoW = settings('logo_width') ? 'max-width:'.(int)settings('logo_width').'px;' : ''; @endphp
+        <img src="{{ asset('storage/' . settings('logo')) }}" alt="{{ settings('site_name', config('app.name')) }}" class="brand-logo"
+             style="height:{{ $authorLogoH }}px;{{ $authorLogoW }}width:auto;object-fit:contain;"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div style="display:none;width:32px;height:32px;background:#0d6efd;border-radius:8px;align-items:center;justify-content:center;">
+        @endif
+        <div style="{{ settings('logo') ? 'display:none;' : 'display:flex;' }}width:32px;height:32px;background:#0d6efd;border-radius:8px;align-items:center;justify-content:center;">
             <i class="fas fa-pen-nib text-white" style="font-size:.8rem;"></i>
         </div>
-        <span class="brand-name">
-            {{ config('app.name', 'Blog') }}
-            <span class="role-badge">Author</span>
-        </span>
     </div>
 
     {{-- Navigation --}}
@@ -279,6 +290,21 @@
             <span class="nav-label">My Media</span>
         </a>
 
+        {{-- My Comments --}}
+        <a href="{{ route('author.comments.index') }}"
+           class="nav-item-link {{ request()->routeIs('author.comments.*') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fas fa-comments"></i></span>
+            <span class="nav-label">
+                My Comments
+                @php
+                    $pendingCmtCount = \App\Models\Comment::whereHas('post', fn($q) => $q->where('user_id', auth()->id()))->pending()->count();
+                @endphp
+                @if($pendingCmtCount > 0)
+                    <span class="badge bg-warning text-dark ms-1" style="font-size:.6rem;">{{ $pendingCmtCount }}</span>
+                @endif
+            </span>
+        </a>
+
     </div>
 
     {{-- Sidebar footer --}}
@@ -291,12 +317,12 @@
 
         {{-- User info --}}
         <div class="px-3 py-3 border-top d-flex align-items-center gap-2" style="border-color:rgba(255,255,255,.08)!important;">
-            @if(auth()->user()->avatar ?? false)
-                <img src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="avatar" class="avatar-sm flex-shrink-0">
+            @if(auth()->user()->avatar)
+                <img src="{{ asset(auth()->user()->avatar) }}" alt="avatar" class="avatar-sm rounded-circle flex-shrink-0" style="object-fit:cover;">
             @else
-                <div class="avatar-sm bg-primary d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+                <div class="avatar-sm bg-primary d-flex align-items-center justify-content-center text-white fw-bold rounded-circle flex-shrink-0"
                      style="font-size:.75rem;">
-                    {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}
+                    {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
                 </div>
             @endif
             <div class="overflow-hidden" style="transition:opacity .2s;" id="sidebarUserInfo">
@@ -336,16 +362,16 @@
         <div class="dropdown">
             <button class="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-1"
                     data-bs-toggle="dropdown">
-                @if(auth()->user()->avatar ?? false)
-                    <img src="{{ asset('storage/' . auth()->user()->avatar) }}" alt="avatar" class="avatar-sm">
+                @if(auth()->user()->avatar)
+                    <img src="{{ asset(auth()->user()->avatar) }}" alt="avatar" class="avatar-sm rounded-circle" style="object-fit:cover;">
                 @else
-                    <div class="avatar-sm bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
+                    <div class="avatar-sm bg-primary d-flex align-items-center justify-content-center text-white fw-bold rounded-circle"
                          style="font-size:.8rem;">
-                        {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 2)) }}
+                        {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
                     </div>
                 @endif
                 <span class="d-none d-md-inline small fw-semibold text-dark">
-                    {{ auth()->user()->name ?? 'Author' }}
+                    {{ explode(' ', auth()->user()->name ?? 'Author')[0] }}
                 </span>
                 <i class="fas fa-chevron-down text-muted" style="font-size:.65rem;"></i>
             </button>

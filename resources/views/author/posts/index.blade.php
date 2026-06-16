@@ -23,9 +23,9 @@
                 <label class="form-label small mb-1">Search</label>
                 <div class="input-group input-group-sm">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" name="search" class="form-control"
+                    <input type="text" name="q" class="form-control"
                            placeholder="Search your posts..."
-                           value="{{ request('search') }}">
+                           value="{{ request('q') }}">
                 </div>
             </div>
 
@@ -112,7 +112,17 @@
 
                         {{-- Category --}}
                         <td>
-                            <span class="small text-muted">{{ $post->category->name ?? '—' }}</span>
+                            @if($post->categories->isNotEmpty())
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach($post->categories as $cat)
+                                        <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size:.65rem;">{{ $cat->name }}</span>
+                                    @endforeach
+                                </div>
+                            @elseif($post->category)
+                                <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size:.65rem;">{{ $post->category->name }}</span>
+                            @else
+                                <span class="small text-muted">—</span>
+                            @endif
                         </td>
 
                         {{-- Status badge --}}

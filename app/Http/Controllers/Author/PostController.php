@@ -16,18 +16,12 @@ use Illuminate\View\View;
 
 class PostController extends Controller
 {
-    /**
-     * Posts per page in the author's post list.
-     */
     private const PER_PAGE = 15;
 
-    /**
-     * Display a listing of the author's own posts.
-     */
     public function index(Request $request): View
     {
         $query = Post::where('user_id', auth()->id())
-            ->with('category')
+            ->with(['category', 'categories'])
             ->withCount('comments');
 
         if ($request->filled('status')) {
@@ -43,9 +37,6 @@ class PostController extends Controller
         return view('author.posts.index', compact('posts'));
     }
 
-    /**
-     * Show the form for creating a new post.
-     */
     public function create(): View
     {
         $categories = Category::orderBy('name')->get();
@@ -54,28 +45,38 @@ class PostController extends Controller
         return view('author.posts.create', compact('categories', 'tags'));
     }
 
-    /**
-     * Store a newly created post (always owned by the logged-in author).
-     */
     public function store(StorePostRequest $request): RedirectResponse
     {
-        $data            = $request->validated();
-        $data['user_id'] = auth()->id();
+        $validated   = $request->validated();
+        $categoryIds = $validated['category_ids'] ?? [];
 
-        // Authors can save as draft or submit for review; they cannot publish directly
-        // unless the site is configured to allow it. For now, allow full status control.
-        if ($data['status'] === 'published' && empty($data['published_at'])) {
-            $data['published_at'] = now();
+        // Pull out fields handled separately
+        unset($validated['category_ids'], $validated['featured_image_path'], $validated['tags']);
+
+        $validated['user_id']     = auth()->id();
+        $validated['category_id'] = $categoryIds[0] ?? null;
+        $validated['is_featured']    = $request->boolean('is_featured');
+        $validated['allow_comments'] = $request->boolean('allow_comments', true);
+
+        if ($validated['status'] === 'published' && empty($validated['published_at'])) {
+            $validated['published_at'] = now();
         }
 
+        // Featured image: prefer media-picker path, fall back to direct file upload
         if ($request->hasFile('featured_image')) {
-            $data['featured_image'] = $request->file('featured_image')
+            $validated['featured_image'] = $request->file('featured_image')
                 ->store('posts/images', 'public');
+        } elseif ($request->filled('featured_image_path')) {
+            $validated['featured_image'] = $request->input('featured_image_path');
         }
 
-        $post = Post::create($data);
+        $post = Post::create($validated);
 
-        // Sync tags
+        // Sync all selected categories (many-to-many)
+        if ($categoryIds) {
+            $post->categories()->sync($categoryIds);
+        }
+
         $tagIds = $this->resolveTagIds($request->input('tags', []));
         $post->tags()->sync($tagIds);
 
@@ -83,9 +84,6 @@ class PostController extends Controller
             ->with('success', 'Post created successfully.');
     }
 
-    /**
-     * Show a single post (preview for the author).
-     */
     public function show(Post $post): View
     {
         Gate::authorize('view', $post);
@@ -93,54 +91,69 @@ class PostController extends Controller
         return view('author.posts.show', compact('post'));
     }
 
-    /**
-     * Show the edit form for an author's own post.
-     */
     public function edit(Post $post): View
     {
         Gate::authorize('update', $post);
 
-        $categories  = Category::orderBy('name')->get();
-        $tags        = Tag::orderBy('name')->get();
-        $selectedIds = $post->tags->pluck('id')->toArray();
+        $categories      = Category::orderBy('name')->get();
+        $tags            = Tag::orderBy('name')->get();
+        $selectedTagIds  = $post->tags->pluck('id')->toArray();
+        $selectedCatIds  = $post->categories->pluck('id')->toArray();
+        if (empty($selectedCatIds) && $post->category_id) {
+            $selectedCatIds = [$post->category_id];
+        }
 
-        return view('author.posts.edit', compact('post', 'categories', 'tags', 'selectedIds'));
+        return view('author.posts.edit', compact('post', 'categories', 'tags', 'selectedTagIds', 'selectedCatIds'));
     }
 
-    /**
-     * Update a post (author may only update their own posts).
-     */
     public function update(UpdatePostRequest $request, Post $post): RedirectResponse
     {
         Gate::authorize('update', $post);
 
-        $data = $request->validated();
+        $validated   = $request->validated();
+        $categoryIds = $validated['category_ids'] ?? [];
 
+        unset($validated['category_ids'], $validated['featured_image_path'], $validated['tags']);
+
+        $validated['category_id']    = $categoryIds[0] ?? $post->category_id;
+        $validated['is_featured']    = $request->boolean('is_featured');
+        $validated['allow_comments'] = $request->boolean('allow_comments', true);
+
+        // Featured image handling
         if ($request->hasFile('featured_image')) {
             if ($post->featured_image) {
                 Storage::disk('public')->delete($post->featured_image);
             }
-
-            $data['featured_image'] = $request->file('featured_image')
+            $validated['featured_image'] = $request->file('featured_image')
                 ->store('posts/images', 'public');
+        } elseif ($request->filled('featured_image_path')) {
+            $validated['featured_image'] = $request->input('featured_image_path');
+        } elseif ($request->boolean('remove_featured_image')) {
+            if ($post->featured_image) {
+                Storage::disk('public')->delete($post->featured_image);
+            }
+            $validated['featured_image'] = null;
+        } else {
+            unset($validated['featured_image']);
         }
 
-        if ($data['status'] === 'published' && empty($data['published_at']) && $post->status !== 'published') {
-            $data['published_at'] = now();
+        if ($validated['status'] === 'published' && empty($validated['published_at']) && $post->status !== 'published') {
+            $validated['published_at'] = now();
         }
 
-        $post->update($data);
+        $post->update($validated);
+
+        if ($categoryIds) {
+            $post->categories()->sync($categoryIds);
+        }
 
         $tagIds = $this->resolveTagIds($request->input('tags', []));
         $post->tags()->sync($tagIds);
 
-        return redirect()->route('author.posts.index')
+        return redirect()->route('author.posts.edit', $post)
             ->with('success', 'Post updated successfully.');
     }
 
-    /**
-     * Delete the author's own post.
-     */
     public function destroy(Post $post): RedirectResponse
     {
         Gate::authorize('delete', $post);
@@ -155,12 +168,6 @@ class PostController extends Controller
             ->with('success', 'Post deleted successfully.');
     }
 
-    /**
-     * Resolve tag names/IDs to IDs, creating missing tags.
-     *
-     * @param  array<int|string>  $tags
-     * @return array<int>
-     */
     private function resolveTagIds(array $tags): array
     {
         return collect($tags)->map(function ($tag) {
