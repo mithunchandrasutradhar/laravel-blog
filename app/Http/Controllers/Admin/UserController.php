@@ -18,16 +18,12 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    /**
-     * Admin users per page.
-     */
     private const PER_PAGE = 15;
 
-    /**
-     * Display a listing of users.
-     */
     public function index(Request $request): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('users.viewAny'), 403);
+
         $query = User::with('roles')->withCount('posts');
 
         if ($request->filled('role')) {
@@ -52,21 +48,19 @@ class UserController extends Controller
         return view('admin.users.index', compact('users', 'roles'));
     }
 
-    /**
-     * Show the form for creating a new user.
-     */
     public function create(): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('users.create'), 403);
+
         $roles = Role::orderBy('name')->get();
 
         return view('admin.users.create', compact('roles'));
     }
 
-    /**
-     * Store a new user.
-     */
     public function store(StoreUserRequest $request): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('users.create'), 403);
+
         $data = [
             'name'     => $request->name,
             'email'    => $request->email,
@@ -111,19 +105,17 @@ class UserController extends Controller
             ->with('success', 'User created successfully.');
     }
 
-    /**
-     * Show a user detail page.
-     */
     public function show(User $user): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('users.viewAny'), 403);
+
         return redirect()->route('admin.users.edit', $user);
     }
 
-    /**
-     * Show the edit form for a user.
-     */
     public function edit(User $user): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('users.update'), 403);
+
         $user->loadCount(['posts', 'comments']);
         $roles       = Role::orderBy('name')->get();
         $currentRole = $user->roles->first()?->name;
@@ -131,19 +123,16 @@ class UserController extends Controller
         return view('admin.users.edit', compact('user', 'roles', 'currentRole'));
     }
 
-    /**
-     * Update a user's information and role.
-     */
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('users.update'), 403);
+
         $data = $request->only(['name', 'email', 'bio', 'status']);
 
-        // Optional password change
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
-        // Optional profile image — stored in the Users media folder
         if ($request->hasFile('profile_image')) {
             if ($user->profile_image) {
                 Storage::disk('public')->delete($user->profile_image);
@@ -180,7 +169,6 @@ class UserController extends Controller
 
         $user->update($data);
 
-        // Update role
         if ($request->filled('role')) {
             $user->syncRoles([$request->role]);
         }
@@ -189,17 +177,14 @@ class UserController extends Controller
             ->with('success', 'User updated successfully.');
     }
 
-    /**
-     * Delete a user account (cannot delete own account).
-     */
     public function destroy(User $user): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('users.delete'), 403);
+
         if ($user->id === auth()->id()) {
             return back()->withErrors(['error' => 'You cannot delete your own account.']);
         }
 
-        // Soft-delete or hard-delete based on your preference.
-        // Posts are kept with user_id intact for archival purposes.
         $user->delete();
 
         return redirect()->route('admin.users.index')

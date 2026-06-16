@@ -9,11 +9,15 @@ use Symfony\Component\HttpFoundation\Response;
 class AdminMiddleware
 {
     /**
-     * Handle an incoming request.
+     * Unified panel middleware.
      *
-     * Grants access only to authenticated users who hold the "admin" role
-     * (via spatie/laravel-permission). Non-admins are either redirected to
-     * the home page (browser requests) or receive a 403 JSON response (AJAX).
+     * Grants access to any authenticated user who holds either:
+     *   - panel.admin  → full admin-panel access
+     *   - panel.author → content-creator access (own posts, media, comments)
+     *
+     * What each user sees inside the panel is controlled by their other
+     * permissions (posts.viewAny, categories.viewAny, etc.). The admin role
+     * always passes regardless of explicit permission assignment.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -23,15 +27,19 @@ class AdminMiddleware
                 : redirect()->route('login');
         }
 
-        if (! $request->user()->isAdmin()) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Forbidden. Admin access required.'], 403);
-            }
+        $user = $request->user();
 
-            abort(403, 'You do not have permission to access the admin panel.');
+        $hasPanel = $user->isAdmin()
+            || $user->hasPermissionTo('panel.admin')
+            || $user->hasPermissionTo('panel.author');
+
+        if (! $hasPanel) {
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Forbidden. Panel access required.'], 403)
+                : abort(403, 'You do not have permission to access this panel.');
         }
 
-        if (! $request->user()->isActive()) {
+        if (! $user->isActive()) {
             auth()->logout();
 
             return redirect()->route('login')

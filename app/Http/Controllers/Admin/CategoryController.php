@@ -13,16 +13,12 @@ use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
-    /**
-     * Admin categories per page.
-     */
     private const PER_PAGE = 15;
 
-    /**
-     * Display a listing of categories.
-     */
     public function index(Request $request): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('categories.viewAny'), 403);
+
         $query = Category::with('parent')->withCount('posts');
 
         if ($request->filled('q')) {
@@ -34,21 +30,19 @@ class CategoryController extends Controller
         return view('admin.categories.index', compact('categories'));
     }
 
-    /**
-     * Show the create category form.
-     */
     public function create(): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('categories.create'), 403);
+
         $parents = Category::orderBy('name')->get();
 
         return view('admin.categories.create', compact('parents'));
     }
 
-    /**
-     * Store a new category.
-     */
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('categories.create'), 403);
+
         $data = $request->validated();
 
         if ($request->filled('image_path')) {
@@ -63,11 +57,10 @@ class CategoryController extends Controller
             ->with('success', 'Category created successfully.');
     }
 
-    /**
-     * Show the edit form for a category.
-     */
     public function edit(Category $category): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('categories.update'), 403);
+
         $parents = Category::where('id', '!=', $category->id)
             ->orderBy('name')
             ->get();
@@ -75,11 +68,10 @@ class CategoryController extends Controller
         return view('admin.categories.edit', compact('category', 'parents'));
     }
 
-    /**
-     * Update a category.
-     */
     public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('categories.update'), 403);
+
         $data = $request->validated();
 
         if ($request->filled('image_path')) {
@@ -105,19 +97,17 @@ class CategoryController extends Controller
             ->with('success', 'Category updated successfully.');
     }
 
-    /**
-     * Show a category detail (admin view).
-     */
     public function show(Category $category): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('categories.viewAny'), 403);
+
         return redirect()->route('admin.categories.edit', $category);
     }
 
-    /**
-     * Bulk-delete selected categories.
-     */
     public function bulkDestroy(Request $request): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('categories.delete'), 403);
+
         $ids = array_filter((array) $request->input('ids', []), 'is_numeric');
 
         if (empty($ids)) {
@@ -129,17 +119,14 @@ class CategoryController extends Controller
         $skipped  = 0;
 
         Category::whereIn('id', $ids)->each(function (Category $category) use ($fallback, &$deleted, &$skipped) {
-            // Never delete the fallback category itself
             if ($fallback && $fallback->id === $category->id) {
                 $skipped++;
                 return;
             }
 
             if ($fallback) {
-                // Move all posts to the fallback before deleting
                 $category->posts()->update(['category_id' => $fallback->id]);
             } elseif ($category->posts()->exists()) {
-                // No fallback available and category still has posts — skip
                 $skipped++;
                 return;
             }
@@ -160,23 +147,17 @@ class CategoryController extends Controller
         return redirect()->route('admin.categories.index')->with('success', $message);
     }
 
-    /**
-     * Delete a category.
-     *
-     * Before deleting, move all posts in this category to an "Uncategorised"
-     * fallback category to prevent orphaned posts.
-     */
     public function destroy(Category $category): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('categories.delete'), 403);
+
         $fallback = Category::where('slug', 'uncategorised')->first();
 
-        // Refuse to delete the fallback category itself
         if ($fallback && $fallback->id === $category->id) {
             return redirect()->route('admin.categories.index')
                 ->withErrors(['error' => 'The default "Uncategorised" category cannot be deleted.']);
         }
 
-        // Move posts away before the FK-RESTRICT fires
         if ($fallback) {
             $category->posts()->update(['category_id' => $fallback->id]);
         }

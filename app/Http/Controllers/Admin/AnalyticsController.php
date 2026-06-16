@@ -18,7 +18,8 @@ class AnalyticsController extends Controller
 {
     public function index(Request $request): View
     {
-        // ── Date range ──────────────────────────────────────────────────────────
+        abort_if(! auth()->user()->hasPermissionTo('panel.admin'), 403);
+
         $from = $request->filled('from')
             ? Carbon::parse($request->input('from'))->startOfDay()
             : now()->subDays(29)->startOfDay();
@@ -27,17 +28,14 @@ class AnalyticsController extends Controller
             ? Carbon::parse($request->input('to'))->endOfDay()
             : now()->endOfDay();
 
-        // Clamp: from must not be after to
         if ($from->gt($to)) {
             $from = $to->copy()->subDays(29)->startOfDay();
         }
 
-        // Previous period (same length, immediately before)
         $periodDays = (int) $from->diffInDays($to) + 1;
         $prevFrom   = $from->copy()->subDays($periodDays)->startOfDay();
         $prevTo     = $from->copy()->subSecond();
 
-        // ── Daily views chart ────────────────────────────────────────────────────
         $dailyRows = PostView::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as views'),
@@ -62,7 +60,6 @@ class AnalyticsController extends Controller
             $cursor->addDay();
         }
 
-        // ── Summary stats ────────────────────────────────────────────────────────
         $totalViews  = PostView::whereBetween('created_at', [$from, $to])->count();
         $uniqueViews = PostView::whereBetween('created_at', [$from, $to])
             ->distinct('ip_address')->count('ip_address');
@@ -91,7 +88,6 @@ class AnalyticsController extends Controller
             'new_users_in_period'   => User::whereBetween('created_at', [$from, $to])->count(),
         ];
 
-        // ── Top 10 posts by views in period ─────────────────────────────────────
         $topPosts = Post::select('posts.*', DB::raw('COUNT(post_views.id) as period_views'))
             ->join('post_views', 'posts.id', '=', 'post_views.post_id')
             ->whereBetween('post_views.created_at', [$from, $to])
@@ -101,7 +97,6 @@ class AnalyticsController extends Controller
             ->with('category')
             ->get();
 
-        // ── Device breakdown ─────────────────────────────────────────────────────
         $deviceTypes = PostView::select(
                 DB::raw("
                     CASE
@@ -116,7 +111,6 @@ class AnalyticsController extends Controller
             ->orderByDesc('count')
             ->get();
 
-        // ── Category stats (views in period) ─────────────────────────────────────
         $categoryStats = Category::select('categories.*', DB::raw('COUNT(post_views.id) as total_views'))
             ->join('posts', 'categories.id', '=', 'posts.category_id')
             ->join('post_views', 'posts.id', '=', 'post_views.post_id')

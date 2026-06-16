@@ -89,10 +89,12 @@
                             <label for="role" class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
                             <select name="role" id="role"
                                     class="form-select @error('role') is-invalid @enderror" required>
-                                <option value="user"   {{ old('role') === 'user'   ? 'selected' : '' }}>User</option>
-                                <option value="author" {{ old('role') === 'author' ? 'selected' : '' }}>Author</option>
-                                <option value="editor" {{ old('role') === 'editor' ? 'selected' : '' }}>Editor</option>
-                                <option value="admin"  {{ old('role') === 'admin'  ? 'selected' : '' }}>Admin</option>
+                                @foreach($roles as $r)
+                                <option value="{{ $r->name }}"
+                                    {{ old('role', 'user') === $r->name ? 'selected' : '' }}>
+                                    {{ $r->display_name ?? ucfirst(str_replace('_', ' ', $r->name)) }}
+                                </option>
+                                @endforeach
                             </select>
                             @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>

@@ -30,6 +30,8 @@ class MediaController extends Controller
 
     public function index(Request $request): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.viewAny'), 403);
+
         $folders       = MediaFolder::withCount('media')->orderBy('name')->get();
         $currentFolder = null;
 
@@ -66,6 +68,8 @@ class MediaController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.upload'), 403);
+
         $request->validate([
             'files'   => ['required', 'array'],
             'files.*' => [
@@ -125,6 +129,8 @@ class MediaController extends Controller
 
     public function list(Request $request): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.viewAny'), 403);
+
         $query = Media::where('mime_type', 'LIKE', 'image/%')->latest();
 
         if ($request->filled('q')) {
@@ -156,6 +162,8 @@ class MediaController extends Controller
 
     public function rename(Request $request, Media $media): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.upload'), 403);
+
         $request->validate(['name' => ['required', 'string', 'max:255']]);
         $media->update(['name' => $request->name]);
 
@@ -164,6 +172,8 @@ class MediaController extends Controller
 
     public function move(Request $request, Media $media): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.upload'), 403);
+
         $request->validate([
             'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
@@ -180,6 +190,8 @@ class MediaController extends Controller
 
     public function copy(Request $request, Media $media): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.upload'), 403);
+
         $request->validate([
             'folder_id' => ['nullable', 'integer', 'exists:media_folders,id'],
         ]);
@@ -215,6 +227,8 @@ class MediaController extends Controller
 
     public function bulkMove(Request $request): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.upload'), 403);
+
         $request->validate([
             'ids'       => ['required', 'array', 'min:1'],
             'ids.*'     => ['integer', 'exists:media,id'],
@@ -233,6 +247,8 @@ class MediaController extends Controller
 
     public function bulkCopy(Request $request): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.upload'), 403);
+
         $request->validate([
             'ids'       => ['required', 'array', 'min:1'],
             'ids.*'     => ['integer', 'exists:media,id'],
@@ -269,6 +285,8 @@ class MediaController extends Controller
 
     public function bulkDestroy(Request $request): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.delete'), 403);
+
         $request->validate([
             'ids'   => ['required', 'array', 'min:1'],
             'ids.*' => ['integer', 'exists:media,id'],
@@ -286,6 +304,8 @@ class MediaController extends Controller
 
     public function destroy(Media $media): JsonResponse|RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.delete'), 403);
+
         Storage::disk($media->disk)->delete($media->file_name);
         $media->delete();
 
@@ -298,6 +318,8 @@ class MediaController extends Controller
 
     public function browse(Request $request): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('media.viewAny'), 403);
+
         $images = Media::where('mime_type', 'LIKE', 'image/%')
             ->latest()
             ->limit(100)

@@ -22,12 +22,29 @@ class PostController extends Controller
     private const PER_PAGE = 15;
 
     /**
-     * Display a paginated listing of all posts.
+     * Whether the current user has full admin-panel access (sees all content).
+     */
+    private function isAdminPanel(): bool
+    {
+        $user = auth()->user();
+        return $user->isAdmin() || $user->hasPermissionTo('panel.admin');
+    }
+
+    /**
+     * Display a paginated listing of posts.
+     * Admin-panel users see all posts; author-panel users see only their own.
      */
     public function index(Request $request): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('posts.viewAny'), 403);
+
         $query = Post::with(['category', 'categories', 'author'])
             ->withCount('comments');
+
+        // Scope to own posts for non-admin users
+        if (! $this->isAdminPanel()) {
+            $query->where('user_id', auth()->id());
+        }
 
         // Filters
         if ($request->filled('status')) {
@@ -38,7 +55,8 @@ class PostController extends Controller
             $query->where('category_id', $request->category);
         }
 
-        if ($request->filled('author')) {
+        // Author filter only available to admin-panel users
+        if ($this->isAdminPanel() && $request->filled('author')) {
             $query->where('user_id', $request->author);
         }
 
@@ -61,6 +79,8 @@ class PostController extends Controller
      */
     public function create(): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('posts.create'), 403);
+
         $categories = Category::orderBy('name')->get();
         $tags       = Tag::orderBy('name')->get();
 
@@ -72,6 +92,8 @@ class PostController extends Controller
      */
     public function store(StorePostRequest $request): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('posts.create'), 403);
+
         $data = $request->validated();
 
         // Handle featured image: media library selection or direct file upload
@@ -82,8 +104,10 @@ class PostController extends Controller
                 ->store('posts/images', 'public');
         }
 
-        // Set author to the current admin user if not specified
-        $data['user_id'] = $request->input('user_id', auth()->id());
+        // Non-admin users always author their own posts; admin can set any user_id
+        $data['user_id'] = $this->isAdminPanel()
+            ? $request->input('user_id', auth()->id())
+            : auth()->id();
 
         // Use first selected category as the primary category_id
         $categoryIds = array_map('intval', $data['category_ids']);
@@ -115,6 +139,11 @@ class PostController extends Controller
      */
     public function edit(Post $post): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('posts.update'), 403);
+
+        if (! $this->isAdminPanel() && $post->user_id !== auth()->id()) {
+            abort(403, 'You can only edit your own posts.');
+        }
         $categories          = Category::orderBy('name')->get();
         $tags                = Tag::orderBy('name')->get();
         $selectedIds         = $post->tags->pluck('id')->toArray();
@@ -133,6 +162,12 @@ class PostController extends Controller
      */
     public function update(UpdatePostRequest $request, Post $post): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('posts.update'), 403);
+
+        if (! $this->isAdminPanel() && $post->user_id !== auth()->id()) {
+            abort(403, 'You can only edit your own posts.');
+        }
+
         $data = $request->validated();
 
         // Ensure slug is never null — fall back to generating one from the title
@@ -187,6 +222,8 @@ class PostController extends Controller
      */
     public function show(Post $post): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('posts.viewAny'), 403);
+
         return redirect()->route('admin.posts.edit', $post);
     }
 
@@ -195,6 +232,8 @@ class PostController extends Controller
      */
     public function bulkDelete(Request $request): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('posts.delete'), 403);
+
         $ids = array_filter((array) $request->input('ids', []), 'is_numeric');
 
         if (empty($ids)) {
@@ -217,6 +256,12 @@ class PostController extends Controller
      */
     public function destroy(Post $post): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('posts.delete'), 403);
+
+        if (! $this->isAdminPanel() && $post->user_id !== auth()->id()) {
+            abort(403, 'You can only delete your own posts.');
+        }
+
         if ($post->featured_image) {
             Storage::disk('public')->delete($post->featured_image);
         }

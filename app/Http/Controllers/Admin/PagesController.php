@@ -13,17 +13,23 @@ class PagesController extends Controller
 {
     public function index(): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('panel.admin'), 403);
+
         $pages = Page::latest()->get();
         return view('admin.pages.index', compact('pages'));
     }
 
     public function create(): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('panel.admin'), 403);
+
         return view('admin.pages.create');
     }
 
     public function store(Request $request): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('panel.admin'), 403);
+
         $data = $request->validate([
             'title'            => 'required|string|max:200',
             'slug'             => 'nullable|string|max:200|unique:pages,slug',
@@ -46,11 +52,15 @@ class PagesController extends Controller
 
     public function edit(Page $page): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('panel.admin'), 403);
+
         return view('admin.pages.edit', compact('page'));
     }
 
     public function update(Request $request, Page $page): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('panel.admin'), 403);
+
         $data = $request->validate([
             'title'            => 'required|string|max:200',
             'slug'             => 'nullable|string|max:200|unique:pages,slug,' . $page->id,
@@ -71,8 +81,17 @@ class PagesController extends Controller
             ->with('success', 'Page updated successfully.');
     }
 
+    public function show(Page $page): RedirectResponse
+    {
+        abort_if(! auth()->user()->hasPermissionTo('panel.admin'), 403);
+
+        return redirect()->route('admin.pages.edit', $page);
+    }
+
     public function destroy(Page $page): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('panel.admin'), 403);
+
         $page->delete();
 
         return redirect()->route('admin.pages.index')

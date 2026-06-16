@@ -12,16 +12,12 @@ use Illuminate\View\View;
 
 class TagController extends Controller
 {
-    /**
-     * Admin tags per page.
-     */
     private const PER_PAGE = 15;
 
-    /**
-     * Display a listing of tags.
-     */
     public function index(Request $request): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('tags.viewAny'), 403);
+
         $query = Tag::withCount('posts');
 
         if ($request->filled('q')) {
@@ -33,57 +29,51 @@ class TagController extends Controller
         return view('admin.tags.index', compact('tags'));
     }
 
-    /**
-     * Show the create tag form.
-     */
     public function create(): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('tags.create'), 403);
+
         return redirect()->route('admin.tags.index');
     }
 
-    /**
-     * Store a new tag.
-     */
     public function store(StoreTagRequest $request): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('tags.create'), 403);
+
         Tag::create($request->validated());
 
         return redirect()->route('admin.tags.index')
             ->with('success', 'Tag created successfully.');
     }
 
-    /**
-     * Show the edit form for a tag.
-     */
     public function edit(Tag $tag): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('tags.update'), 403);
+
         return redirect()->route('admin.tags.index');
     }
 
-    /**
-     * Update a tag.
-     */
     public function update(UpdateTagRequest $request, Tag $tag): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('tags.update'), 403);
+
         $tag->update($request->validated());
 
         return redirect()->route('admin.tags.index')
             ->with('success', 'Tag updated successfully.');
     }
 
-    /**
-     * Show a tag (admin view).
-     */
     public function show(Tag $tag): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('tags.viewAny'), 403);
+
         return redirect()->route('admin.tags.index');
     }
 
-    /**
-     * Delete a tag.
-     */
     public function destroy(Tag $tag): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('tags.delete'), 403);
+
         $tag->posts()->detach();
         $tag->delete();
 

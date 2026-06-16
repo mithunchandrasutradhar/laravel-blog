@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Setting;   // still used for index() pluck and updateGroup file lookup
+use App\Models\Setting;
 use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,11 +14,6 @@ use Illuminate\View\View;
 
 class SettingsController extends Controller
 {
-    /**
-     * All recognised setting groups.
-     *
-     * @var array<string>
-     */
     private const GROUPS = [
         'general',
         'seo',
@@ -29,32 +24,23 @@ class SettingsController extends Controller
         'advanced',
     ];
 
-    /**
-     * Display the settings management page.
-     *
-     * Loads all settings grouped so the view can render them in tabs.
-     */
     public function index(): View
     {
-        // Flat key→value map so the view can do $settings['site_name'] directly
+        abort_if(! auth()->user()->hasPermissionTo('settings.view'), 403);
+
         $settings = Setting::pluck('value', 'key')->toArray();
 
         return view('admin.settings.index', compact('settings'));
     }
 
-    /**
-     * Update all settings from the form (flat list, all groups at once).
-     */
     public function update(Request $request): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('settings.update'), 403);
+
         $service = app(SettingService::class);
 
-        // Fields that are purely file uploads — skip when no file is provided
-        // so existing stored paths are never overwritten with null.
         $fileOnlyFields = ['logo', 'favicon', 'og_image', 'about_image'];
-
-        // Skip blank password so the existing stored password is never cleared.
-        $skipIfBlank = ['mail_password'];
+        $skipIfBlank    = ['mail_password'];
 
         $input = $request->except(['_token', '_method', 'section']);
 
@@ -83,11 +69,10 @@ class SettingsController extends Controller
             ->with('success', 'Settings saved successfully.');
     }
 
-    /**
-     * Send a test email using the current DB mail settings.
-     */
     public function sendTestEmail(Request $request): JsonResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('settings.update'), 403);
+
         $request->validate(['email' => 'required|email']);
 
         $s    = app(SettingService::class);
@@ -102,7 +87,6 @@ class SettingsController extends Controller
 
         $this->applyMailConfig();
 
-        // Purge any cached mailer so a fresh SMTP transport is created with the new config.
         app('mail.manager')->purge('smtp');
 
         try {
@@ -123,36 +107,10 @@ class SettingsController extends Controller
         }
     }
 
-    /**
-     * Apply mail settings from the database to the runtime config so that
-     * all mail operations (including test sends) use the admin-configured values.
-     */
-    private function applyMailConfig(): void
-    {
-        $s = app(SettingService::class);
-
-        $host = $s->get('mail_host');
-        if (! $host) {
-            return; // No DB settings yet — keep .env defaults
-        }
-
-        config([
-            'mail.default'                 => $s->get('mail_mailer', 'smtp'),
-            'mail.mailers.smtp.host'       => $host,
-            'mail.mailers.smtp.port'       => (int) $s->get('mail_port', 587),
-            'mail.mailers.smtp.encryption' => $s->get('mail_encryption', 'tls') ?: null,
-            'mail.mailers.smtp.username'   => $s->get('mail_username'),
-            'mail.mailers.smtp.password'   => $s->get('mail_password'),
-            'mail.from.address'            => $s->get('mail_from_address', config('mail.from.address')),
-            'mail.from.name'               => $s->get('mail_from_name', config('mail.from.name')),
-        ]);
-    }
-
-    /**
-     * Update settings for a specific group only.
-     */
     public function updateGroup(Request $request, string $group): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('settings.update'), 403);
+
         if (! in_array($group, self::GROUPS)) {
             abort(404, 'Unknown settings group.');
         }
@@ -175,5 +133,26 @@ class SettingsController extends Controller
 
         return redirect()->route('admin.settings.index')
             ->with('success', ucfirst($group) . ' settings saved successfully.');
+    }
+
+    private function applyMailConfig(): void
+    {
+        $s = app(SettingService::class);
+
+        $host = $s->get('mail_host');
+        if (! $host) {
+            return;
+        }
+
+        config([
+            'mail.default'                 => $s->get('mail_mailer', 'smtp'),
+            'mail.mailers.smtp.host'       => $host,
+            'mail.mailers.smtp.port'       => (int) $s->get('mail_port', 587),
+            'mail.mailers.smtp.encryption' => $s->get('mail_encryption', 'tls') ?: null,
+            'mail.mailers.smtp.username'   => $s->get('mail_username'),
+            'mail.mailers.smtp.password'   => $s->get('mail_password'),
+            'mail.from.address'            => $s->get('mail_from_address', config('mail.from.address')),
+            'mail.from.name'               => $s->get('mail_from_name', config('mail.from.name')),
+        ]);
     }
 }

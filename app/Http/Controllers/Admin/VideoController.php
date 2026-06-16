@@ -13,6 +13,8 @@ class VideoController extends Controller
 {
     public function index(): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('videos.viewAny'), 403);
+
         $videos = Video::with('category')->ordered()->paginate(20);
 
         return view('admin.videos.index', compact('videos'));
@@ -20,6 +22,8 @@ class VideoController extends Controller
 
     public function create(): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('videos.create'), 403);
+
         $categories = Category::orderBy('name')->get();
 
         return view('admin.videos.create', compact('categories'));
@@ -27,6 +31,8 @@ class VideoController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('videos.create'), 403);
+
         $data = $request->validate([
             'category_id' => 'nullable|exists:categories,id',
             'title'       => 'required|string|max:255',
@@ -47,11 +53,15 @@ class VideoController extends Controller
 
     public function show(Video $video): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('videos.viewAny'), 403);
+
         return redirect()->route('admin.videos.edit', $video);
     }
 
     public function edit(Video $video): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('videos.update'), 403);
+
         $categories = Category::orderBy('name')->get();
 
         return view('admin.videos.edit', compact('video', 'categories'));
@@ -59,6 +69,8 @@ class VideoController extends Controller
 
     public function update(Request $request, Video $video): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('videos.update'), 403);
+
         $data = $request->validate([
             'category_id' => 'nullable|exists:categories,id',
             'title'       => 'required|string|max:255',
@@ -79,6 +91,8 @@ class VideoController extends Controller
 
     public function destroy(Video $video): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('videos.delete'), 403);
+
         $video->delete();
 
         return redirect()->route('admin.videos.index')

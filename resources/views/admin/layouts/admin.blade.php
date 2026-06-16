@@ -302,11 +302,12 @@
 
     {{-- Navigation --}}
     <div class="flex-grow-1 overflow-y-auto py-2" style="scrollbar-width:thin;scrollbar-color:#343a40 transparent;">
+    @php $u = auth()->user(); @endphp
 
         {{-- MAIN --}}
         <div class="nav-section-title">Main</div>
 
-        {{-- Dashboard --}}
+        {{-- Dashboard — always visible --}}
         <a href="{{ route('admin.dashboard') }}"
            class="nav-item-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
@@ -314,6 +315,7 @@
         </a>
 
         {{-- Posts --}}
+        @if($u->hasPermissionTo('posts.viewAny'))
         <div x-data="{ open: {{ request()->routeIs('admin.posts.*') ? 'true' : 'false' }} }">
             <a href="#" class="nav-item-link {{ request()->routeIs('admin.posts.*') ? 'active' : '' }}"
                @click.prevent="open = !open">
@@ -327,36 +329,46 @@
                     <span class="nav-icon"><i class="fas fa-list"></i></span>
                     <span class="nav-label">All Posts</span>
                 </a>
+                @if($u->hasPermissionTo('posts.create'))
                 <a href="{{ route('admin.posts.create') }}"
                    class="nav-item-link {{ request()->routeIs('admin.posts.create') ? 'active' : '' }}">
                     <span class="nav-icon"><i class="fas fa-plus"></i></span>
                     <span class="nav-label">Add New</span>
                 </a>
+                @endif
             </div>
         </div>
+        @endif
 
         {{-- Categories --}}
+        @if($u->hasPermissionTo('categories.viewAny'))
         <a href="{{ route('admin.categories.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-folder"></i></span>
             <span class="nav-label">Categories</span>
         </a>
+        @endif
 
         {{-- Tags --}}
+        @if($u->hasPermissionTo('tags.viewAny'))
         <a href="{{ route('admin.tags.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.tags.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-tags"></i></span>
             <span class="nav-label">Tags</span>
         </a>
+        @endif
 
         {{-- Videos --}}
+        @if($u->hasPermissionTo('videos.viewAny'))
         <a href="{{ route('admin.videos.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.videos.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fab fa-youtube"></i></span>
             <span class="nav-label">Videos</span>
         </a>
+        @endif
 
         {{-- Comments --}}
+        @if($u->hasPermissionTo('comments.viewAny'))
         <a href="{{ route('admin.comments.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.comments.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-comments"></i></span>
@@ -366,25 +378,32 @@
                 <span class="badge bg-danger badge-sidebar">{{ $pendingComments }}</span>
             @endif
         </a>
+        @endif
 
-        {{-- Pages --}}
+        {{-- Pages — admin-panel only --}}
+        @if($u->hasPermissionTo('panel.admin'))
         <a href="{{ route('admin.pages.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.pages.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
             <span class="nav-label">Pages</span>
         </a>
+        @endif
 
         {{-- Media Library --}}
+        @if($u->hasPermissionTo('media.viewAny'))
         <a href="{{ route('admin.media.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.media.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-images"></i></span>
             <span class="nav-label">Media Library</span>
         </a>
+        @endif
 
-        {{-- PEOPLE --}}
+        {{-- PEOPLE section — show if user can see any people item --}}
+        @if($u->hasAnyPermission(['users.viewAny','subscribers.viewAny']) || $u->hasPermissionTo('panel.admin'))
         <div class="nav-section-title">People</div>
 
         {{-- Users --}}
+        @if($u->hasPermissionTo('users.viewAny'))
         <div x-data="{ open: {{ request()->routeIs('admin.users.*') ? 'true' : 'false' }} }">
             <a href="#" class="nav-item-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
                @click.prevent="open = !open">
@@ -398,50 +417,65 @@
                     <span class="nav-icon"><i class="fas fa-list"></i></span>
                     <span class="nav-label">All Users</span>
                 </a>
+                @if($u->hasPermissionTo('users.create'))
                 <a href="{{ route('admin.users.create') }}"
                    class="nav-item-link {{ request()->routeIs('admin.users.create') ? 'active' : '' }}">
                     <span class="nav-icon"><i class="fas fa-plus"></i></span>
                     <span class="nav-label">Add New</span>
                 </a>
+                @endif
             </div>
         </div>
+        @endif
 
         {{-- Subscribers --}}
+        @if($u->hasPermissionTo('subscribers.viewAny'))
         <a href="{{ route('admin.subscribers.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.subscribers.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-envelope"></i></span>
             <span class="nav-label">Subscribers</span>
         </a>
+        @endif
+
+        {{-- Roles & Permissions — admin-panel only --}}
+        @if($u->hasPermissionTo('panel.admin'))
+        <a href="{{ route('admin.roles.index') }}"
+           class="nav-item-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fas fa-shield-alt"></i></span>
+            <span class="nav-label">Roles & Permissions</span>
+        </a>
+        @endif
+        @endif {{-- end PEOPLE --}}
 
         {{-- MONETIZATION --}}
+        @if($u->hasPermissionTo('advertisements.viewAny'))
         <div class="nav-section-title">Monetization</div>
-
-        {{-- Advertisements --}}
         <a href="{{ route('admin.advertisements.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.advertisements.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-ad"></i></span>
             <span class="nav-label">Advertisements</span>
         </a>
+        @endif
 
-        {{-- REPORTS --}}
+        {{-- REPORTS — admin-panel only --}}
+        @if($u->hasPermissionTo('panel.admin'))
         <div class="nav-section-title">Reports</div>
-
-        {{-- Analytics --}}
         <a href="{{ route('admin.analytics.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
             <span class="nav-label">Analytics</span>
         </a>
+        @endif
 
         {{-- SYSTEM --}}
+        @if($u->hasPermissionTo('settings.view'))
         <div class="nav-section-title">System</div>
-
-        {{-- Settings --}}
         <a href="{{ route('admin.settings.index') }}"
            class="nav-item-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-cog"></i></span>
             <span class="nav-label">Settings</span>
         </a>
+        @endif
 
     </div>
 
@@ -576,11 +610,13 @@
                         <i class="fas fa-user-edit fa-fw me-2 text-muted"></i>Profile
                     </a>
                 </li>
+                @if(auth()->user()->hasPermissionTo('settings.view'))
                 <li>
                     <a class="dropdown-item" href="{{ route('admin.settings.index') }}">
                         <i class="fas fa-cog fa-fw me-2 text-muted"></i>Settings
                     </a>
                 </li>
+                @endif
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <form method="POST" action="{{ route('logout') }}">

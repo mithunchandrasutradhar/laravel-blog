@@ -145,20 +145,18 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified', 'author'])->prefix('author')->name('author.')->group(function () {
-    Route::get('/dashboard', [Author\DashboardController::class, 'index'])->name('dashboard');
+// Legacy /author/* URLs — redirect everything to the unified panel at /admin/*
+// Named routes are preserved so any existing blade/email links keep working.
+Route::middleware(['auth', 'verified'])->prefix('author')->name('author.')->group(function () {
+    Route::get('/dashboard',         fn () => redirect()->route('admin.dashboard'))->name('dashboard');
+    Route::get('/posts',             fn () => redirect()->route('admin.posts.index'))->name('posts.index');
+    Route::get('/posts/create',      fn () => redirect()->route('admin.posts.create'))->name('posts.create');
+    Route::get('/posts/{post}',      fn ($p) => redirect()->route('admin.posts.edit', $p))->name('posts.show');
+    Route::get('/posts/{post}/edit', fn ($p) => redirect()->route('admin.posts.edit', $p))->name('posts.edit');
+    Route::get('/comments',          fn () => redirect()->route('admin.comments.index'))->name('comments.index');
+    Route::get('/media',             fn () => redirect()->route('admin.media.index'))->name('media.index');
 
-    // Author's own posts
-    Route::resource('posts', Author\PostController::class);
-
-    // Comments on author's own posts
-    Route::get('/comments', [Author\CommentController::class, 'index'])->name('comments.index');
-    Route::patch('/comments/{comment}/approve', [Author\CommentController::class, 'approve'])->name('comments.approve');
-    Route::patch('/comments/{comment}/reject', [Author\CommentController::class, 'reject'])->name('comments.reject');
-    Route::delete('/comments/{comment}', [Author\CommentController::class, 'destroy'])->name('comments.destroy');
-
-    // Media library (Posts folder only)
-    Route::get('/media',                  [Author\MediaController::class, 'index'])->name('media.index');
+    // API endpoints used by older media-picker modals — keep functional via Author\MediaController
     Route::post('/media',                 [Author\MediaController::class, 'store'])->name('media.store');
     Route::post('/media/upload',          [Author\MediaController::class, 'store'])->name('media.upload');
     Route::get('/media/list',             [Author\MediaController::class, 'list'])->name('media.list');
@@ -248,6 +246,14 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 
     // Pages
     Route::resource('pages', Admin\PagesController::class);
+
+    // Roles & Permissions (ACL)
+    Route::get('/roles',               [Admin\RolesController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create',        [Admin\RolesController::class, 'create'])->name('roles.create');
+    Route::post('/roles',              [Admin\RolesController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{role}/edit',   [Admin\RolesController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{role}',        [Admin\RolesController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{role}',     [Admin\RolesController::class, 'destroy'])->name('roles.destroy');
 });
 
 // Unified slug dispatcher — must be LAST so it doesn't shadow any named route above.

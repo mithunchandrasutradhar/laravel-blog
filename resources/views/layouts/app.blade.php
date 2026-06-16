@@ -274,16 +274,17 @@
                                             <span class="di-icon"><i class="fas fa-user"></i></span>Profile
                                         </a>
                                     </li>
-                                    @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('editor'))
+                                    @php
+                                        $__authUser    = auth()->user();
+                                        $__primaryRole = $__authUser->roles->first();
+                                        $__roleLabel   = $__primaryRole
+                                            ? ($__primaryRole->display_name ?? ucfirst(str_replace('_', ' ', $__primaryRole->name)))
+                                            : 'User';
+                                    @endphp
+                                    @if($__authUser->hasPermissionTo('panel.admin') || $__authUser->hasPermissionTo('panel.author'))
                                     <li>
                                         <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
-                                            <span class="di-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-tachometer-alt"></i></span>Admin Dashboard
-                                        </a>
-                                    </li>
-                                    @elseif(auth()->user()->hasRole('author'))
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('author.dashboard') }}">
-                                            <span class="di-icon" style="background:#e0f2fe;color:#0284c7;"><i class="fas fa-pen-nib"></i></span>Author Dashboard
+                                            <span class="di-icon" style="background:#e0f2fe;color:#0284c7;"><i class="fas fa-tachometer-alt"></i></span>{{ $__roleLabel }} Dashboard
                                         </a>
                                     </li>
                                     @endif

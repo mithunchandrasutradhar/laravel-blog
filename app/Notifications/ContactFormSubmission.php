@@ -4,11 +4,10 @@ namespace App\Notifications;
 
 use App\Models\ContactMessage;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ContactFormSubmission extends Notification implements ShouldQueue
+class ContactFormSubmission extends Notification
 {
     use Queueable;
 
@@ -34,20 +33,20 @@ class ContactFormSubmission extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $siteName   = setting('site_name', config('app.name', 'Blog'));
-        $adminUrl   = route('admin.contact-messages.show', $this->contactMessage->id);
+        $siteName    = setting('site_name', config('app.name', 'Blog'));
+        $adminUrl    = route('admin.contact-messages.index');
         $bodyExcerpt = \Illuminate\Support\Str::limit($this->contactMessage->message, 300);
 
         return (new MailMessage)
             ->subject("[{$siteName}] New contact form message: {$this->contactMessage->subject}")
             ->greeting('Hello Admin,')
-            ->line("A new message has been submitted via the contact form.")
+            ->line('A new message has been submitted via the contact form.')
             ->line("**From:** {$this->contactMessage->name} ({$this->contactMessage->email})")
             ->line("**Subject:** {$this->contactMessage->subject}")
             ->line("**Message:**")
             ->line($bodyExcerpt)
-            ->action('View Full Message', $adminUrl)
-            ->line('Please log in to the admin panel to read and respond to this message.')
+            ->action('View Messages', $adminUrl)
+            ->line("Please log in to the admin panel to read and respond to this message.")
             ->salutation("The {$siteName} notification system");
     }
 

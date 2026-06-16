@@ -15,62 +15,83 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        $now       = now();
-        $thisMonth = $now->copy()->startOfMonth();
-        $lastMonth = $now->copy()->subMonth()->startOfMonth();
+        $user    = auth()->user();
+        $isAdmin = $user->hasPermissionTo('panel.admin') || $user->isAdmin();
+        $uid     = $user->id;
+        $now     = now();
+
+        $thisMonth    = $now->copy()->startOfMonth();
+        $lastMonth    = $now->copy()->subMonth()->startOfMonth();
         $lastMonthEnd = $now->copy()->subMonth()->endOfMonth();
 
-        // --- Core counts ---
-        $totalPosts    = Post::count();
-        $totalUsers    = User::count();
-        $totalViews    = Post::sum('views_count');
-        $totalComments = Comment::count();
-        $pendingComments = Comment::pending()->count();
+        // Base post scope — admin sees all, others see own
+        $postScope = $isAdmin
+            ? Post::query()
+            : Post::where('user_id', $uid);
 
-        // --- Trend vs last month (percentage change) ---
-        $postsThisMonth = Post::where('created_at', '>=', $thisMonth)->count();
-        $postsLastMonth = Post::whereBetween('created_at', [$lastMonth, $lastMonthEnd])->count();
+        // --- Core counts ---
+        $totalPosts      = (clone $postScope)->count();
+        $totalViews      = (clone $postScope)->sum('views_count');
+        $totalComments   = $isAdmin
+            ? Comment::count()
+            : Comment::whereIn('post_id', (clone $postScope)->pluck('id'))->count();
+        $pendingComments = $isAdmin
+            ? Comment::pending()->count()
+            : Comment::pending()->whereIn('post_id', (clone $postScope)->pluck('id'))->count();
+        $totalUsers      = $isAdmin ? User::count() : null;
+
+        // --- Trends vs last month ---
+        $postsThisMonth = (clone $postScope)->where('created_at', '>=', $thisMonth)->count();
+        $postsLastMonth = (clone $postScope)->whereBetween('created_at', [$lastMonth, $lastMonthEnd])->count();
         $postsTrend = $postsLastMonth > 0
             ? round((($postsThisMonth - $postsLastMonth) / $postsLastMonth) * 100)
             : ($postsThisMonth > 0 ? 100 : 0);
 
-        $usersThisMonth = User::where('created_at', '>=', $thisMonth)->count();
-        $usersLastMonth = User::whereBetween('created_at', [$lastMonth, $lastMonthEnd])->count();
+        $usersThisMonth = $isAdmin ? User::where('created_at', '>=', $thisMonth)->count() : 0;
+        $usersLastMonth = $isAdmin ? User::whereBetween('created_at', [$lastMonth, $lastMonthEnd])->count() : 0;
         $usersTrend = $usersLastMonth > 0
             ? round((($usersThisMonth - $usersLastMonth) / $usersLastMonth) * 100)
             : ($usersThisMonth > 0 ? 100 : 0);
 
-        $viewsThisMonth = PostView::where('created_at', '>=', $thisMonth)->count();
-        $viewsLastMonth = PostView::whereBetween('created_at', [$lastMonth, $lastMonthEnd])->count();
+        $viewsThisMonth = $isAdmin
+            ? PostView::where('created_at', '>=', $thisMonth)->count()
+            : PostView::whereIn('post_id', (clone $postScope)->pluck('id'))->where('created_at', '>=', $thisMonth)->count();
+        $viewsLastMonth = $isAdmin
+            ? PostView::whereBetween('created_at', [$lastMonth, $lastMonthEnd])->count()
+            : PostView::whereIn('post_id', (clone $postScope)->pluck('id'))->whereBetween('created_at', [$lastMonth, $lastMonthEnd])->count();
         $viewsTrend = $viewsLastMonth > 0
             ? round((($viewsThisMonth - $viewsLastMonth) / $viewsLastMonth) * 100)
             : ($viewsThisMonth > 0 ? 100 : 0);
 
         $stats = [
             'total_posts'      => $totalPosts,
-            'published_posts'  => Post::published()->count(),
-            'draft_posts'      => Post::draft()->count(),
+            'published_posts'  => (clone $postScope)->where('status', 'published')->count(),
+            'draft_posts'      => (clone $postScope)->where('status', 'draft')->count(),
             'total_users'      => $totalUsers,
-            'active_users'     => User::active()->count(),
+            'active_users'     => $isAdmin ? User::active()->count() : null,
             'total_views'      => $totalViews,
             'total_comments'   => $totalComments,
             'pending_comments' => $pendingComments,
-            'subscribers'      => Subscriber::verified()->count(),
+            'subscribers'      => $isAdmin ? Subscriber::verified()->count() : null,
             'posts_trend'      => $postsTrend,
             'users_trend'      => $usersTrend,
             'views_trend'      => $viewsTrend,
+            'is_admin'         => $isAdmin,
         ];
 
-        // --- Views chart: last 30 days ---
-        $viewsRaw = PostView::select(
+        // --- Views chart: last 30 days (scoped) ---
+        $ownPostIds     = $isAdmin ? null : (clone $postScope)->pluck('id');
+        $viewsBaseQuery = PostView::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as views')
             )
-            ->where('created_at', '>=', $now->copy()->subDays(29)->startOfDay())
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->keyBy('date');
+            ->where('created_at', '>=', $now->copy()->subDays(29)->startOfDay());
+
+        if (! $isAdmin) {
+            $viewsBaseQuery->whereIn('post_id', $ownPostIds);
+        }
+
+        $viewsRaw = $viewsBaseQuery->groupBy('date')->orderBy('date')->get()->keyBy('date');
 
         $viewsChartLabels = [];
         $viewsChartData   = [];
@@ -80,8 +101,9 @@ class DashboardController extends Controller
             $viewsChartData[]   = optional($viewsRaw->get($date))->views ?? 0;
         }
 
-        // --- Posts per month: last 6 months ---
-        $postsRaw = Post::select(
+        // --- Posts per month: last 6 months (scoped) ---
+        $postsRaw = (clone $postScope)
+            ->select(
                 DB::raw('YEAR(created_at) as y'),
                 DB::raw('MONTH(created_at) as m'),
                 DB::raw('COUNT(*) as cnt')
@@ -101,26 +123,24 @@ class DashboardController extends Controller
             $postsChartData[]   = optional($postsRaw->get($key))->cnt ?? 0;
         }
 
-        // --- Recent posts (latest 5) ---
-        $recentPosts = Post::with('category')
-            ->latest()
-            ->limit(5)
-            ->get();
+        // --- Recent posts (scoped) ---
+        $recentPosts = (clone $postScope)->with('category')->latest()->limit(5)->get();
 
-        // --- Recent comments ---
-        $recentComments = Comment::with(['post', 'user'])
-            ->latest()
-            ->limit(10)
-            ->get();
+        // --- Recent comments (scoped to own posts for non-admin) ---
+        $recentCommentsQuery = Comment::with(['post', 'user'])->latest()->limit(10);
+        if (! $isAdmin) {
+            $recentCommentsQuery->whereIn('post_id', $ownPostIds);
+        }
+        $recentComments = $recentCommentsQuery->get();
 
-        // --- New users (last 7 days) ---
-        $newUsers = User::where('created_at', '>=', $now->copy()->subDays(7))
-            ->latest()
-            ->limit(5)
-            ->get();
+        // --- New users: admin only ---
+        $newUsers = $isAdmin
+            ? User::where('created_at', '>=', $now->copy()->subDays(7))->latest()->limit(5)->get()
+            : collect();
 
-        // --- Posts per status breakdown ---
-        $postsByStatus = Post::select('status', DB::raw('COUNT(*) as count'))
+        // --- Posts by status (scoped) ---
+        $postsByStatus = (clone $postScope)
+            ->select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status');
 

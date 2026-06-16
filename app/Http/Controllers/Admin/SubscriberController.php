@@ -11,19 +11,14 @@ use Illuminate\View\View;
 
 class SubscriberController extends Controller
 {
-    /**
-     * Admin subscribers per page.
-     */
     private const PER_PAGE = 15;
 
-    /**
-     * Display a listing of subscribers.
-     */
     public function index(Request $request): View
     {
+        abort_if(! auth()->user()->hasPermissionTo('subscribers.viewAny'), 403);
+
         $query = Subscriber::query();
 
-        // Filter by verified status (view sends verified=1 or verified=0)
         if ($request->filled('verified')) {
             if ($request->verified === '1') {
                 $query->verified();
@@ -32,7 +27,6 @@ class SubscriberController extends Controller
             }
         }
 
-        // Search by email
         if ($request->filled('search')) {
             $query->where('email', 'LIKE', "%{$request->search}%");
         }
@@ -47,31 +41,28 @@ class SubscriberController extends Controller
         ));
     }
 
-    /**
-     * Manually verify a subscriber.
-     */
     public function verify(Subscriber $subscriber): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('subscribers.viewAny'), 403);
+
         $subscriber->verify();
 
         return back()->with('success', 'Subscriber marked as verified.');
     }
 
-    /**
-     * Delete a subscriber.
-     */
     public function destroy(Subscriber $subscriber): RedirectResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('subscribers.delete'), 403);
+
         $subscriber->delete();
 
         return back()->with('success', 'Subscriber removed successfully.');
     }
 
-    /**
-     * Export all subscribers as a CSV file.
-     */
     public function export(): StreamedResponse
     {
+        abort_if(! auth()->user()->hasPermissionTo('subscribers.viewAny'), 403);
+
         $subscribers = Subscriber::orderBy('email')->get(['email', 'verified_at', 'created_at']);
 
         $filename = 'subscribers-' . now()->format('Y-m-d') . '.csv';
@@ -87,10 +78,8 @@ class SubscriberController extends Controller
         $callback = function () use ($subscribers) {
             $handle = fopen('php://output', 'w');
 
-            // BOM for Excel UTF-8 compatibility
             fwrite($handle, "\xEF\xBB\xBF");
 
-            // Header row
             fputcsv($handle, ['Email', 'Status', 'Verified At', 'Subscribed At']);
 
             foreach ($subscribers as $subscriber) {
