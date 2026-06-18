@@ -40,10 +40,11 @@ class ActivityLogController extends Controller
         $logs = $query->paginate(50)->withQueryString();
 
         // Distinct module names for the filter dropdown
-        $modules = ActivityLog::selectRaw("SUBSTRING_INDEX(event, '.', 1) as module")
-            ->distinct()
-            ->orderBy('module')
-            ->pluck('module');
+        $modules = ActivityLog::pluck('event')
+            ->map(fn ($event) => explode('.', $event)[0])
+            ->unique()
+            ->sort()
+            ->values();
 
         $totalLogs = ActivityLog::count();
 
