@@ -27,7 +27,7 @@ class SearchController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = trim($request->input('q', ''));
+        $query = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], trim($request->input('q', '')));
 
         $posts = null;
         $total = 0;

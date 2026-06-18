@@ -19,10 +19,11 @@ class ContactMessageController extends Controller
 
         // Keyword search across name, email, subject
         if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('subject', 'like', "%{$search}%");
+            $s = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $search);
+            $query->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")
+                  ->orWhere('email', 'like', "%{$s}%")
+                  ->orWhere('subject', 'like', "%{$s}%");
             });
         }
 

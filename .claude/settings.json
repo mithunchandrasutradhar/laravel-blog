@@ -8,7 +8,11 @@
       "PowerShell(docker exec blog_app php /var/www/test_storage.php 2>&1)",
       "PowerShell(docker exec blog_app grep \"FILESYSTEM_DISK\" /var/www/.env)",
       "PowerShell(docker exec blog_app cat /var/www/bootstrap/cache/config.php 2>&1)",
-      "PowerShell(docker exec blog_app cat /usr/local/etc/php/conf.d/custom.ini 2>&1)"
+      "PowerShell(docker exec blog_app cat /usr/local/etc/php/conf.d/custom.ini 2>&1)",
+      "Bash(awk -F\"'\" '{print $2}')",
+      "Bash(grep -n \"Author\\\\\\\\\\\\\\\\.*Controller\\\\|author\\\\\\\\..*\\\\\\\\.\" /c/Users/User/Downloads/blog/routes/web.php)",
+      "Bash(grep -B 1 \"//\\\\s*$\\\\|return;\\\\s*$\")",
+      "PowerShell(Remove-Item \"c:\\\\Users\\\\User\\\\Downloads\\\\blog\\\\resources\\\\views\\\\author\" -Force -Recurse -Confirm:$false)"
     ]
   }
 }

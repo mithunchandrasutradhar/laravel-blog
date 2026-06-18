@@ -36,7 +36,7 @@ class UserController extends Controller
         }
 
         if ($request->filled('q')) {
-            $q = $request->q;
+            $q = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->q);
             $query->where(function ($sub) use ($q) {
                 $sub->where('name', 'LIKE', "%{$q}%")
                     ->orWhere('email', 'LIKE', "%{$q}%");

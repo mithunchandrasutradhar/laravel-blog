@@ -39,7 +39,8 @@ class MediaController extends Controller
         }
 
         if ($request->filled('q')) {
-            $query->where('name', 'LIKE', "%{$request->q}%");
+            $q = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->q);
+            $query->where('name', 'LIKE', "%{$q}%");
         }
 
         $media    = $query->paginate(self::PER_PAGE)->withQueryString();
@@ -52,7 +53,7 @@ class MediaController extends Controller
     {
         $request->validate([
             'files'   => ['required', 'array'],
-            'files.*' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg,pdf', 'max:' . self::MAX_SIZE_KB],
+            'files.*' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,webp,pdf', 'max:' . self::MAX_SIZE_KB],
         ]);
 
         $folder   = $this->postsFolder();
@@ -98,7 +99,8 @@ class MediaController extends Controller
                        ->latest();
 
         if ($request->filled('q')) {
-            $query->where('name', 'LIKE', "%{$request->q}%");
+            $q = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->q);
+            $query->where('name', 'LIKE', "%{$q}%");
         }
 
         $paginated = $query->paginate(self::PER_PAGE, ['*'], 'page', $request->integer('page', 1));

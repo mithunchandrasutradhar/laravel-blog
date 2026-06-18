@@ -22,7 +22,8 @@ class TagController extends Controller
         $query = Tag::withCount('posts');
 
         if ($request->filled('q')) {
-            $query->where('name', 'LIKE', "%{$request->q}%");
+            $q = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->q);
+            $query->where('name', 'LIKE', "%{$q}%");
         }
 
         $tags = $query->orderBy('name')->paginate(self::PER_PAGE)->withQueryString();

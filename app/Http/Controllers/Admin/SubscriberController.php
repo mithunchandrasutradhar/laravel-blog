@@ -29,7 +29,8 @@ class SubscriberController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where('email', 'LIKE', "%{$request->search}%");
+            $s = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->search);
+            $query->where('email', 'LIKE', "%{$s}%");
         }
 
         $subscribers     = $query->latest()->paginate(self::PER_PAGE)->withQueryString();

@@ -46,20 +46,6 @@ class CommentObserver
     }
 
     // -------------------------------------------------------------------------
-    // Updated
-    // -------------------------------------------------------------------------
-
-    /**
-     * Handle the Comment "updated" event.
-     * Currently unused — reserved for future functionality (e.g. moderation
-     * status change notifications).
-     */
-    public function updated(Comment $comment): void
-    {
-        //
-    }
-
-    // -------------------------------------------------------------------------
     // Deleted
     // -------------------------------------------------------------------------
 
@@ -72,19 +58,6 @@ class CommentObserver
     public function deleted(Comment $comment): void
     {
         $comment->allReplies()->delete();
-    }
-
-    // -------------------------------------------------------------------------
-    // Restored
-    // -------------------------------------------------------------------------
-
-    /**
-     * Handle the Comment "restored" event.
-     * Currently unused.
-     */
-    public function restored(Comment $comment): void
-    {
-        //
     }
 
     // -------------------------------------------------------------------------

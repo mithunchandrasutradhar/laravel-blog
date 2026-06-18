@@ -23,7 +23,8 @@ class HtmlSanitizer
         $html = preg_replace('#<(iframe|frame|frameset|object|embed|applet|base|form|input|button|textarea|select|meta|link)\b[^>]*/?\s*>#is', '', $html);
 
         // 3. Strip all on* event handler attributes (onclick, onload, onerror, etc.)
-        $html = preg_replace('#\s+on\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)#i', '', $html);
+        // \s* (not \s+) catches cases like <img/onerror=...> with no leading space
+        $html = preg_replace('#[\s/]*on\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]+)#i', '', $html);
 
         // 4. Strip javascript: and data: URIs from href/src/action attributes
         $html = preg_replace('#(href|src|action|formaction)\s*=\s*["\']?\s*(javascript|data|vbscript):#i', '$1="#"', $html);

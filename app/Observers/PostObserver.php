@@ -132,16 +132,4 @@ class PostObserver
         $post->tags()->detach();
     }
 
-    // -------------------------------------------------------------------------
-    // Restored
-    // -------------------------------------------------------------------------
-
-    /**
-     * Handle the Post "restored" event.
-     * No additional action is required; slug and reading_time are still intact.
-     */
-    public function restored(Post $post): void
-    {
-        //
-    }
 }

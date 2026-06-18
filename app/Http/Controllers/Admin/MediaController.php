@@ -58,7 +58,8 @@ class MediaController extends Controller
         }
 
         if ($request->filled('q')) {
-            $query->where('name', 'LIKE', "%{$request->q}%");
+            $q = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->q);
+            $query->where('name', 'LIKE', "%{$q}%");
         }
 
         $media = $query->paginate(self::PER_PAGE)->withQueryString();
@@ -136,7 +137,8 @@ class MediaController extends Controller
         $query = Media::where('mime_type', 'LIKE', 'image/%')->latest();
 
         if ($request->filled('q')) {
-            $query->where('name', 'LIKE', "%{$request->q}%");
+            $q = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->q);
+            $query->where('name', 'LIKE', "%{$q}%");
         }
 
         if ($request->filled('folder')) {

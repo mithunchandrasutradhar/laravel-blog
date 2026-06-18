@@ -23,7 +23,8 @@ class CategoryController extends Controller
         $query = Category::with('parent')->withCount('posts');
 
         if ($request->filled('q')) {
-            $query->where('name', 'LIKE', "%{$request->q}%");
+            $q = str_replace(['%', '_', '\\'], ['\\%', '\\_', '\\\\'], $request->q);
+            $query->where('name', 'LIKE', "%{$q}%");
         }
 
         $categories = $query->orderBy('name')->paginate(self::PER_PAGE)->withQueryString();

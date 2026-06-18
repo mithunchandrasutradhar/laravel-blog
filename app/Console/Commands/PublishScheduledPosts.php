@@ -74,8 +74,8 @@ class PublishScheduledPosts extends Command
         }
 
         // Flush relevant caches so the front-end picks up the new posts.
-        Cache::forget('posts.featured');
-        Cache::forget('posts.latest');
+        Cache::forget('home.page_data');
+        Cache::forget('view.global_data');
 
         $this->info("Published: {$published} | Failed: {$failed}");
 
