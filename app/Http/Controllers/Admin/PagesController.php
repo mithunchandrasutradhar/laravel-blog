@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Page;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -44,7 +45,8 @@ class PagesController extends Controller
         $data['slug']           = Str::slug($data['slug'] ?: $data['title']);
         $data['show_in_footer'] = $request->boolean('show_in_footer');
 
-        Page::create($data);
+        $page = Page::create($data);
+        ActivityLogger::log('page.created', "Page \"{$page->title}\" was created.", [], $page);
 
         return redirect()->route('admin.pages.index')
             ->with('success', 'Page created successfully.');
@@ -76,6 +78,7 @@ class PagesController extends Controller
         $data['show_in_footer'] = $request->boolean('show_in_footer');
 
         $page->update($data);
+        ActivityLogger::log('page.updated', "Page \"{$page->title}\" was updated.", [], $page);
 
         return redirect()->route('admin.pages.index')
             ->with('success', 'Page updated successfully.');
@@ -92,7 +95,9 @@ class PagesController extends Controller
     {
         abort_if(! auth()->user()->hasPermissionTo('panel.admin'), 403);
 
+        $pageTitle = $page->title;
         $page->delete();
+        ActivityLogger::log('page.deleted', "Page \"{$pageTitle}\" was deleted.");
 
         return redirect()->route('admin.pages.index')
             ->with('success', 'Page deleted.');

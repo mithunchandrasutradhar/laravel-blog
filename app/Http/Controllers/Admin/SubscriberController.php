@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Subscriber;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -46,6 +47,7 @@ class SubscriberController extends Controller
         abort_if(! auth()->user()->hasPermissionTo('subscribers.viewAny'), 403);
 
         $subscriber->verify();
+        ActivityLogger::log('subscriber.verified', "Subscriber \"{$subscriber->email}\" was manually verified.", [], $subscriber);
 
         return back()->with('success', 'Subscriber marked as verified.');
     }
@@ -54,7 +56,9 @@ class SubscriberController extends Controller
     {
         abort_if(! auth()->user()->hasPermissionTo('subscribers.delete'), 403);
 
+        $email = $subscriber->email;
         $subscriber->delete();
+        ActivityLogger::log('subscriber.deleted', "Subscriber \"{$email}\" was removed.");
 
         return back()->with('success', 'Subscriber removed successfully.');
     }

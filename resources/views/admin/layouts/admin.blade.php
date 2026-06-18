@@ -399,7 +399,7 @@
         @endif
 
         {{-- PEOPLE section — show if user can see any people item --}}
-        @if($u->hasAnyPermission(['users.viewAny','subscribers.viewAny']) || $u->hasPermissionTo('panel.admin'))
+        @if($u->hasAnyPermission(['users.viewAny','subscribers.viewAny','contact_messages.viewAny']) || $u->hasPermissionTo('panel.admin'))
         <div class="nav-section-title">People</div>
 
         {{-- Users --}}
@@ -437,6 +437,19 @@
         </a>
         @endif
 
+        {{-- Contact Messages --}}
+        @if($u->hasPermissionTo('contact_messages.viewAny'))
+        <a href="{{ route('admin.contact-messages.index') }}"
+           class="nav-item-link {{ request()->routeIs('admin.contact-messages.*') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+            <span class="nav-label">Contact Messages</span>
+            @php $unreadMessages = \App\Models\ContactMessage::where('is_read', false)->count() @endphp
+            @if($unreadMessages > 0)
+                <span class="badge bg-warning text-dark badge-sidebar">{{ $unreadMessages }}</span>
+            @endif
+        </a>
+        @endif
+
         {{-- Roles & Permissions — admin-panel only --}}
         @if($u->hasPermissionTo('panel.admin'))
         <a href="{{ route('admin.roles.index') }}"
@@ -464,6 +477,11 @@
            class="nav-item-link {{ request()->routeIs('admin.analytics.*') ? 'active' : '' }}">
             <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
             <span class="nav-label">Analytics</span>
+        </a>
+        <a href="{{ route('admin.activity-log.index') }}"
+           class="nav-item-link {{ request()->routeIs('admin.activity-log.*') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fas fa-clipboard-list"></i></span>
+            <span class="nav-label">Activity Log</span>
         </a>
         @endif
 

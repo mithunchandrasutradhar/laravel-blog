@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MediaFolder;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,10 +31,11 @@ class MediaFolderController extends Controller
             'name' => ['required', 'string', 'max:100', 'unique:media_folders,name'],
         ]);
 
-        MediaFolder::create([
+        $folder = MediaFolder::create([
             'name' => $request->name,
             'slug' => Str::slug($request->name),
         ]);
+        ActivityLogger::log('media_folder.created', "Media folder \"{$folder->name}\" was created.", [], $folder);
 
         return redirect()->route('admin.media.index')
             ->with('success', 'Folder "' . $request->name . '" created.');
@@ -52,15 +54,17 @@ class MediaFolderController extends Controller
             'name' => $request->name,
             'slug' => Str::slug($request->name),
         ]);
+        ActivityLogger::log('media_folder.updated', "Media folder renamed to \"{$mediaFolder->name}\".", [], $mediaFolder);
 
         return response()->json(['success' => true, 'name' => $mediaFolder->name, 'slug' => $mediaFolder->slug]);
     }
 
     public function destroy(MediaFolder $mediaFolder): RedirectResponse
     {
-        // Move all files in this folder to uncategorized (folder_id = null)
+        $folderName = $mediaFolder->name;
         $mediaFolder->media()->update(['folder_id' => null]);
         $mediaFolder->delete();
+        ActivityLogger::log('media_folder.deleted', "Media folder \"{$folderName}\" was deleted. Files moved to uncategorized.");
 
         return redirect()->route('admin.media.index')
             ->with('success', 'Folder deleted. Files moved to uncategorized.');

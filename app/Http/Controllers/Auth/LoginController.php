@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,8 +33,9 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        // Redirect admins to the admin dashboard, authors to the author dashboard
         $user = Auth::user();
+
+        ActivityLogger::log('auth.logged_in', "User \"{$user->name}\" logged in", ['email' => $user->email]);
 
         if ($user->isAdmin()) {
             return redirect()->intended(route('admin.dashboard'));
@@ -51,6 +53,12 @@ class LoginController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+
+        if ($user) {
+            ActivityLogger::log('auth.logged_out', "User \"{$user->name}\" logged out", ['email' => $user->email]);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdatePostRequest;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Tag;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -130,6 +131,8 @@ class PostController extends Controller
             $post->tags()->sync($tagIds);
         }
 
+        ActivityLogger::log('post.created', "Created post \"{$post->title}\"", ['status' => $post->status], $post);
+
         return redirect()->route('admin.posts.index')
             ->with('success', 'Post created successfully.');
     }
@@ -213,6 +216,8 @@ class PostController extends Controller
         $tagIds = $this->resolveTagIds($request->input('tags', []));
         $post->tags()->sync($tagIds);
 
+        ActivityLogger::log('post.updated', "Updated post \"{$post->title}\"", ['status' => $post->status], $post);
+
         return redirect()->route('admin.posts.index')
             ->with('success', 'Post updated successfully.');
     }
@@ -247,6 +252,8 @@ class PostController extends Controller
             $post->delete();
         });
 
+        ActivityLogger::log('post.bulk_deleted', 'Bulk deleted ' . count($ids) . ' post(s)', ['ids' => $ids]);
+
         return redirect()->route('admin.posts.index')
             ->with('success', count($ids) . ' post(s) deleted.');
     }
@@ -265,6 +272,8 @@ class PostController extends Controller
         if ($post->featured_image) {
             Storage::disk('public')->delete($post->featured_image);
         }
+
+        ActivityLogger::log('post.deleted', "Deleted post \"{$post->title}\"", ['id' => $post->id]);
 
         $post->delete();
 

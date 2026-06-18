@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTagRequest;
 use App\Http\Requests\Admin\UpdateTagRequest;
 use App\Models\Tag;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -40,7 +41,8 @@ class TagController extends Controller
     {
         abort_if(! auth()->user()->hasPermissionTo('tags.create'), 403);
 
-        Tag::create($request->validated());
+        $tag = Tag::create($request->validated());
+        ActivityLogger::log('tag.created', "Tag \"{$tag->name}\" was created.", [], $tag);
 
         return redirect()->route('admin.tags.index')
             ->with('success', 'Tag created successfully.');
@@ -58,6 +60,7 @@ class TagController extends Controller
         abort_if(! auth()->user()->hasPermissionTo('tags.update'), 403);
 
         $tag->update($request->validated());
+        ActivityLogger::log('tag.updated', "Tag \"{$tag->name}\" was updated.", [], $tag);
 
         return redirect()->route('admin.tags.index')
             ->with('success', 'Tag updated successfully.');
@@ -74,8 +77,10 @@ class TagController extends Controller
     {
         abort_if(! auth()->user()->hasPermissionTo('tags.delete'), 403);
 
+        $tagName = $tag->name;
         $tag->posts()->detach();
         $tag->delete();
+        ActivityLogger::log('tag.deleted', "Tag \"{$tagName}\" was deleted.");
 
         return redirect()->route('admin.tags.index')
             ->with('success', 'Tag deleted successfully.');

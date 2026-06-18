@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\ActivityLogger;
 use App\Services\SettingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -64,6 +65,9 @@ class SettingsController extends Controller
         }
 
         $service->clearCache();
+
+        $section = $request->input('section', 'general');
+        ActivityLogger::log('settings.updated', "Updated settings ({$section} section)", ['section' => $section]);
 
         return redirect()->route('admin.settings.index')
             ->with('success', 'Settings saved successfully.');

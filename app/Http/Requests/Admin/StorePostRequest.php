@@ -11,7 +11,7 @@ class StorePostRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->isAdmin();
+        return $this->user()?->hasPermissionTo('posts.create') ?? false;
     }
 
     /**

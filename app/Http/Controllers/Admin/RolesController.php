@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -122,6 +123,8 @@ class RolesController extends Controller
         $role->syncPermissions($request->input('permissions', []));
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
+        ActivityLogger::log('role.created', "Created role \"{$data['display_name']}\"", ['name' => $slug], $role);
+
         return redirect()->route('admin.roles.index')
             ->with('success', "Role \"{$data['display_name']}\" created successfully.");
     }
@@ -172,6 +175,8 @@ class RolesController extends Controller
         $role->syncPermissions($request->input('permissions', []));
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
+        ActivityLogger::log('role.updated', "Updated role \"{$role->display_name}\"", [], $role);
+
         return redirect()->route('admin.roles.index')
             ->with('success', "Role \"{$role->display_name}\" updated successfully.");
     }
@@ -191,6 +196,9 @@ class RolesController extends Controller
         }
 
         $name = $role->display_name ?? $role->name;
+
+        ActivityLogger::log('role.deleted', "Deleted role \"{$name}\"", ['name' => $role->name]);
+
         $role->delete();
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 

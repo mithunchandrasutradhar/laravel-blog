@@ -211,6 +211,12 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/notifications/mark-all-read', [Admin\NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/{id}/mark-read', [Admin\NotificationController::class, 'markRead'])->name('notifications.mark-read');
 
+    // Contact Messages
+    Route::get('/contact-messages', [Admin\ContactMessageController::class, 'index'])->name('contact-messages.index');
+    Route::get('/contact-messages/{contactMessage}', [Admin\ContactMessageController::class, 'show'])->name('contact-messages.show');
+    Route::delete('/contact-messages/{contactMessage}', [Admin\ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+    Route::delete('/contact-messages', [Admin\ContactMessageController::class, 'bulkDestroy'])->name('contact-messages.bulk-destroy');
+
     // Settings
     Route::get('/settings', [Admin\SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
@@ -240,6 +246,10 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/media-folders', [Admin\MediaFolderController::class, 'store'])->name('media-folders.store');
     Route::put('/media-folders/{mediaFolder}', [Admin\MediaFolderController::class, 'update'])->name('media-folders.update');
     Route::delete('/media-folders/{mediaFolder}', [Admin\MediaFolderController::class, 'destroy'])->name('media-folders.destroy');
+
+    // Activity Log
+    Route::get('/activity-log', [Admin\ActivityLogController::class, 'index'])->name('activity-log.index');
+    Route::delete('/activity-log', [Admin\ActivityLogController::class, 'clear'])->name('activity-log.clear');
 
     // Analytics
     Route::get('/analytics', [Admin\AnalyticsController::class, 'index'])->name('analytics.index');

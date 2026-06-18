@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\Media;
 use App\Models\MediaFolder;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -101,6 +102,8 @@ class UserController extends Controller
             $user->assignRole('user');
         }
 
+        ActivityLogger::log('user.created', "Created user \"{$user->name}\" ({$user->email})", ['role' => $request->role ?? 'user'], $user);
+
         return redirect()->route('admin.users.index')
             ->with('success', 'User created successfully.');
     }
@@ -173,6 +176,8 @@ class UserController extends Controller
             $user->syncRoles([$request->role]);
         }
 
+        ActivityLogger::log('user.updated', "Updated user \"{$user->name}\" ({$user->email})", [], $user);
+
         return redirect()->route('admin.users.edit', $user)
             ->with('success', 'User updated successfully.');
     }
@@ -184,6 +189,8 @@ class UserController extends Controller
         if ($user->id === auth()->id()) {
             return back()->withErrors(['error' => 'You cannot delete your own account.']);
         }
+
+        ActivityLogger::log('user.deleted', "Deleted user \"{$user->name}\" ({$user->email})", ['id' => $user->id]);
 
         $user->delete();
 

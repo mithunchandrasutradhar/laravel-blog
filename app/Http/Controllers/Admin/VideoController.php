@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Video;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -45,7 +46,8 @@ class VideoController extends Controller
         $data['is_active']  = $request->boolean('is_active', true);
         $data['sort_order'] = $request->input('sort_order', 0);
 
-        Video::create($data);
+        $video = Video::create($data);
+        ActivityLogger::log('video.created', "Video \"{$video->title}\" was created.", [], $video);
 
         return redirect()->route('admin.videos.index')
             ->with('success', 'Video added successfully.');
@@ -84,6 +86,7 @@ class VideoController extends Controller
         $data['sort_order'] = $request->input('sort_order', 0);
 
         $video->update($data);
+        ActivityLogger::log('video.updated', "Video \"{$video->title}\" was updated.", [], $video);
 
         return redirect()->route('admin.videos.index')
             ->with('success', 'Video updated successfully.');
@@ -93,7 +96,9 @@ class VideoController extends Controller
     {
         abort_if(! auth()->user()->hasPermissionTo('videos.delete'), 403);
 
+        $videoTitle = $video->title;
         $video->delete();
+        ActivityLogger::log('video.deleted', "Video \"{$videoTitle}\" was deleted.");
 
         return redirect()->route('admin.videos.index')
             ->with('success', 'Video deleted successfully.');

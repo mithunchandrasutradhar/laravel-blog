@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Media;
 use App\Models\MediaFolder;
+use App\Services\ActivityLogger;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -121,6 +122,8 @@ class MediaController extends Controller
             ];
         }
 
+        ActivityLogger::log('media.uploaded', count($uploaded) . ' file(s) uploaded to media library.', ['count' => count($uploaded)]);
+
         return response()->json([
             'success' => true,
             'files'   => $uploaded,
@@ -166,6 +169,7 @@ class MediaController extends Controller
 
         $request->validate(['name' => ['required', 'string', 'max:255']]);
         $media->update(['name' => $request->name]);
+        ActivityLogger::log('media.renamed', "Media file renamed to \"{$media->name}\".", [], $media);
 
         return response()->json(['success' => true, 'name' => $media->name]);
     }
@@ -184,6 +188,7 @@ class MediaController extends Controller
             'folder_id'       => $folder?->id,
             'collection_name' => $folder ? $folder->slug : 'default',
         ]);
+        ActivityLogger::log('media.moved', "Media \"{$media->name}\" moved to folder \"" . ($folder?->name ?? 'Uncategorized') . "\".", [], $media);
 
         return response()->json(['success' => true]);
     }
@@ -216,6 +221,8 @@ class MediaController extends Controller
             'folder_id'       => $folder?->id,
         ]);
 
+        ActivityLogger::log('media.copied', "Media \"{$media->name}\" was copied.", [], $copy);
+
         return response()->json([
             'success'    => true,
             'id'         => $copy->id,
@@ -241,6 +248,7 @@ class MediaController extends Controller
             'folder_id'       => $folder?->id,
             'collection_name' => $folder ? $folder->slug : 'default',
         ]);
+        ActivityLogger::log('media.bulk_moved', count($request->ids) . ' file(s) moved to folder "' . ($folder?->name ?? 'Uncategorized') . '".', ['count' => count($request->ids)]);
 
         return response()->json(['success' => true, 'count' => count($request->ids)]);
     }
@@ -280,6 +288,8 @@ class MediaController extends Controller
             $copied++;
         }
 
+        ActivityLogger::log('media.bulk_copied', "{$copied} file(s) were copied.", ['count' => $copied]);
+
         return response()->json(['success' => true, 'count' => $copied]);
     }
 
@@ -299,6 +309,8 @@ class MediaController extends Controller
             $count++;
         }
 
+        ActivityLogger::log('media.bulk_deleted', "{$count} file(s) were permanently deleted from media library.", ['count' => $count]);
+
         return response()->json(['success' => true, 'count' => $count]);
     }
 
@@ -306,8 +318,10 @@ class MediaController extends Controller
     {
         abort_if(! auth()->user()->hasPermissionTo('media.delete'), 403);
 
+        $mediaName = $media->name;
         Storage::disk($media->disk)->delete($media->file_name);
         $media->delete();
+        ActivityLogger::log('media.deleted', "Media file \"{$mediaName}\" was permanently deleted.");
 
         if (request()->expectsJson()) {
             return response()->json(['success' => true]);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAdvertisementRequest;
 use App\Http\Requests\Admin\UpdateAdvertisementRequest;
 use App\Models\Advertisement;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -68,7 +69,8 @@ class AdvertisementController extends Controller
             $data['image'] = $request->input('media_path');
         }
 
-        Advertisement::create($data);
+        $ad = Advertisement::create($data);
+        ActivityLogger::log('advertisement.created', "Advertisement \"{$ad->name}\" was created.", [], $ad);
 
         return redirect()->route('admin.advertisements.index')
             ->with('success', 'Advertisement created successfully.');
@@ -112,6 +114,7 @@ class AdvertisementController extends Controller
         }
 
         $advertisement->update($data);
+        ActivityLogger::log('advertisement.updated', "Advertisement \"{$advertisement->name}\" was updated.", [], $advertisement);
 
         return redirect()->route('admin.advertisements.index')
             ->with('success', 'Advertisement updated successfully.');
@@ -122,6 +125,8 @@ class AdvertisementController extends Controller
         abort_if(! auth()->user()->hasPermissionTo('advertisements.update'), 403);
 
         $advertisement->update(['is_active' => ! $advertisement->is_active]);
+        $status = $advertisement->is_active ? 'activated' : 'deactivated';
+        ActivityLogger::log('advertisement.toggled', "Advertisement \"{$advertisement->name}\" was {$status}.", [], $advertisement);
 
         return back()->with('success', 'Advertisement status updated.');
     }
@@ -130,11 +135,12 @@ class AdvertisementController extends Controller
     {
         abort_if(! auth()->user()->hasPermissionTo('advertisements.delete'), 403);
 
+        $adName = $advertisement->name;
         if ($advertisement->image) {
             Storage::disk('public')->delete($advertisement->image);
         }
-
         $advertisement->delete();
+        ActivityLogger::log('advertisement.deleted', "Advertisement \"{$adName}\" was deleted.");
 
         return redirect()->route('admin.advertisements.index')
             ->with('success', 'Advertisement deleted successfully.');

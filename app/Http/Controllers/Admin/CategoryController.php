@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCategoryRequest;
 use App\Http\Requests\Admin\UpdateCategoryRequest;
 use App\Models\Category;
+use App\Services\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -51,7 +52,9 @@ class CategoryController extends Controller
             $data['image'] = $request->file('image')->store('categories', 'public');
         }
 
-        Category::create($data);
+        $category = Category::create($data);
+
+        ActivityLogger::log('category.created', "Created category \"{$category->name}\"", [], $category);
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Category created successfully.');
@@ -92,6 +95,8 @@ class CategoryController extends Controller
         }
 
         $category->update($data);
+
+        ActivityLogger::log('category.updated', "Updated category \"{$category->name}\"", [], $category);
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Category updated successfully.');
@@ -144,6 +149,8 @@ class CategoryController extends Controller
             $message .= ' ' . $skipped . ' skipped (default "Uncategorised" category cannot be removed).';
         }
 
+        ActivityLogger::log('category.bulk_deleted', "Bulk deleted {$deleted} category(s)", ['ids' => $ids]);
+
         return redirect()->route('admin.categories.index')->with('success', $message);
     }
 
@@ -165,6 +172,8 @@ class CategoryController extends Controller
         if ($category->image) {
             Storage::disk('public')->delete($category->image);
         }
+
+        ActivityLogger::log('category.deleted', "Deleted category \"{$category->name}\"", ['id' => $category->id]);
 
         $category->delete();
 
