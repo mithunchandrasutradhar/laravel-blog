@@ -6,11 +6,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     {{-- SEO Meta Tags --}}
-    <title>{{ $seo['title'] ?? settings('site_name', config('app.name', 'Blog')) }}</title>
-    <meta name="description" content="{{ $seo['description'] ?? settings('seo_description', 'A modern blog platform') }}">
+    <title>{{ $seo['title'] ?? settings('default_meta_title', settings('site_name', config('app.name', 'Blog'))) }}</title>
+    <meta name="description" content="{{ $seo['description'] ?? settings('default_meta_description', settings('seo_description', 'A modern blog platform')) }}">
     <meta name="keywords" content="{{ $seo['keywords'] ?? settings('seo_keywords', '') }}">
     @if(isset($seo['robots']))
     <meta name="robots" content="{{ $seo['robots'] }}">
+    @elseif(settings('robots'))
+    <meta name="robots" content="{{ settings('robots') }}">
+    @endif
+    @if(settings('google_search_console'))
+    <meta name="google-site-verification" content="{{ settings('google_search_console') }}">
     @endif
 
     {{-- Canonical URL --}}
@@ -18,8 +23,8 @@
 
     {{-- Open Graph Tags --}}
     <meta property="og:type" content="{{ $seo['og_type'] ?? 'website' }}">
-    <meta property="og:title" content="{{ $seo['og_title'] ?? $seo['title'] ?? config('app.name') }}">
-    <meta property="og:description" content="{{ $seo['og_description'] ?? $seo['description'] ?? settings('seo_description', '') }}">
+    <meta property="og:title" content="{{ $seo['og_title'] ?? $seo['title'] ?? settings('default_meta_title', settings('site_name', config('app.name'))) }}">
+    <meta property="og:description" content="{{ $seo['og_description'] ?? $seo['description'] ?? settings('default_meta_description', settings('seo_description', '')) }}">
     <meta property="og:url" content="{{ $seo['og_url'] ?? url()->current() }}">
     <meta property="og:image" content="{{ $seo['og_image'] ?? asset(settings('og_default_image', 'images/og-default.jpg')) }}">
     <meta property="og:site_name" content="{{ settings('site_name', config('app.name')) }}">
@@ -27,8 +32,8 @@
 
     {{-- Twitter Card Tags --}}
     <meta name="twitter:card" content="{{ $seo['twitter_card'] ?? 'summary_large_image' }}">
-    <meta name="twitter:title" content="{{ $seo['twitter_title'] ?? $seo['title'] ?? config('app.name') }}">
-    <meta name="twitter:description" content="{{ $seo['twitter_description'] ?? $seo['description'] ?? settings('seo_description', '') }}">
+    <meta name="twitter:title" content="{{ $seo['twitter_title'] ?? $seo['title'] ?? settings('default_meta_title', settings('site_name', config('app.name'))) }}">
+    <meta name="twitter:description" content="{{ $seo['twitter_description'] ?? $seo['description'] ?? settings('default_meta_description', settings('seo_description', '')) }}">
     <meta name="twitter:image" content="{{ $seo['twitter_image'] ?? $seo['og_image'] ?? asset(settings('og_default_image', 'images/og-default.jpg')) }}">
     @if(settings('twitter_site'))
     <meta name="twitter:site" content="{{ settings('twitter_site') }}">
@@ -86,13 +91,14 @@
     @endif
 
     {{-- Google Analytics 4 --}}
-    @if(settings('ga4_measurement_id'))
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ settings('ga4_measurement_id') }}"></script>
+    @php $gaId = settings('google_analytics_id', settings('ga4_measurement_id', '')); @endphp
+    @if($gaId)
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaId }}"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', '{{ settings('ga4_measurement_id') }}');
+        gtag('config', '{{ $gaId }}');
     </script>
     @endif
 

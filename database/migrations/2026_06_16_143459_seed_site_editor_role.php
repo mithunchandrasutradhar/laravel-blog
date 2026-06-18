@@ -16,7 +16,7 @@ return new class extends Migration
             'guard_name' => 'web',
         ]);
 
-        $role->syncPermissions([
+        $names = [
             'posts.viewAny', 'posts.view', 'posts.create', 'posts.update',
             'posts.delete', 'posts.publish', 'posts.forceDelete', 'posts.restore',
             'categories.viewAny', 'categories.create', 'categories.update', 'categories.delete',
@@ -28,7 +28,14 @@ return new class extends Migration
             'advertisements.viewAny',
             'subscribers.viewAny',
             'contact_messages.viewAny', 'contact_messages.delete',
-        ]);
+        ];
+
+        $permissions = array_map(
+            fn ($name) => Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']),
+            $names
+        );
+
+        $role->syncPermissions($permissions);
     }
 
     public function down(): void

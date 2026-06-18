@@ -235,8 +235,8 @@
                                 <label class="form-label fw-semibold">Google Search Console Verification</label>
                                 <input type="text" name="google_search_console" class="form-control"
                                        value="{{ old('google_search_console', $settings['google_search_console'] ?? '') }}"
-                                       placeholder="Meta content value...">
-                                <div class="form-text">The content value from the meta tag verification method.</div>
+                                       placeholder="e.g. rqXmBR16_6McEu58AIss2xXuT6bmdykSNbN7MxWtzi4">
+                                <div class="form-text">Paste only the <code>content="..."</code> value from the verification meta tag — not the full tag.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Robots.txt</label>
