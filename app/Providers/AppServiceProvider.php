@@ -9,6 +9,7 @@ use App\Observers\PostObserver;
 use App\Services\AdvertisementService;
 use App\Services\SettingService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -31,6 +32,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Use Bootstrap 5 pagination across all views
+        Paginator::useBootstrapFive();
+
         // ---- Eloquent model hardening ----------------------------------------
         Model::preventLazyLoading(! app()->isProduction());
 
