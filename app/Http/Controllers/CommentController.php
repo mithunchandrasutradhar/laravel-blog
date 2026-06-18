@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCommentRequest;
 use App\Models\Comment;
 use App\Models\Post;
-use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Http;
 
 class CommentController extends Controller
 {
@@ -20,12 +18,6 @@ class CommentController extends Controller
     public function store(StoreCommentRequest $request): RedirectResponse
     {
         $post = Post::where('id', $request->post_id)->published()->firstOrFail();
-
-        // reCAPTCHA validation (only when secret key is configured)
-        $recaptchaSecret = Setting::get('recaptcha_secret_key');
-        if ($recaptchaSecret && $request->filled('g-recaptcha-response')) {
-            $this->verifyRecaptcha($request->input('g-recaptcha-response'), $recaptchaSecret);
-        }
 
         Comment::create([
             'post_id'    => $post->id,
@@ -45,25 +37,4 @@ class CommentController extends Controller
             ->withFragment('comments');
     }
 
-    /**
-     * Verify the reCAPTCHA v2 token with Google's API.
-     * Aborts with 422 if verification fails.
-     */
-    private function verifyRecaptcha(string $token, string $secret): void
-    {
-        try {
-            $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                'secret'   => $secret,
-                'response' => $token,
-                'remoteip' => request()->ip(),
-            ]);
-
-            if (! ($response->json('success') === true)) {
-                abort(422, 'reCAPTCHA verification failed. Please try again.');
-            }
-        } catch (\Exception $e) {
-            logger()->warning('reCAPTCHA check failed: ' . $e->getMessage());
-            // Fail open in case of network issues so users aren't blocked
-        }
-    }
 }

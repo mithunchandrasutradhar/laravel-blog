@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Services\HtmlSanitizer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -52,6 +53,7 @@ class UpdatePostRequest extends FormRequest
             'is_featured'       => $this->boolean('is_featured'),
             'allow_comments'    => $this->boolean('allow_comments', true),
             'short_description' => $this->input('short_description') ?? $this->input('excerpt'),
+            'content'           => HtmlSanitizer::clean($this->input('content')),
         ]);
     }
 }

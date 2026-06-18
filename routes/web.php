@@ -59,13 +59,13 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 
 // Contact
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store')->middleware('throttle:5,1');
 
 // Comments (posted from blog post page)
-Route::post('/comments', [CommentController::class, 'store'])->name('comments.store');
+Route::post('/comments', [CommentController::class, 'store'])->name('comments.store')->middleware('throttle:10,1');
 
 // Newsletter
-Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe')->middleware('throttle:5,1');
 Route::get('/newsletter/verify/{token}', [NewsletterController::class, 'verify'])->name('newsletter.verify');
 Route::get('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
 
@@ -88,7 +88,7 @@ Route::get('/rss.xml', [RssController::class, 'feed'])->name('rss.feed');
 Route::post('/posts/{post}/view', function (\App\Models\Post $post) {
     \App\Models\PostView::record($post, request()->ip(), request()->userAgent() ?? '');
     return response()->json(['ok' => true]);
-})->name('posts.track-view');
+})->name('posts.track-view')->middleware('throttle:3,1');
 
 /*
 |--------------------------------------------------------------------------

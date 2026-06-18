@@ -30,7 +30,9 @@ class SettingsSeeder extends Seeder
             'time_format'      => 'g:i a',
             'timezone'         => 'UTC',
             'language'         => 'en',
-            'maintenance_mode' => '0',
+            'maintenance_mode'    => '0',
+            'terms_page'          => '',
+            'privacy_policy_page' => '',
         ],
 
         // -----------------------------------------------------------------------

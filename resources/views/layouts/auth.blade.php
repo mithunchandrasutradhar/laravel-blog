@@ -21,9 +21,11 @@
 
     {{-- Favicon --}}
     @if(settings('favicon'))
-    <link rel="icon" type="image/x-icon" href="{{ asset(settings('favicon')) }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/' . settings('favicon')) }}">
+    <link rel="apple-touch-icon" href="{{ asset('storage/' . settings('favicon')) }}">
     @else
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
+    <link rel="alternate icon" href="{{ asset('favicon.ico') }}">
     @endif
 
     {{-- Custom CSS --}}
@@ -48,26 +50,24 @@
 </head>
 <body class="auth-body bg-light min-vh-100 d-flex flex-column">
 
-    {{-- Header Bar --}}
-    <header class="auth-header py-3 bg-white border-bottom">
-        <div class="container text-center">
-            <a href="{{ route('home') }}" class="text-decoration-none">
-                @if(settings('logo'))
-                    @php $authLogoH = (int) settings('logo_height', 36); $authLogoW = settings('logo_width') ? 'max-width:'.(int)settings('logo_width').'px;' : ''; @endphp
-                    <img src="{{ asset('storage/' . settings('logo')) }}" alt="{{ settings('site_name', config('app.name')) }}"
-                         style="height:{{ $authLogoH }}px;{{ $authLogoW }}width:auto;object-fit:contain;">
-                @else
-                    <span class="fw-bold fs-5 text-primary">{{ settings('site_name', config('app.name')) }}</span>
-                @endif
-            </a>
-        </div>
-    </header>
-
     {{-- Main Auth Content --}}
     <main class="flex-grow-1 d-flex align-items-center justify-content-center py-5">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-12 col-sm-9 col-md-7 col-lg-5 col-xl-4">
+
+                    {{-- Logo above card --}}
+                    <div class="d-flex justify-content-center mb-4">
+                        <a href="{{ route('home') }}" class="text-decoration-none">
+                            @if(settings('logo'))
+                                @php $authLogoH = (int) settings('logo_height', 40); $authLogoW = settings('logo_width') ? 'max-width:'.(int)settings('logo_width').'px;' : ''; @endphp
+                                <img src="{{ asset('storage/' . settings('logo')) }}" alt="{{ settings('site_name', config('app.name')) }}"
+                                     style="height:{{ $authLogoH }}px;{{ $authLogoW }}width:auto;object-fit:contain;display:block;">
+                            @else
+                                <span class="fw-bold fs-4 text-primary">{{ settings('site_name', config('app.name')) }}</span>
+                            @endif
+                        </a>
+                    </div>
 
                     {{-- Flash Messages --}}
                     @include('partials.flash-messages')

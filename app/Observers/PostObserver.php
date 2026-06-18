@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Post;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -36,9 +37,10 @@ class PostObserver
         }
 
         if (! empty($dirty)) {
-            // Use updateQuietly to avoid triggering the observer recursively.
             $post->updateQuietly($dirty);
         }
+
+        Cache::forget('home.page_data');
     }
 
     // -------------------------------------------------------------------------
@@ -67,6 +69,11 @@ class PostObserver
         if (! empty($dirty)) {
             $post->updateQuietly($dirty);
         }
+
+        // Bust home page cache when a post is published, unpublished, or featured
+        if ($post->wasChanged(['status', 'published_at', 'is_featured'])) {
+            Cache::forget('home.page_data');
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -83,6 +90,7 @@ class PostObserver
     public function deleted(Post $post): void
     {
         $post->tags()->detach();
+        Cache::forget('home.page_data');
     }
 
     // -------------------------------------------------------------------------

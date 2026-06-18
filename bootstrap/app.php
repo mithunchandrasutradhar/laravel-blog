@@ -4,6 +4,7 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AuthorMiddleware;
 use App\Http\Middleware\CheckUserStatus;
 use App\Http\Middleware\HttpsRedirect;
+use App\Http\Middleware\SecureHeaders;
 use App\Http\Middleware\TrackPostView;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Global middleware (runs on every request)
         // -----------------------------------------------------------------------
         $middleware->append(HttpsRedirect::class);
+        $middleware->append(SecureHeaders::class);
 
         // -----------------------------------------------------------------------
         // Web middleware group additions

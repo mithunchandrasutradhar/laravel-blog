@@ -31,15 +31,10 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        Password::sendResetLink($request->only('email'));
 
-        if ($status == Password::RESET_LINK_SENT) {
-            return back()->with('status', __($status));
-        }
-
-        return back()->withInput($request->only('email'))
-            ->withErrors(['email' => __($status)]);
+        // Always return the same message regardless of whether the email exists
+        // to prevent user enumeration attacks.
+        return back()->with('status', __('passwords.sent'));
     }
 }

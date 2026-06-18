@@ -26,9 +26,7 @@ class AuthorController extends Controller
         // Assumes User::name is stored as the display name and a virtual
         // "username" slug matches str_slug(name). If a dedicated `username`
         // column exists this can be swapped to a direct where('username') call.
-        $author = is_numeric($username)
-            ? User::findOrFail((int) $username)
-            : User::whereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [strtolower($username)])->firstOrFail();
+        $author = User::whereRaw('LOWER(REPLACE(name, " ", "-")) = ?', [strtolower($username)])->firstOrFail();
 
         // Ensure author is active and has the author/admin role
         abort_if(! $author->isActive(), 404);

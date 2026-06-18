@@ -90,23 +90,25 @@
                 <input class="form-check-input @error('terms') is-invalid @enderror" type="checkbox" name="terms" id="terms" required>
                 <label class="form-check-label small" for="terms">
                     I agree to the
-                    @if(settings('terms_page'))
-                    <a href="{{ route('page', settings('terms_page')) }}" class="text-primary" target="_blank" rel="noopener">Terms of Service</a>
-                    @else
-                    <span class="text-primary">Terms of Service</span>
-                    @endif
+                    <a href="{{ url('/terms') }}" class="text-primary" target="_blank" rel="noopener">Terms of Service</a>
                     and
-                    @if(settings('privacy_policy_page'))
-                    <a href="{{ route('page', settings('privacy_policy_page')) }}" class="text-primary" target="_blank" rel="noopener">Privacy Policy</a>
-                    @else
-                    <span class="text-primary">Privacy Policy</span>
-                    @endif
+                    <a href="{{ url('/privacy') }}" class="text-primary" target="_blank" rel="noopener">Privacy Policy</a>
                 </label>
                 @error('terms')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
         </div>
+
+        {{-- reCAPTCHA --}}
+        @if(settings('recaptcha_site_key'))
+        <div class="mb-4">
+            <div class="g-recaptcha" data-sitekey="{{ settings('recaptcha_site_key') }}"></div>
+            @error('g-recaptcha-response')
+            <div class="text-danger small mt-1">{{ $message }}</div>
+            @enderror
+        </div>
+        @endif
 
         {{-- Submit --}}
         <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">
@@ -124,6 +126,9 @@
 @endsection
 
 @push('scripts')
+@if(settings('recaptcha_site_key'))
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+@endif
 <script>
 // Password toggle
 document.querySelectorAll('.password-toggle-btn').forEach(btn => {

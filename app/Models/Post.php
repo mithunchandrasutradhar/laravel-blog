@@ -36,7 +36,6 @@ class Post extends Model
         'canonical_url',
         'status',
         'published_at',
-        'views_count',
         'reading_time',
     ];
 

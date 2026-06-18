@@ -187,6 +187,33 @@
                                        x-ref="faviconInput" @change="previewFavicon($event)">
                             </div>
 
+                            {{-- Legal Pages --}}
+                            <div class="col-12"><hr class="my-1"></div>
+                            <div class="col-12">
+                                <h6 class="fw-semibold mb-0"><i class="fas fa-file-contract text-secondary me-2"></i>Legal Pages</h6>
+                                <div class="form-text mb-2">Enter the page slug (e.g. <code>terms-of-service</code>) so registration links work correctly.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Terms of Service Page Slug</label>
+                                <div class="input-group">
+                                    <span class="input-group-text text-muted">/</span>
+                                    <input type="text" name="terms_page" class="form-control"
+                                           value="{{ old('terms_page', settings('terms_page', '')) }}"
+                                           placeholder="terms-of-service">
+                                </div>
+                                <div class="form-text">Leave blank to show plain text instead of a link.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Privacy Policy Page Slug</label>
+                                <div class="input-group">
+                                    <span class="input-group-text text-muted">/</span>
+                                    <input type="text" name="privacy_policy_page" class="form-control"
+                                           value="{{ old('privacy_policy_page', settings('privacy_policy_page', '')) }}"
+                                           placeholder="privacy-policy">
+                                </div>
+                                <div class="form-text">Leave blank to show plain text instead of a link.</div>
+                            </div>
+
                         </div>
                     </div>
                     <div class="card-footer bg-transparent border-0 text-end py-3">

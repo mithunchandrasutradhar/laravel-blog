@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Services\ActivityLogger;
+use App\Services\HtmlSanitizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -44,6 +45,7 @@ class PagesController extends Controller
 
         $data['slug']           = Str::slug($data['slug'] ?: $data['title']);
         $data['show_in_footer'] = $request->boolean('show_in_footer');
+        $data['content']        = HtmlSanitizer::clean($data['content'] ?? '');
 
         $page = Page::create($data);
         ActivityLogger::log('page.created', "Page \"{$page->title}\" was created.", [], $page);
@@ -76,6 +78,7 @@ class PagesController extends Controller
 
         $data['slug']           = Str::slug($data['slug'] ?: $data['title']);
         $data['show_in_footer'] = $request->boolean('show_in_footer');
+        $data['content']        = HtmlSanitizer::clean($data['content'] ?? '');
 
         $page->update($data);
         ActivityLogger::log('page.updated', "Page \"{$page->title}\" was updated.", [], $page);

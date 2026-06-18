@@ -59,6 +59,16 @@
             </div>
         </div>
 
+        {{-- reCAPTCHA --}}
+        @if(settings('recaptcha_site_key'))
+        <div class="mb-4">
+            <div class="g-recaptcha" data-sitekey="{{ settings('recaptcha_site_key') }}"></div>
+            @error('g-recaptcha-response')
+            <div class="text-danger small mt-1">{{ $message }}</div>
+            @enderror
+        </div>
+        @endif
+
         {{-- Submit --}}
         <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">
             <i class="fas fa-sign-in-alt me-2"></i>Sign In
@@ -92,6 +102,9 @@
 @endsection
 
 @push('scripts')
+@if(settings('recaptcha_site_key'))
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+@endif
 <script>
 document.querySelectorAll('.password-toggle-btn').forEach(btn => {
     btn.addEventListener('click', function() {

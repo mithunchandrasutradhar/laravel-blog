@@ -1,0 +1,87 @@
+# ─── Gzip / Deflate Compression ────────────────────────────────────────────
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript text/javascript
+    AddOutputFilterByType DEFLATE application/json application/xml application/rss+xml application/atom+xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE font/truetype font/opentype application/vnd.ms-fontobject
+    AddOutputFilterByType DEFLATE application/x-font-ttf application/x-font-woff application/font-woff2
+</IfModule>
+
+# ─── Browser Caching (Expires) ──────────────────────────────────────────────
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # Images — 1 year (content-hashed by Vite, safe to cache forever)
+    ExpiresByType image/jpeg        "access plus 1 year"
+    ExpiresByType image/png         "access plus 1 year"
+    ExpiresByType image/gif         "access plus 1 year"
+    ExpiresByType image/webp        "access plus 1 year"
+    ExpiresByType image/svg+xml     "access plus 1 year"
+    ExpiresByType image/x-icon      "access plus 1 year"
+    ExpiresByType image/vnd.microsoft.icon "access plus 1 year"
+
+    # Fonts — 1 year
+    ExpiresByType font/woff         "access plus 1 year"
+    ExpiresByType font/woff2        "access plus 1 year"
+    ExpiresByType font/ttf          "access plus 1 year"
+    ExpiresByType application/font-woff  "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    ExpiresByType application/vnd.ms-fontobject "access plus 1 year"
+
+    # CSS & JS — 1 month (Vite adds content hash to filenames)
+    ExpiresByType text/css                  "access plus 1 month"
+    ExpiresByType application/javascript    "access plus 1 month"
+    ExpiresByType text/javascript           "access plus 1 month"
+
+    # HTML — no cache (always fresh)
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# ─── Cache-Control Headers ──────────────────────────────────────────────────
+<IfModule mod_headers.c>
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|ico|svg)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    <FilesMatch "\.(woff|woff2|ttf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+
+    # Remove ETags (redundant with Cache-Control)
+    Header unset ETag
+    FileETag None
+
+    # Security headers for static files
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# ─── Keep-Alive ─────────────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+    Header set Connection keep-alive
+</IfModule>
+
+# ─── Laravel Routing ────────────────────────────────────────────────────────
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+    RewriteBase /
+
+    # Remove trailing slash (not a directory)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Skip rewrite for actual files and directories (css, js, images, storage)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route everything else through Laravel's index.php
+    RewriteRule ^ index.php [L]
+</IfModule>

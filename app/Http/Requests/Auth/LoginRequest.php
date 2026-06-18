@@ -5,6 +5,7 @@ namespace App\Http\Requests\Auth;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -26,10 +27,60 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'email'    => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
+
+        if (settings('recaptcha_site_key') && settings('recaptcha_secret_key')) {
+            $rules['g-recaptcha-response'] = ['required'];
+        }
+
+        return $rules;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'g-recaptcha-response.required' => 'Please complete the reCAPTCHA verification.',
+        ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $secretKey = settings('recaptcha_secret_key');
+
+        if (! $secretKey) {
+            return;
+        }
+
+        $validator->after(function ($validator) use ($secretKey) {
+            $token = $this->input('g-recaptcha-response');
+
+            if (! $token) {
+                return;
+            }
+
+            try {
+                $result = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                    'secret'   => $secretKey,
+                    'response' => $token,
+                    'remoteip' => $this->ip(),
+                ]);
+
+                if (! $result->successful() || ! $result->json('success')) {
+                    $validator->errors()->add(
+                        'g-recaptcha-response',
+                        'reCAPTCHA verification failed. Please try again.'
+                    );
+                }
+            } catch (\Throwable) {
+                $validator->errors()->add(
+                    'g-recaptcha-response',
+                    'Could not verify reCAPTCHA. Please try again later.'
+                );
+            }
+        });
     }
 
     /**

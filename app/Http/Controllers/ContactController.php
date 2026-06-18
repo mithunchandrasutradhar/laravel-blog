@@ -40,10 +40,11 @@ class ContactController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        // Send notification email to the fixed admin inbox
+        // Send notification email to the configured admin inbox
         try {
-            Mail::send('emails.contact-notification', ['contactMessage' => $message], function ($mail) use ($message) {
-                $mail->to('blog@wollfiabd.com')
+            $adminEmail = Setting::get('contact_email', config('mail.from.address'));
+            Mail::send('emails.contact-notification', ['contactMessage' => $message], function ($mail) use ($message, $adminEmail) {
+                $mail->to($adminEmail)
                      ->replyTo($message->email, $message->name)
                      ->subject('New Contact Message: ' . $message->subject);
             });

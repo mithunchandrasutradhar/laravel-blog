@@ -24,8 +24,6 @@ class Comment extends Model
         'name',
         'email',
         'body',
-        'status',
-        'ip_address',
     ];
 
     /**

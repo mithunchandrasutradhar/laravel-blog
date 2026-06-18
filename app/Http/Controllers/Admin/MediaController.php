@@ -21,7 +21,6 @@ class MediaController extends Controller
         'image/png',
         'image/gif',
         'image/webp',
-        'image/svg+xml',
         'application/pdf',
     ];
 
@@ -76,7 +75,7 @@ class MediaController extends Controller
             'files.*' => [
                 'required',
                 'file',
-                'mimes:jpg,jpeg,png,gif,webp,svg,pdf',
+                'mimes:jpg,jpeg,png,gif,webp,pdf',
                 'max:' . self::MAX_SIZE_KB,
             ],
         ]);
