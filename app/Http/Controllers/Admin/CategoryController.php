@@ -120,22 +120,20 @@ class CategoryController extends Controller
             return back()->withErrors(['error' => 'No categories selected.']);
         }
 
-        $fallback = Category::where('slug', 'uncategorised')->first();
+        $fallback = Category::firstOrCreate(
+            ['slug' => 'uncategorised'],
+            ['name' => 'Uncategorised']
+        );
         $deleted  = 0;
         $skipped  = 0;
 
         Category::whereIn('id', $ids)->each(function (Category $category) use ($fallback, &$deleted, &$skipped) {
-            if ($fallback && $fallback->id === $category->id) {
+            if ($fallback->id === $category->id) {
                 $skipped++;
                 return;
             }
 
-            if ($fallback) {
-                $category->posts()->update(['category_id' => $fallback->id]);
-            } elseif ($category->posts()->exists()) {
-                $skipped++;
-                return;
-            }
+            $category->posts()->withTrashed()->update(['category_id' => $fallback->id]);
 
             if ($category->image) {
                 Storage::disk('public')->delete($category->image);
@@ -159,16 +157,17 @@ class CategoryController extends Controller
     {
         abort_if(! auth()->user()->hasPermissionTo('categories.delete'), 403);
 
-        $fallback = Category::where('slug', 'uncategorised')->first();
+        $fallback = Category::firstOrCreate(
+            ['slug' => 'uncategorised'],
+            ['name' => 'Uncategorised']
+        );
 
-        if ($fallback && $fallback->id === $category->id) {
+        if ($fallback->id === $category->id) {
             return redirect()->route('admin.categories.index')
                 ->withErrors(['error' => 'The default "Uncategorised" category cannot be deleted.']);
         }
 
-        if ($fallback) {
-            $category->posts()->update(['category_id' => $fallback->id]);
-        }
+        $category->posts()->withTrashed()->update(['category_id' => $fallback->id]);
 
         if ($category->image) {
             Storage::disk('public')->delete($category->image);

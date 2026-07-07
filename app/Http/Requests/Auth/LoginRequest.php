@@ -27,14 +27,13 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
+        // reCAPTCHA temporarily disabled on login for local development
+        // (site key isn't verified for this domain). Re-enable by restoring
+        // the settings()-gated rule below.
         $rules = [
             'email'    => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
-
-        if (settings('recaptcha_site_key') && settings('recaptcha_secret_key')) {
-            $rules['g-recaptcha-response'] = ['required'];
-        }
 
         return $rules;
     }
@@ -46,42 +45,46 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator): void
-    {
-        $secretKey = settings('recaptcha_secret_key');
-
-        if (! $secretKey) {
-            return;
-        }
-
-        $validator->after(function ($validator) use ($secretKey) {
-            $token = $this->input('g-recaptcha-response');
-
-            if (! $token) {
-                return;
-            }
-
-            try {
-                $result = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                    'secret'   => $secretKey,
-                    'response' => $token,
-                    'remoteip' => $this->ip(),
-                ]);
-
-                if (! $result->successful() || ! $result->json('success')) {
-                    $validator->errors()->add(
-                        'g-recaptcha-response',
-                        'reCAPTCHA verification failed. Please try again.'
-                    );
-                }
-            } catch (\Throwable) {
-                $validator->errors()->add(
-                    'g-recaptcha-response',
-                    'Could not verify reCAPTCHA. Please try again later.'
-                );
-            }
-        });
-    }
+    // reCAPTCHA temporarily disabled on login for local development (site key
+    // isn't verified for this domain). Restore this method's body to
+    // re-enable:
+    //
+    // public function withValidator($validator): void
+    // {
+    //     $secretKey = settings('recaptcha_secret_key');
+    //
+    //     if (! $secretKey) {
+    //         return;
+    //     }
+    //
+    //     $validator->after(function ($validator) use ($secretKey) {
+    //         $token = $this->input('g-recaptcha-response');
+    //
+    //         if (! $token) {
+    //             return;
+    //         }
+    //
+    //         try {
+    //             $result = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+    //                 'secret'   => $secretKey,
+    //                 'response' => $token,
+    //                 'remoteip' => $this->ip(),
+    //             ]);
+    //
+    //             if (! $result->successful() || ! $result->json('success')) {
+    //                 $validator->errors()->add(
+    //                     'g-recaptcha-response',
+    //                     'reCAPTCHA verification failed. Please try again.'
+    //                 );
+    //             }
+    //         } catch (\Throwable) {
+    //             $validator->errors()->add(
+    //                 'g-recaptcha-response',
+    //                 'Could not verify reCAPTCHA. Please try again later.'
+    //             );
+    //         }
+    //     });
+    // }
 
     /**
      * Attempt to authenticate the request's credentials.
