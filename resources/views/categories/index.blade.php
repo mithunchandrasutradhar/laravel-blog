@@ -10,69 +10,152 @@
 
 @push('styles')
 <style>
-    /* ── Parent category card ─────────────────────────────────── */
-    .cat-parent-card {
-        border-radius: .875rem;
-        overflow: hidden;
-        transition: box-shadow .2s, transform .2s;
-        text-decoration: none;
-        display: block;
-    }
-    .cat-parent-card:hover {
-        box-shadow: 0 .5rem 1.75rem rgba(0,0,0,.1) !important;
-        transform: translateY(-2px);
-    }
-    .cat-icon-col {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        width: 88px;
-        min-height: 88px;
-    }
-    .cat-icon-wrap {
-        width: 52px;
-        height: 52px;
-        border-radius: .6rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .categories-page {
+        background: #f7f6f2;
     }
 
-    /* ── Sub-category cards ───────────────────────────────────── */
-    .subcat-card {
+    .cat-section-label {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 1.25rem;
+    }
+
+    /* ── Core topic card ──────────────────────────────────────── */
+    .core-cat-card {
         display: flex;
-        align-items: center;
-        gap: .75rem;
-        padding: .75rem 1rem;
+        flex-direction: column;
+        height: 100%;
         background: #fff;
-        border: 1px solid #e9ecef;
-        border-radius: .625rem;
+        border-radius: 1rem;
+        border-left: 5px solid var(--cat-color, #6366f1);
+        padding: 1.5rem;
         text-decoration: none;
-        transition: box-shadow .15s, transform .15s, border-color .15s;
+        box-shadow: 0 1px 3px rgba(0,0,0,.04);
+        transition: box-shadow .2s, transform .2s;
     }
-    .subcat-card:hover {
-        box-shadow: 0 .25rem .75rem rgba(0,0,0,.08);
-        transform: translateY(-2px);
-        border-color: #dee2e6;
+    .core-cat-card:hover {
+        box-shadow: 0 .75rem 2rem rgba(0,0,0,.09);
+        transform: translateY(-3px);
     }
-    .subcat-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: .4rem;
+    .cat-icon-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: .75rem;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        background: color-mix(in srgb, var(--cat-color, #6366f1) 16%, white);
     }
-    .count-pill {
-        font-size: .68rem;
+    .cat-icon-badge i {
+        color: var(--cat-color, #6366f1);
+        font-size: 1.15rem;
+    }
+    .core-cat-card .cat-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+    .core-cat-card .cat-desc {
+        font-size: .875rem;
+        color: #6c757d;
+        margin: .75rem 0 0;
+    }
+    .core-cat-card .cat-footer {
+        margin-top: auto;
+        padding-top: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .cat-meta {
+        font-size: .8rem;
+        color: #8a8f98;
+    }
+    .cat-arrow-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: color-mix(in srgb, var(--cat-color, #6366f1) 14%, white);
+        color: var(--cat-color, #6366f1);
+    }
+
+    /* ── Leaf top-level "row" card ────────────────────────────── */
+    .row-cat-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #fff;
+        border-radius: .75rem;
+        border-left: 5px solid var(--cat-color, #adb5bd);
+        padding: 1rem 1.25rem;
+        text-decoration: none;
+        height: 100%;
+        box-shadow: 0 1px 3px rgba(0,0,0,.04);
+        transition: box-shadow .2s, transform .2s;
+    }
+    .row-cat-card:hover {
+        box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.08);
+        transform: translateY(-2px);
+    }
+    .row-cat-card .cat-icon-badge {
+        width: 42px;
+        height: 42px;
+    }
+    .row-cat-card .cat-title-line {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+    .row-cat-card .cat-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+    .row-cat-card .cat-desc {
+        font-size: .8rem;
+        color: #8a8f98;
+        margin: .2rem 0 0;
+    }
+    .count-badge {
+        font-size: .7rem;
         font-weight: 700;
         line-height: 1;
-        padding: .25rem .5rem;
+        padding: .3rem .55rem;
         border-radius: 100px;
+        background: color-mix(in srgb, var(--cat-color, #6366f1) 16%, white);
+        color: var(--cat-color, #6366f1);
         white-space: nowrap;
-        flex-shrink: 0;
+    }
+
+    /* ── Empty (0-post) category state ────────────────────────── */
+    .row-cat-card.is-empty {
+        border-left-color: #dee2e6;
+        box-shadow: none;
+    }
+    .row-cat-card.is-empty:hover {
+        box-shadow: none;
+        transform: none;
+    }
+    .row-cat-card.is-empty .cat-icon-badge {
+        background: #f1f3f5;
+    }
+    .row-cat-card.is-empty .cat-icon-badge i {
+        color: #adb5bd;
+    }
+    .row-cat-card.is-empty .cat-title,
+    .row-cat-card.is-empty .cat-desc {
+        color: #adb5bd;
+    }
+    .row-cat-card.is-empty .cat-arrow-btn {
+        background: #f1f3f5;
+        color: #adb5bd;
     }
 </style>
 @endpush
@@ -80,7 +163,7 @@
 @section('content')
 
 {{-- Page Header --}}
-<div class="page-header bg-light border-bottom py-4">
+<div class="page-header border-bottom py-4" style="background: linear-gradient(90deg, #eef2ff 0%, #ffffff 100%);">
     <div class="container">
         <div class="row align-items-center">
             <div class="col">
@@ -99,99 +182,101 @@
     </div>
 </div>
 
-<div class="container py-5">
-    @forelse($categories as $category)
-    @php
-        $color      = $category->color ?? '#0d6efd';
-        $icon       = $category->icon  ?? 'fas fa-folder';
-        $postCount  = $category->posts_count ?? 0;
-        $descCount  = $category->descendants->count();
-    @endphp
+<div class="categories-page py-5">
+    <div class="container">
 
-    <div class="mb-5">
+        @php
+            $subCategories = $categories->flatMap(fn ($c) => $c->descendants)->values();
+        @endphp
 
-        {{-- ── Parent Category Card ───────────────────────────── --}}
-        <a href="{{ route('categories.show', $category->slug) }}" class="cat-parent-card card border-0 shadow-sm mb-3">
-            <div class="card-body p-0">
-                <div class="d-flex align-items-stretch">
+        @if($categories->isEmpty())
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-folder-open fa-3x mb-3 opacity-25 d-block"></i>
+                <p>No categories yet.</p>
+            </div>
+        @else
 
-                    {{-- Icon column with accent colour --}}
-                    <div class="cat-icon-col" style="background:{{ $color }}18; border-left:5px solid {{ $color }};">
-                        @if($category->image)
-                            <img src="{{ asset('storage/' . $category->image) }}"
-                                 alt="{{ $category->name }}"
-                                 class="rounded-2"
-                                 style="width:52px;height:52px;object-fit:cover;">
-                        @else
-                            <div class="cat-icon-wrap" style="background:{{ $color }}28;">
-                                <i class="{{ $icon }} fa-lg" style="color:{{ $color }};"></i>
+            {{-- ── Core Topic Areas (all parent categories) ─────── --}}
+            <div class="mb-5">
+                <div class="cat-section-label">Core Topic Areas</div>
+                <div class="row g-3">
+                    @foreach($categories as $category)
+                    @php
+                        $color     = $category->color ?? '#6366f1';
+                        $icon      = $category->icon  ?? 'fas fa-folder';
+                        $postCount = $category->posts_count ?? 0;
+                        $descCount = $category->descendants->count();
+                    @endphp
+                    <div class="col-12 col-md-4">
+                        <a href="{{ route('categories.show', $category->slug) }}"
+                           class="core-cat-card"
+                           style="--cat-color: {{ $color }};">
+                            <div class="d-flex align-items-center gap-3 mb-1">
+                                <div class="cat-icon-badge">
+                                    <i class="{{ $icon }}"></i>
+                                </div>
+                                <span class="cat-title">{{ $category->name }}</span>
                             </div>
-                        @endif
-                    </div>
-
-                    {{-- Name + meta --}}
-                    <div class="flex-grow-1 px-4 py-3 d-flex flex-column justify-content-center">
-                        <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
-                            <span class="h5 fw-bold mb-0 text-dark">{{ $category->name }}</span>
-                            <span class="count-pill" style="background:{{ $color }}18; color:{{ $color }};">
-                                {{ $postCount }} {{ Str::plural('post', $postCount) }}
-                            </span>
-                            @if($descCount)
-                                <span class="text-muted" style="font-size:.8rem;">
-                                    · {{ $descCount }} {{ Str::plural('sub-category', $descCount) }}
-                                </span>
+                            @if($category->description)
+                                <p class="cat-desc">{{ $category->description }}</p>
                             @endif
-                        </div>
-                        @if($category->description)
-                            <p class="text-muted mb-0" style="font-size:.875rem;">{{ $category->description }}</p>
-                        @endif
+                            <div class="cat-footer">
+                                <span class="cat-meta">
+                                    {{ $postCount }} {{ Str::plural('post', $postCount) }} &bull; {{ $descCount }} {{ Str::plural('sub-category', $descCount) }}
+                                </span>
+                                <span class="cat-arrow-btn">
+                                    <i class="fas fa-arrow-right fa-sm"></i>
+                                </span>
+                            </div>
+                        </a>
                     </div>
-
-                    {{-- Arrow --}}
-                    <div class="d-flex align-items-center pe-4">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                             style="width:38px;height:38px;background:{{ $color }}15;color:{{ $color }};">
-                            <i class="fas fa-arrow-right fa-sm"></i>
-                        </div>
-                    </div>
-
+                    @endforeach
                 </div>
             </div>
-        </a>
 
-        {{-- ── Sub-categories grid ─────────────────────────────── --}}
-        @if($category->descendants->isNotEmpty())
-        <div class="row g-2 ps-md-3">
-            @foreach($category->descendants as $child)
-            @php
-                $childColor = $child->color ?? $color;
-                $childIcon  = $child->icon  ?? 'fas fa-folder-open';
-                $childCount = $child->posts_count ?? 0;
-            @endphp
-            <div class="col-12 col-sm-6 col-xl-4">
-                <a href="{{ route('categories.show', $child->slug) }}" class="subcat-card h-100">
-                    <div class="subcat-icon" style="background:{{ $childColor }}18;">
-                        <i class="{{ $childIcon }} fa-sm" style="color:{{ $childColor }};"></i>
+            {{-- ── Specific Topics & Content Types (all sub-categories) ─── --}}
+            @if($subCategories->isNotEmpty())
+            <div>
+                <div class="cat-section-label">Specific Topics &amp; Content Types</div>
+                <div class="row g-3">
+                    @foreach($subCategories as $child)
+                    @php
+                        $color     = $child->color ?? '#adb5bd';
+                        $icon      = $child->icon  ?? 'fas fa-folder';
+                        $postCount = $child->posts_count ?? 0;
+                        $isEmpty   = $postCount === 0;
+                    @endphp
+                    <div class="col-12 col-md-6">
+                        <a href="{{ route('categories.show', $child->slug) }}"
+                           class="row-cat-card {{ $isEmpty ? 'is-empty' : '' }}"
+                           style="--cat-color: {{ $color }};">
+                            <div class="cat-icon-badge">
+                                <i class="{{ $icon }}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="cat-title-line">
+                                    <span class="cat-title">{{ $child->name }}</span>
+                                    @if(! $isEmpty)
+                                        <span class="count-badge">{{ $postCount }} {{ Str::plural('post', $postCount) }}</span>
+                                    @endif
+                                </div>
+                                @if($child->description)
+                                    <p class="cat-desc mb-0">{{ $child->description }}</p>
+                                @endif
+                            </div>
+                            <span class="cat-arrow-btn">
+                                <i class="fas fa-arrow-right fa-sm"></i>
+                            </span>
+                        </a>
                     </div>
-                    <span class="fw-medium text-dark flex-grow-1" style="font-size:.875rem;line-height:1.3;">
-                        {{ $child->name }}
-                    </span>
-                    <span class="count-pill" style="background:#f1f3f5;color:#6c757d;">
-                        {{ $childCount }}
-                    </span>
-                </a>
+                    @endforeach
+                </div>
             </div>
-            @endforeach
-        </div>
+            @endif
+
         @endif
 
     </div>
-    @empty
-    <div class="text-center py-5 text-muted">
-        <i class="fas fa-folder-open fa-3x mb-3 opacity-25 d-block"></i>
-        <p>No categories yet.</p>
-    </div>
-    @endforelse
 </div>
 
 @endsection
